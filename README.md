@@ -1,5 +1,4 @@
 #amdclean
-=========
 
 A build tool that converts AMD code to standard JavaScript.
 
@@ -21,7 +20,7 @@ So, you get great code cleanliness with AMD, reduced file sizes, and easy integr
 
 ## Restrictions
 
-**Note:** Same restrictions as almond.js, plus a few more
+**Note:** Same restrictions as Almond.js, plus a few more
 
 It is best used for libraries or apps that use AMD and:
 
@@ -36,7 +35,7 @@ It is best used for libraries or apps that use AMD and:
 
 ## Download
 
-Node - npm install amdclean
+Node - `npm install amdclean`
 
 Web - [Latest release](https://github.com/gfranko/amdclean/src/amdclean.js)
 
@@ -47,7 +46,7 @@ Web - [Latest release](https://github.com/gfranko/amdclean/src/amdclean.js)
 
 2.  npm install amdclean
 
-3.  Update the `onBuildWrite` property in your RequireJS build configuration.  Like this:
+3.  Update the `onBuildWrite` property in your RequireJS build configuration file.  Like this:
 
 ```javascript
     onBuildWrite: function (moduleName, path, contents) {
@@ -55,4 +54,4 @@ Web - [Latest release](https://github.com/gfranko/amdclean/src/amdclean.js)
     }
 ```
 
-4.  Run the optimizer using [Node](http://nodejs.org) (also [works in Java](https://github.com/jrburke/r.js/blob/master/README.md)).  More details can be found in the the r.js repo.
+4.  Run the optimizer using [Node](http://nodejs.org) (also [works in Java](https://github.com/jrburke/r.js/blob/master/README.md)).  More details can be found in the the [r.js](https://github.com/jrburke/r.js/) repo.
