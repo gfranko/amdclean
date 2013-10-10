@@ -42,11 +42,11 @@ Web - [Latest release](https://github.com/gfranko/amdclean/src/amdclean.js)
 
 ## Usage
 
-1.  [Download the RequireJS optimizer](http://requirejs.org/docs/download.html#rjs).
+* [Download the RequireJS optimizer](http://requirejs.org/docs/download.html#rjs).
 
-2.  npm install amdclean
+* npm install amdclean
 
-3.  Update the `onBuildWrite` property in your RequireJS build configuration file.  Like this:
+* Update the `onBuildWrite` property in your RequireJS build configuration file.  Like this:
 
 ```javascript
     onBuildWrite: function (moduleName, path, contents) {
@@ -54,4 +54,26 @@ Web - [Latest release](https://github.com/gfranko/amdclean/src/amdclean.js)
     }
 ```
 
-4.  Run the optimizer using [Node](http://nodejs.org) (also [works in Java](https://github.com/jrburke/r.js/blob/master/README.md)).  More details can be found in the the [r.js](https://github.com/jrburke/r.js/) repo.
+* Run the optimizer using [Node](http://nodejs.org) (also [works in Java](https://github.com/jrburke/r.js/blob/master/README.md)).  More details can be found in the the [r.js](https://github.com/jrburke/r.js/) repo.
+
+## Requirements
+
+* Esprima 1.0+
+
+* Lodash 2.2.1+
+
+* Estraverse 1.3.1+
+
+* Escodegen 0.0.27+
+
+## How it works
+
+
+
+## Unit Tests
+
+Work in Progress
+
+## License
+
+Copyright (c) 2013 Greg Franko Licensed under the MIT license.
