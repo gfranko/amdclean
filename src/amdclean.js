@@ -22,7 +22,7 @@
         _ = codeEnv === 'node' ? require('lodash'): window._,
         fs = codeEnv === 'node' ? require('fs'): {},
         utils = {
-            VERSION: '0.1.0',
+            VERSION: '0.1.1',
             env: codeEnv,
             moduleNamesStore: {},
             errorMsgs: {
