@@ -158,6 +158,7 @@ var example = function () {
 }();
 ```
 
+---
 
 _AMD_
 
@@ -166,6 +167,7 @@ define('example', ['example1', 'example2'], function(one, two) {
 	
 });
 ```
+
 
 _Standard_
 
@@ -176,6 +178,7 @@ var example = function (one, two) {
 }();
 ```
 
+---
 
 _AMD_
 
@@ -193,6 +196,7 @@ var third = {
 };
 ```
 
+---
 
 ###Require Calls
 
@@ -212,6 +216,7 @@ _Standard_
 }());
 ```
 
+---
 
 _AMD_
 
