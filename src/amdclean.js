@@ -12,7 +12,7 @@
         factory();
     } else {
         factory.env = 'web';
-        root.cleanamd = factory();
+        root.amdclean = factory();
     }
 }(this, function cleanamd() {
     var codeEnv = cleanamd.env,
