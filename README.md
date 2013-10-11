@@ -2,25 +2,30 @@
 
 A build tool that converts AMD code to standard JavaScript.
 
+`npm install amdclean`
+
+
 ## Use Case
 
 **Single file** JavaScript libraries or applications that use AMD, but do not use AMD plugins (e.g. text! plugin).
 
+
 ## Why
 
-Many developers like to use the AMD API to write modular JavaScript, but do not want to include a full AMD loader (e.g. RequireJS), or AMD shim (e.g. Almond.js) because of file size.
+Many developers like to use the AMD API to write modular JavaScript, but do not want to include a full AMD loader (e.g. [require.js](https://github.com/jrburke/requirejs)), or AMD shim (e.g. [almond.js](https://github.com/jrburke/almond)) because of file size/source code readability.
 
-By incorporating amdclean into the build process, there is no need for RequireJS or Almond.
+By incorporating amdclean.js into the build process, there is no need for Require or Almond.
 
-Since amdclean rewrites your source file into standard JavaScript, it is a great
+Since AMDclean rewrites your source code into standard JavaScript, it is a great
 fit for JavaScript library authors who want a tiny download in one file after using the
 [RequireJS Optimizer](http://requirejs.org/docs/optimization.html).
 
-So, you get great code cleanliness with AMD, reduced file sizes, and easy integration for other developers who may not use AMD.
+So, you get great code cleanliness with AMD, reduced file sizes, improved code readability, and easy integration with other developers who may not use AMD.
+
 
 ## Restrictions
 
-**Note:** Same restrictions as Almond.js, plus a few more
+**Note:** Same restrictions as almond.js, plus a few more.
 
 It is best used for libraries or apps that use AMD and:
 
@@ -29,9 +34,10 @@ It is best used for libraries or apps that use AMD and:
 * do not use AMD loader plugins (e.g. text! plugin)
 * only have **one** require.config() call.
 
+
 ##What is Supported
 
-* define() and require() calls.
+* `define()` and `require()` calls.
 
 ## Download
 
@@ -50,21 +56,37 @@ There are a few different ways that amdclean can be used including:
 
 * As a client-side library
 
+
 ###RequireJS Optimizer
 
 * [Download the RequireJS optimizer](http://requirejs.org/docs/download.html#rjs).
 
 * `npm install amdclean`
 
+* Make sure that each of your AMD modules have a module ID `path` alias name
+
+```javascript
+paths: {
+
+	'first': '../modules/firstModule',
+
+	'second': '../modules/secondModule',
+
+	'third': '../modules/thirdModule'
+
+}
+```
+
 * Update the `onBuildWrite` property in your RequireJS build configuration file.  Like this:
 
 ```javascript
-    onBuildWrite: function (moduleName, path, contents) {
-        return require('amdclean').clean(contents);
-    }
+onBuildWrite: function (moduleName, path, contents) {
+    return require('amdclean').clean(contents);
+}
 ```
 
 * Run the optimizer using [Node](http://nodejs.org) (also [works in Java](https://github.com/jrburke/r.js/blob/master/README.md)).  More details can be found in the the [r.js](https://github.com/jrburke/r.js/) repo.
+
 
 ###Node Module
 
@@ -79,9 +101,10 @@ var cleanAMD = require('amdclean');
 * Call the clean method
 
 ```javascript
-var code = 'define('exampleModule', function() {});'
+var code = 'define("exampleModule", function() {});'
 var cleanedCode = cleanAMD.clean(code);
 ```
+
 
 ###Client-side Library
 
@@ -111,9 +134,11 @@ var cleanedCode = cleanamd.clean('define("example", [], function() { var a = tru
 
 * [Escodegen](https://github.com/Constellation/escodegen) 0.0.27+
 
+
 ## How it works
 
 amdclean uses Esprima to generate an AST (Abstract Syntax Tree) from the provided source code, estraverse to traverse and update the AST, and escodegen to generate the new standard JavaScript code.  There are a few different techniques that amdclean uses to convert AMD to standard JavaScript code:
+
 
 ###Define Calls
 
@@ -133,6 +158,7 @@ var example = function () {
 }();
 ```
 
+
 _AMD_
 
 ```javascript
@@ -150,6 +176,7 @@ var example = function (one, two) {
 }();
 ```
 
+
 _AMD_
 
 ```javascript
@@ -165,6 +192,8 @@ var third = {
 	exampleProp: 'This is an example'
 };
 ```
+
+
 ###Require Calls
 
 _AMD_
@@ -183,6 +212,7 @@ _Standard_
 }());
 ```
 
+
 _AMD_
 
 ```javascript
@@ -199,9 +229,11 @@ _Standard_
 }(anotherModule));
 ```
 
+
 ## Unit Tests
 
 Work in Progress
+
 
 ## License
 
