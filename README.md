@@ -37,14 +37,24 @@ It is best used for libraries or apps that use AMD and:
 
 Node - `npm install amdclean`
 
-Web - [Latest release](https://github.com/gfranko/amdclean/src/amdclean.js)
+Web - [Latest release](https://github.com/gfranko/amdclean/blob/master/src/amdclean.js)
 
 
 ## Usage
 
+There are a few different ways that amdclean can be used including:
+
+* With the RequireJS Optimizer
+
+* As a standalone node module
+
+* As a client-side library
+
+###RequireJS Optimizer
+
 * [Download the RequireJS optimizer](http://requirejs.org/docs/download.html#rjs).
 
-* npm install amdclean
+* `npm install amdclean`
 
 * Update the `onBuildWrite` property in your RequireJS build configuration file.  Like this:
 
@@ -56,19 +66,138 @@ Web - [Latest release](https://github.com/gfranko/amdclean/src/amdclean.js)
 
 * Run the optimizer using [Node](http://nodejs.org) (also [works in Java](https://github.com/jrburke/r.js/blob/master/README.md)).  More details can be found in the the [r.js](https://github.com/jrburke/r.js/) repo.
 
+###Node Module
+
+* `npm install amdclean`
+
+* Require the module
+
+```javascript
+var cleanAMD = require('amdclean');
+```
+
+* Call the clean method
+
+```javascript
+var code = 'define('exampleModule', function() {});'
+var cleanedCode = cleanAMD.clean(code);
+```
+
+###Client-side Library
+
+* Include all dependencies
+
+```html
+<script src="http://esprima.org/esprima.js"></script>
+<script src="http://esprima.org/test/3rdparty/escodegen.browser.js"></script>
+<script src="http://gregfranko.com/javascripts/estraverse.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/lodash.js/2.2.1/lodash.js"></script>
+<script src="http://gregfranko.com/javascripts/amdclean.js"></script>
+```
+
+* Use the global `amdclean` object and `clean()` method
+
+```javascript
+var cleanedCode = cleanamd.clean('define("example", [], function() { var a = true; });');
+```
+
 ## Requirements
 
-* Esprima 1.0+
+* [Esprima](https://github.com/ariya/esprima) 1.0+
 
-* Lodash 2.2.1+
+* [Lodash](https://github.com/lodash/lodash) 2.2.1+
 
-* Estraverse 1.3.1+
+* [Estraverse](https://github.com/Constellation/estraverse) 1.3.1+
 
-* Escodegen 0.0.27+
+* [Escodegen](https://github.com/Constellation/escodegen) 0.0.27+
 
 ## How it works
 
+amdclean uses Esprima to generate an AST (Abstract Syntax Tree) from the provided source code, estraverse to traverse and update the AST, and escodegen to generate the new standard JavaScript code.  There are a few different techniques that amdclean uses to convert AMD to standard JavaScript code:
 
+###Define Calls
+
+_AMD_
+
+```javascript
+define('example', [], function() {
+	
+});
+```
+
+_Standard_
+
+```javascript
+var example = function () {
+
+}();
+```
+
+_AMD_
+
+```javascript
+define('example', ['example1', 'example2'], function(one, two) {
+	
+});
+```
+
+_Standard_
+
+```javascript
+var example = function (one, two) {
+        two = example2;
+        one = example1;
+}();
+```
+
+_AMD_
+
+```javascript
+define('third',{
+	exampleProp: 'This is an example'
+});
+```
+
+_Standard_
+
+```javascript
+var third = {
+	exampleProp: 'This is an example'
+};
+```
+###Require Calls
+
+_AMD_
+
+```javascript
+require('example', [], function() {
+	var example = true;
+});
+```
+
+_Standard_
+
+```javascript
+(function () {
+    var example = true;
+}());
+```
+
+_AMD_
+
+```javascript
+require('example', ['anotherModule'], function(anotherModule) {
+	var example = true;
+});
+```
+
+_Standard_
+
+```javascript
+(function (anotherModule) {
+    var example = true;
+}(anotherModule));
+```
 
 ## Unit Tests
 
