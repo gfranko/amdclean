@@ -121,7 +121,7 @@ var cleanedCode = cleanAMD.clean(code);
 * Use the global `amdclean` object and `clean()` method
 
 ```javascript
-var cleanedCode = cleanamd.clean('define("example", [], function() { var a = true; });');
+var cleanedCode = amdclean.clean('define("example", [], function() { var a = true; });');
 ```
 
 ## Requirements
