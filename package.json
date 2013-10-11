@@ -2,7 +2,7 @@
   "name": "amdclean",
   "version": "0.1.0",
   "description": "A build tool that converts AMD code to standard JavaScript",
-  "main": "amdclean",
+  "main": "./src/amdclean",
   "repository": {
     "type": "git",
     "url": "https://github.com/gfranko/amdclean.git"
