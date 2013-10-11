@@ -200,10 +200,12 @@ var third = {
 
 ###Require Calls
 
+**Note:** `require(['someModule'])` calls are removed from the built source code
+
 _AMD_
 
 ```javascript
-require('example', [], function() {
+require([], function() {
 	var example = true;
 });
 ```
@@ -221,7 +223,7 @@ _Standard_
 _AMD_
 
 ```javascript
-require('example', ['anotherModule'], function(anotherModule) {
+require(['anotherModule'], function(anotherModule) {
 	var example = true;
 });
 ```
@@ -235,9 +237,32 @@ _Standard_
 ```
 
 
+##Options
+
+The amdclean `clean()` method accepts a string or an object.  Below is an example objects with all of the available configuration options:
+
+```javascript
+amdclean.clean({
+	// The source code you would like to be 'cleaned'
+	code: 'define("example", [], function(one, two) {});',
+	// All esprima API options are supported: http://esprima.org/doc/
+	esprima: {},
+	// All escodegen API options are supported: https://github.com/Constellation/escodegen/wiki/API
+	escodegen: {}
+})
+```
+
+
 ## Unit Tests
 
 Work in Progress
+
+
+## FAQ
+
+__Why would I use amdclean instead of Almond.js?__
+
+ - Although Almond is very small (~1k gzipped and minified), most JavaScript library authors do not want to have to include it in their library's source code.  If you are not using an AMD plugin, then amdclean provides the benefit of AMD without increasing your library's file size.
 
 
 ## License

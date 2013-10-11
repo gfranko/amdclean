@@ -277,7 +277,7 @@
                 var filePath = obj.filePath,
                     code = obj.code || (filePath && utils.env === 'node' ? utils.readFile(filePath) : ''),
                     esprimaDefaultOptions = {},
-                    esprimaOptions = _.extend(esprimaDefaultOptions, (_.isPlainObject(obj.esprimaOptions) ? obj.esprimaOptions : {}));
+                    esprimaOptions = _.extend(esprimaDefaultOptions, (_.isPlainObject(obj.esprima) ? obj.esprima : {}));
                 if(!code) {
                     throw new Error(utils.errorMsgs.emptyCode);
                 } else {
@@ -317,7 +317,7 @@
             clean: function(obj) {
                 var code = {},
                     ast = {},
-                    generateOptions = {};
+                    escodegenOptions = {};
                 if(!_ || !_.isPlainObject) {
                     throw new Error(utils.errorMsgs.lodash);
                 }
@@ -340,8 +340,8 @@
                     });
                 }
                 // console.log('all empty statements');
-                generateOptions = _.isPlainObject(obj.escodegenOptions) ? obj.escodegenOptions : {};
-                return utils.generateCode(ast, generateOptions);
+                escodegenOptions = _.isPlainObject(obj.escodegen) ? obj.escodegen : {};
+                return utils.generateCode(ast, escodegenOptions);
             }
         };
         if(codeEnv === 'node') {
