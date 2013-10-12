@@ -1,6 +1,6 @@
 {
   "name": "amdclean",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A build tool that converts AMD code to standard JavaScript",
   "main": "./src/amdclean",
   "repository": {
@@ -12,6 +12,9 @@
     "name" : "Greg Franko",
     "url" : "http://gregfranko.com"
   },
+  "scripts": {
+      "test": "jasmine-node test/specs/ --matchall"
+  },
   "dependencies" : {
     "esprima" : ">= 1.0 <1.2",
     "lodash": "~2.2.1",
@@ -19,6 +22,7 @@
     "escodegen": "~0.0.27"
   },
   "devDependencies" : {
+    "jasmine-node" : "1.x"
   },
   "engine" : {
     "node" : ">= 0.8"

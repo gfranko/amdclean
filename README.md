@@ -50,7 +50,7 @@ Web - [Latest release](https://github.com/gfranko/amdclean/blob/master/src/amdcl
 
 There are a few different ways that amdclean can be used including:
 
-* With the RequireJS Optimizer
+* With the RequireJS Optimizer (Grunt is also supported)
 
 * As a standalone node module
 
@@ -87,6 +87,35 @@ onBuildWrite: function (moduleName, path, contents) {
 
 * Run the optimizer using [Node](http://nodejs.org) (also [works in Java](https://github.com/jrburke/r.js/blob/master/README.md)).  More details can be found in the the [r.js](https://github.com/jrburke/r.js/) repo.
 
+* If you are using the RequireJS optimizer [Grunt task](https://github.com/gruntjs/grunt-contrib-requirejs), then it is very easy to integrate amdclean using the `onBuildWrite` config option. Here is an example Grunt file that includes the RequireJS optimizer plugin with amdclean support:
+
+```javascript
+module.exports = function(grunt) {
+  grunt.initConfig({
+    pkg: grunt.file.readJSON('package.json'),
+    requirejs: {
+      js: {
+        options: {
+          findNestedDependencies: true,
+          baseUrl: 'src/js/app/modules',
+          wrap: true,
+          preserveLicenseComments: false,
+          optimize: 'none',
+          mainConfigFile: 'src/js/app/config/config.js',
+          include: ['first'],
+          out: 'src/js/app/exampleLib.js',
+          onBuildWrite: function( name, path, contents ) {
+            return require('amdclean').clean(contents);
+          }
+        }
+      }
+    }
+  });
+  grunt.loadNpmTasks('grunt-contrib-requirejs');
+  grunt.registerTask('build', ['requirejs:js']);
+  grunt.registerTask('default', ['build']);
+};
+```
 
 ###Node Module
 
@@ -255,7 +284,7 @@ amdclean.clean({
 
 ## Unit Tests
 
-Work in Progress
+All unit tests are written using the [jasmine-node](https://github.com/mhevery/jasmine-node) library and can be found in the `test/specs/` folder.
 
 
 ## FAQ
