@@ -2,6 +2,8 @@
 
 A build tool that converts AMD code to standard JavaScript.
 
+[![Build Status](https://travis-ci.org/gfranko/amdclean.png?branch=master)](https://travis-ci.org/gfranko/amdclean)
+
 `npm install amdclean`
 
 
