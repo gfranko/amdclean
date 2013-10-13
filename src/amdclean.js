@@ -30,7 +30,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            VERSION: '0.2.0',
+            VERSION: '0.2.1',
             // Environment - either node or web
             env: codeEnv,
             // Object that keeps track of module ids/names that are used
@@ -157,13 +157,7 @@
             convertToIIFE: function(obj) {
                 var callbackFuncParams = obj.callbackFuncParams,
                     callbackFunc = obj.callbackFunc,
-                    dependencyNames = (function() {
-                        var arr = [], names = obj.dependencyNames;
-                        _.each(callbackFuncParams, function(currentCallbackFuncParam, iterator) {
-                            arr.push({ type: 'Identifier', name: names[iterator] });
-                        });
-                        return arr;
-                    }());
+                    dependencyNames = obj.dependencyNames;
                 return {
                     'type': 'ExpressionStatement',
                     'expression': {
@@ -189,7 +183,8 @@
             convertToIIFEDeclaration: function(obj) {
                 var moduleName = obj.moduleName,
                     callbackFuncParams = obj.callbackFuncParams,
-                    callbackFunc = obj.callbackFunc;
+                    callbackFunc = obj.callbackFunc,
+                    dependencyNames = obj.dependencyNames;
                 return {
                     'type': 'VariableDeclaration',
                     'declarations': [
@@ -214,7 +209,7 @@
                                     'generator': callbackFunc.generator,
                                     'expression': callbackFunc.expression
                                 },
-                                'arguments': []
+                                'arguments': dependencyNames
                             }
                         }
                     ],
@@ -231,7 +226,6 @@
                     node = obj.node,
                     moduleName  = obj.moduleName,
                     callbackFunc = obj.moduleReturnValue,
-                    dependencies = obj.dependencies,
                     callbackFuncParams = (function() {
                         var deps = [],
                             cbParams = callbackFunc.params || [];
@@ -240,36 +234,24 @@
                         });
                         return deps;
                     }()),
-                    currentCallbackAssignment = {};
+                    dependencies = obj.dependencies,
+                    dependencyNames = (function() {
+                        var arr = [], names = dependencies;
+                        _.each(callbackFuncParams, function(currentCallbackFuncParam, iterator) {
+                            arr.push({ type: 'Identifier', name: names[iterator] });
+                        });
+                        return arr;
+                    }());
                 if(isDefine) {
-                    _.each(callbackFuncParams, function(currentCallbackFuncParam, iterator) {
-                        currentCallbackAssignment = {
-                            'type': 'ExpressionStatement',
-                            'expression': {
-                                'type': 'AssignmentExpression',
-                                'operator': '=',
-                                'left': {
-                                    'type': 'Identifier',
-                                    'name': currentCallbackFuncParam.name
-                                },
-                                'right': {
-                                    'type': 'Identifier',
-                                    'name': dependencies[iterator]
-                                }
-                            }
-                        };
-                        if(callbackFunc.body && callbackFunc.body.body && Array.isArray(callbackFunc.body.body)) {
-                            callbackFunc.body.body.unshift(currentCallbackAssignment);
-                        }
-                    });
                     return publicAPI.convertToIIFEDeclaration({
                         moduleName: moduleName,
+                        dependencyNames: dependencyNames,
                         callbackFuncParams: callbackFuncParams,
                         callbackFunc: callbackFunc
                     });
                 } else if(isRequire) {
                     return publicAPI.convertToIIFE({
-                        dependencyNames: dependencies,
+                        dependencyNames: dependencyNames,
                         callbackFuncParams: callbackFuncParams,
                         callbackFunc: callbackFunc
                     });
@@ -404,7 +386,6 @@
                         }
                     });
                 }
-                // console.log('all empty statements');
                 escodegenOptions = _.isPlainObject(obj.escodegen) ? obj.escodegen : {};
                 publicAPI.moduleNamesStore = {};
                 return publicAPI.generateCode(ast, escodegenOptions);

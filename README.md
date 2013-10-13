@@ -204,9 +204,8 @@ _Standard_
 
 ```javascript
 var example = function (one, two) {
-        two = example2;
-        one = example1;
-}();
+
+}(example1, example2);
 ```
 
 ---

@@ -15,7 +15,7 @@ describe('amdclean specs', function() {
 			it('should correctly set callback parameters to the callback function', function() {
 				var AMDcode = "define('example', ['example1', 'example2'], function(one, two) {});",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
-					standardJavaScript = "var example=function (one,two){two=example2;one=example1;}();";
+					standardJavaScript = "var example=function (one,two){}(example1,example2);";
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
