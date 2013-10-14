@@ -479,7 +479,6 @@
                         depNames = [];
                         if(Array.isArray(deps) && deps.length) {
                             _.each(deps, function(currentDependency) {
-                                console.log('currentDependency', currentDependency);
                                 if(publicAPI.dependencyBlacklist[currentDependency.value]) {
                                     depNames.push('{}');
                                 } else {
