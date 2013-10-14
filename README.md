@@ -32,7 +32,6 @@ So, you get great code cleanliness with AMD, reduced file sizes, improved code r
 It is best used for libraries or apps that use AMD and:
 
 * optimize all the modules into one file -- no dynamic code loading.
-* include `path` alias names for each module using the `require.config()` method.
 * do not use AMD loader plugins (e.g. text! plugin)
 * only have **one** require.config() call
 
