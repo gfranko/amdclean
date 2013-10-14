@@ -181,7 +181,6 @@
                 var callbackFuncParams = obj.callbackFuncParams,
                     callbackFunc = obj.callbackFunc,
                     dependencyNames = obj.dependencyNames;
-                // console.log('dependencyNames', dependencyNames);
                 return {
                     'type': 'ExpressionStatement',
                     'expression': {
