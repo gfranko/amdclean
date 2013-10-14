@@ -34,7 +34,8 @@ It is best used for libraries or apps that use AMD and:
 * optimize all the modules into one file -- no dynamic code loading.
 * include `path` alias names for each module using the `require.config()` method.
 * do not use AMD loader plugins (e.g. text! plugin)
-* only have **one** require.config() call.
+* only have **one** require.config() call
+* do not use the `cjsTranslate` Require.js configuration
 
 
 ##What is Supported
