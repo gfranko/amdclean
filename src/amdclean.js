@@ -1,4 +1,4 @@
-/*! amdclean - v0.2.2 - 2013-10-13 
+/*! amdclean - v0.2.3 - 2013-10-13 
 * http://gregfranko.com/amdclean
 * Copyright (c) 2013 Greg Franko; Licensed MIT*/
 
@@ -34,7 +34,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            VERSION: '0.2.2',
+            VERSION: '0.2.3',
             // Environment - either node or web
             env: codeEnv,
             // Object that keeps track of module ids/names that are used
@@ -70,6 +70,14 @@
                 'esprima': 'There is not an esprima.parse() method.  Make sure you have included esprima (https://github.com/ariya/esprima).',
                 'estraverse': 'There is not an estraverse.replace() method.  Make sure you have included estraverse (https://github.com/Constellation/estraverse).',
                 'escodegen': 'There is not an escodegen.generate() method.  Make sure you have included escodegen (https://github.com/Constellation/escodegen).'
+            },
+            // Dependency blacklist
+            // --------------------
+            //  Variable names that are not allowed as dependencies to functions
+            dependencyBlacklist: {
+                'require': true,
+                'exports': true,
+                'module': true
             },
             // readFile
             // --------
@@ -114,6 +122,10 @@
                     obj = node.object;
                 return (publicAPI.isRequireExpression || publicAPI.isRequireMemberExpression(node) || isRequireCallExpression(node));
             },
+            // isRequireExpression
+            // -------------------
+            //  Returns if the current AST node is a require() variable declaration
+            //  e.g. var example = require('someModule');
             isRequireExpression: function(node) {
                 return (node.type === 'VariableDeclarator' &&
                             !_.isUndefined(node.init) &&
@@ -122,6 +134,10 @@
                             !_.isUndefined(node.init.callee) &&
                             node.init.callee.name === 'require');
             },
+            // isRequireMemberExpression
+            // -------------------------
+            //  Returns if the current AST node is a require() property variable declaration
+            //  e.g. var example = require('someModule').someProp;
             isRequireMemberExpression: function(node) {
                 return (node.type === 'VariableDeclarator' &&
                             !_.isUndefined(node.init) &&
@@ -131,6 +147,10 @@
                             !_.isUndefined(node.init.object.callee) &&
                             node.init.object.callee.name === 'require');
             },
+            // isRequireCallExpression
+            // -----------------------
+            //  Returns if the current AST node is a require() method variable declaration
+            //  e.g. var example = require('someModule').someProp();
             isRequireCallExpression: function(node) {
                 return (node.type === 'VariableDeclarator' &&
                         !_.isUndefined(node.init) &&
@@ -459,7 +479,12 @@
                         depNames = [];
                         if(Array.isArray(deps) && deps.length) {
                             _.each(deps, function(currentDependency) {
-                                depNames.push(currentDependency.value);
+                                console.log('currentDependency', currentDependency);
+                                if(publicAPI.dependencyBlacklist[currentDependency.value]) {
+                                    depNames.push('{}');
+                                } else {
+                                    depNames.push(currentDependency.value);
+                                }
                             });
                         }
                         return depNames;
