@@ -49,6 +49,12 @@
                     'fix': 'Fix: ' + 'Make sure that you assign unique module paths using the require.config() method.  Take a look at http://requirejs.org/docs/api.html#config for more details\n',
                     'exiting': 'Result: Did not complete and exiting...'
                 },
+                // Malformed module name
+                malformedModuleName: function(moduleName) {
+                    return 'This module name is malformed: ' + moduleName;
+                },
+                // CommonJS converting issues
+                'commonjs': 'There was an error parsing a CommonJS require include.  Please create a ticket at https://github.com/gfranko/amdclean/issues',
                 // The user has not supplied the cliean method with any code
                 'emptyCode': 'There is no code to generate the AST with',
                 // An AST has not been correctly returned by Esprima
@@ -92,11 +98,54 @@
             isRequire: function(node) {
                 var expression = node.expression || {},
                     callee = expression.callee;
-                return node.type === 'ExpressionStatement' &&
+                return (node.type === 'ExpressionStatement' &&
                     !_.isUndefined(expression) &&
                     expression.type === 'CallExpression' &&
                     callee.type === 'Identifier' &&
-                    callee.name === 'require';
+                    callee.name === 'require');
+            },
+            // isCommonJS
+            // ----------
+            //  Returns if the current AST node is a commonJS require() method call
+            //  e.g. require('someModule');
+            isCommonJS: function(node) {
+                if(!node) return false;
+                var callee = node.callee,
+                    obj = node.object;
+                return (publicAPI.isRequireExpression || publicAPI.isRequireMemberExpression(node) || isRequireCallExpression(node));
+            },
+            isRequireExpression: function(node) {
+                return (node.type === 'VariableDeclarator' &&
+                            !_.isUndefined(node.init) &&
+                            !_.isUndefined(node.init.type) &&
+                            node.init.type === 'CallExpression' &&
+                            !_.isUndefined(node.init.callee) &&
+                            node.init.callee.name === 'require');
+            },
+            isRequireMemberExpression: function(node) {
+                return (node.type === 'VariableDeclarator' &&
+                            !_.isUndefined(node.init) &&
+                            !_.isUndefined(node.init.type) &&
+                            node.init.type === 'MemberExpression' &&
+                            !_.isUndefined(node.init.object) &&
+                            !_.isUndefined(node.init.object.callee) &&
+                            node.init.object.callee.name === 'require');
+            },
+            isRequireCallExpression: function(node) {
+                return (node.type === 'VariableDeclarator' &&
+                        !_.isUndefined(node.init) &&
+                        !_.isUndefined(node.init.type) &&
+                        node.init.type === 'CallExpression' &&
+                        !_.isUndefined(node.init.callee) &&
+                        node.init.callee.type === 'MemberExpression' &&
+                        !_.isUndefined(node.init.callee.object) &&
+                        !_.isUndefined(node.init.callee.object.type) &&
+                        node.init.callee.object.type === 'CallExpression' &&
+                        !_.isUndefined(node.init.callee.object['arguments']) &&
+                        !_.isUndefined(node.init.callee.object.callee) &&
+                        node.init.callee.object.callee.name === 'require' &&
+                        !_.isUndefined(node.init.callee.property) &&
+                        !_.isUndefined(node.init.callee.property.name));
             },
             // isObjectExpression
             // ------------------
@@ -122,9 +171,15 @@
                     containsRelativePath = name.lastIndexOf('/') !== -1;
                 if(containsRelativePath) {
                     moduleName = moduleName.substring(0, lastIndex);
-                    folderName = moduleName.substring((moduleName.lastIndexOf('/') + 1), moduleName.length);
-                    fileName = name.substring((lastIndex + 1), name.length);
-                    return folderName + '_' + fileName;
+                    folderName = (moduleName.substring((moduleName.lastIndexOf('/') + 1), moduleName.length)).replace(/\W/g, '');
+                    fileName = (name.substring((lastIndex + 1), name.length)).replace(/\W/g, '');
+                    if(folderName && fileName) {
+                        return folderName + '_' + fileName;
+                    } else if(!folderName && fileName) {
+                        return fileName;
+                    } else {
+                        throw new Error(publicAPI.errorMsgs.malformedModuleName(name));
+                    }
                 } else {
                     return name;
                 }
@@ -150,10 +205,107 @@
                     return true;
                 }
             },
+            // convertCommonJSDeclaration
+            // --------------------------
+            //  Replaces the CommonJS variable declaration with a variable the same name as the argument
+            //  e.g. var prop = require('example'); -> var prop = example;
+            convertCommonJSDeclaration: function(node) {
+                if(!node) return node;
+                try {
+                    if(publicAPI.isRequireExpression(node)) {
+                        return {
+                            'type': 'VariableDeclarator',
+                            'id': {
+                                'type': 'Identifier',
+                                'name': node.id.name
+                            },
+                            'init': {
+                                'type': 'Identifier',
+                                'name': publicAPI.normalizeModuleName((node.init['arguments'][0].value) || (node.init['arguments'][0].elements[0].value))
+                            }
+                        };
+                    } else if(publicAPI.isRequireMemberExpression(node)) {
+                        return {
+                            'type': 'VariableDeclarator',
+                            'id': {
+                                'type': 'Identifier',
+                                'name': node.id.name
+                            },
+                            'init': {
+                                'type': 'MemberExpression',
+                                'computed': false,
+                                'object': {
+                                    'type': 'Identifier',
+                                    'name': (function() {
+                                        if(node.init && node.init.object && node.init.object['arguments'] && node.init.object['arguments'][0] && node.init.object['arguments'][0].elements) {
+                                            return  publicAPI.normalizeModuleName(node.init.object['arguments'][0].elements[0].value);
+                                        } else {
+                                            return publicAPI.normalizeModuleName(node.init.object['arguments'][0].value);
+                                        }
+                                    }())
+                                },
+                                'property': {
+                                    'type': 'Identifier',
+                                    'name': node.init.property.name
+                                }
+                            }
+                        };
+                    } else if(publicAPI.isRequireCallExpression(node)) {
+                        return {
+                            'type': 'VariableDeclarator',
+                            'id': {
+                                'type': 'Identifier',
+                                'name': node.id.name
+                            },
+                            'init': {
+                                'type': 'CallExpression',
+                                'callee': {
+                                    'type': 'MemberExpression',
+                                    'computed': false,
+                                    'object': {
+                                        'type': 'Identifier',
+                                        'name': (function() {
+                                            if(node.init && node.init.callee && node.init.callee.object && node.init.callee.object['arguments'] && node.init.callee.object['arguments'][0] && node.init.callee.object['arguments'][0].elements) {
+                                                return  publicAPI.normalizeModuleName(node.init.callee.object['arguments'][0].elements[0].value);
+                                            } else {
+                                                return publicAPI.normalizeModuleName(node.init.callee.object['arguments'][0].value);
+                                            }
+                                        }())
+                                    },
+                                    'property': {
+                                        'type': 'Identifier',
+                                        'name': node.init.callee.property.name
+                                    }
+                                },
+                                'arguments': node.init['arguments']
+                            }
+                        };
+                    } else {
+                        return node;
+                    }
+                } catch(e) {
+                    console.log(publicAPI.errorMsgs.commonjs + '\n\n' + e);
+                    return node;
+                }
+
+            },
+            // returnExpressionIdentifier
+            // --------------------------
+            //  Returns a single identifier
+            //  e.g. module
+            returnExpressionIdentifier: function(name) {
+                return {
+                    'type': 'ExpressionStatement',
+                    'expression': {
+                        'type': 'Identifier',
+                        'name': name
+                    }
+                };
+            },
             // convertToObjectDeclaration
             // --------------------------
             //  Returns an object variable declaration
-            //  ( e.g. var example = { exampleProp: true } )
+            //  e.g. var example = { exampleProp: true }
             convertToObjectDeclaration: function(obj) {
                 var node = obj.node,
                     moduleName  = obj.moduleName,
@@ -176,7 +328,7 @@
             // convertToIIFE
             // -------------
             //  Returns an IIFE
-            //  ( e.g. (function() { }()) )
+            //  e.g. (function() { }())
             convertToIIFE: function(obj) {
                 var callbackFuncParams = obj.callbackFuncParams,
                     callbackFunc = obj.callbackFunc,
@@ -202,7 +354,7 @@
             // convertToIIFEDeclaration
             // ------------------------
             //  Returns a function expression that is executed immediately
-            //  ( e.g. var example = function(){}() )
+            //  e.g. var example = function(){}()
             convertToIIFEDeclaration: function(obj) {
                 var moduleName = obj.moduleName,
                     callbackFuncParams = obj.callbackFuncParams,
@@ -248,22 +400,31 @@
                     isRequire = obj.isRequire,
                     node = obj.node,
                     moduleName  = obj.moduleName,
+                    dependencies = obj.dependencies,
+                    depLength = dependencies.length,
+                    dependencyNames = (function() {
+                        var deps = [],
+                            iterator = -1;
+                        while(++iterator < depLength) {
+                            deps.push({ type: 'Identifier', name: publicAPI.normalizeModuleName(dependencies[iterator]) });
+                        }
+                        return deps;
+                    }()),
                     callbackFunc = obj.moduleReturnValue,
                     callbackFuncParams = (function() {
                         var deps = [],
+                            iterator = -1,
+                            currentParam,
                             cbParams = callbackFunc.params || [];
-                        _.each(cbParams, function(currentParam) {
-                            deps.push({ 'type': 'Identifier', 'name': currentParam.name });
-                        });
+                        while(++iterator < depLength) {
+                            currentParam = cbParams[iterator];
+                            if(currentParam) {
+                                deps.push({ 'type': 'Identifier', 'name': currentParam.name });
+                            } else {
+                                deps.push({ 'type': 'Identifier', 'name': dependencyNames[iterator].name });
+                            }
+                        }
                         return deps;
-                    }()),
-                    dependencies = obj.dependencies,
-                    dependencyNames = (function() {
-                        var arr = [], names = dependencies;
-                        _.each(callbackFuncParams, function(currentCallbackFuncParam, iterator) {
-                            arr.push({ type: 'Identifier', name: publicAPI.normalizeModuleName(names[iterator]) });
-                        });
-                        return arr;
                     }());
                 if(isDefine) {
                     return publicAPI.convertToIIFEDeclaration({
@@ -324,7 +485,7 @@
                             return publicAPI.convertToFunctionExpression(params);
                         } else {
                             // Remove the require include statement from the source
-                            return { type: 'EmptyStatement', expression: {} };
+                            return { type: 'EmptyStatement' };
                         }
                     }
                 } else {
@@ -401,11 +562,26 @@
                 ast = publicAPI.traverseAndUpdateAst({
                     ast: publicAPI.createAst(code)
                 });
-                // Removes all empty statements from the source so that there are no single semicolons
+                // Removes all empty statements from the source so that there are no single semicolons and
+                // Make sure that all require() CommonJS calls are converted
                 if(ast && _.isArray(ast.body)) {
-                    _.each(ast.body, function(currentNode, iterator) {
-                        if(currentNode === undefined || currentNode.type === 'EmptyStatement') {
-                            ast.body.splice(iterator, 1);
+                    estraverse.replace(ast, {
+                        enter: function(node, parent) {
+                            if(node === undefined || node.type === 'EmptyStatement') {
+                                _.each(parent.body, function(currentNode, iterator) {
+                                    if(currentNode === undefined || currentNode.type === 'EmptyStatement') {
+                                        parent.body.splice(iterator, 1);
+                                    }
+                                });
+                            } else if(node.type === 'VariableDeclaration' && Array.isArray(node.declarations)) {
+                                _.each(node.declarations, function(currentDeclaration, iterator) {
+                                    if(publicAPI.isCommonJS(currentDeclaration)) {
+                                        node.declarations[iterator] = publicAPI.convertCommonJSDeclaration(currentDeclaration);
+                                    }
+                                });
+                                return node;
+                            }
+
                         }
                     });
                 }

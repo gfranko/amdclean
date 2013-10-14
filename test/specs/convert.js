@@ -39,6 +39,45 @@ describe('amdclean specs', function() {
 
 		});
 
+		describe('CommonJS Variable Declarations', function() {
+
+			it('should convert CommonJS require() calls', function() {
+				var AMDcode = "var example = require('anotherModule');",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var example=anotherModule;";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should convert CommonJS require() calls with file paths', function() {
+				var AMDcode = "var example = require('./anotherModule');",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var example=anotherModule;";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should convert CommonJS require() calls with advanced file paths', function() {
+				var AMDcode = "var example = require('./../anotherModule');",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var example=anotherModule;";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should convert CommonJS require() calls with single properties', function() {
+				var AMDcode = "var example = require('./anotherModule').prop;",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var example=anotherModule.prop;";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should convert CommonJS require() calls with method calls', function() {
+				var AMDcode = "var example = require('./anotherModule').prop();",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var example=anotherModule.prop();";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+		});
+
 	});
 
 	describe('require() method conversions', function() {
@@ -66,7 +105,7 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
-			it('remove require() calls with no callback functions', function() {
+			it('should remove require() calls with no callback functions', function() {
 				var AMDcode = "require(['anotherModule']);",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
 					standardJavaScript = "";
