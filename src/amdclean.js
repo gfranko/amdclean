@@ -1,3 +1,7 @@
+/*! amdclean - v0.2.2 - 2013-10-13 
+* http://gregfranko.com/amdclean
+* Copyright (c) 2013 Greg Franko; Licensed MIT*/
+
 (function (root, factory, undefined) {
     'use strict';
     // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js,
@@ -30,7 +34,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            VERSION: '0.2.1',
+            VERSION: '0.2.2',
             // Environment - either node or web
             env: codeEnv,
             // Object that keeps track of module ids/names that are used
@@ -106,6 +110,25 @@
             isFunctionExpression: function(expression) {
                 return expression && _.isPlainObject(expression) && expression.type === 'FunctionExpression';
             },
+            // normalizeModuleName
+            // -------------------
+            //  Returns a normalized module name (removes relative file path urls)
+            normalizeModuleName: function(name) {
+                name = name || '';
+                var moduleName = name,
+                    folderName,
+                    fileName,
+                    lastIndex = name.lastIndexOf('/'),
+                    containsRelativePath = name.lastIndexOf('/') !== -1;
+                if(containsRelativePath) {
+                    moduleName = moduleName.substring(0, lastIndex);
+                    folderName = moduleName.substring((moduleName.lastIndexOf('/') + 1), moduleName.length);
+                    fileName = name.substring((lastIndex + 1), name.length);
+                    return folderName + '_' + fileName;
+                } else {
+                    return name;
+                }
+            },
             // hasUniqueModelName
             // ------------------
             //  Returns if the current module id/name has already been used
@@ -158,6 +181,7 @@
                 var callbackFuncParams = obj.callbackFuncParams,
                     callbackFunc = obj.callbackFunc,
                     dependencyNames = obj.dependencyNames;
+                // console.log('dependencyNames', dependencyNames);
                 return {
                     'type': 'ExpressionStatement',
                     'expression': {
@@ -238,7 +262,7 @@
                     dependencyNames = (function() {
                         var arr = [], names = dependencies;
                         _.each(callbackFuncParams, function(currentCallbackFuncParam, iterator) {
-                            arr.push({ type: 'Identifier', name: names[iterator] });
+                            arr.push({ type: 'Identifier', name: publicAPI.normalizeModuleName(names[iterator]) });
                         });
                         return arr;
                     }());
@@ -281,7 +305,7 @@
                         return depNames;
                     }()),
                     moduleReturnValue = args[args.length - 1];
-                    moduleName = node.expression['arguments'][0].value;
+                    moduleName = publicAPI.normalizeModuleName(node.expression['arguments'][0].value);
                     params = {
                             node: node,
                             moduleName: moduleName,
@@ -381,7 +405,7 @@
                 // Removes all empty statements from the source so that there are no single semicolons
                 if(ast && _.isArray(ast.body)) {
                     _.each(ast.body, function(currentNode, iterator) {
-                        if(currentNode.type === 'EmptyStatement') {
+                        if(currentNode === undefined || currentNode.type === 'EmptyStatement') {
                             ast.body.splice(iterator, 1);
                         }
                     });

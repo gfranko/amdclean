@@ -19,6 +19,13 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
+			it('should correctly normalize relative file paths', function() {
+				var AMDcode = "define('./modules/example', ['example1', 'example2'], function(one, two) {});",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var modules_example=function (one,two){}(example1,example2);";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
 		});
 
 		describe('objects', function() {
@@ -49,6 +56,13 @@ describe('amdclean specs', function() {
 				var AMDcode = "require(['anotherModule'], function(anotherModule) { var example = true; });",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
 					standardJavaScript = "(function(anotherModule){var example=true;}(anotherModule));";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should correctly normalize relative file paths', function() {
+				var AMDcode = "require(['./modules/anotherModule'], function(anotherModule) { var example = true; });",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "(function(anotherModule){var example=true;}(modules_anotherModule));";
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 

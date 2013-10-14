@@ -165,6 +165,10 @@ var cleanedCode = amdclean.clean('define("example", [], function() { var a = tru
 
 * [Escodegen](https://github.com/Constellation/escodegen) 0.0.27+
 
+## Optional Dependencies
+
+* [r.js](https://github.com/jrburke/r.js/) 2.1.0+
+
 
 ## How it works
 
