@@ -1,4 +1,4 @@
-/*! amdclean - v0.2.4 - 2013-10-15 
+/*! amdclean - v0.2.5 - 2013-10-15 
 * http://gregfranko.com/amdclean
 * Copyright (c) 2013 Greg Franko; Licensed MIT*/
 
@@ -34,7 +34,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            VERSION: '0.2.4',
+            VERSION: '0.2.5',
             // Environment - either node or web
             env: codeEnv,
             // Object that keeps track of module ids/names that are used
@@ -118,7 +118,7 @@
             //  e.g. require('someModule');
             isCommonJS: function(node) {
                 if(!node) return false;
-                return (publicAPI.isRequireExpression || publicAPI.isRequireMemberExpression(node) || isRequireCallExpression(node));
+                return (publicAPI.isRequireExpression(node) || publicAPI.isRequireMemberExpression(node) || publicAPI.isRequireCallExpression(node));
             },
             // isRequireExpression
             // -------------------
@@ -126,10 +126,12 @@
             //  e.g. var example = require('someModule');
             isRequireExpression: function(node) {
                 return (node.type === 'VariableDeclarator' &&
-                            !_.isUndefined(node.init) &&
-                            !_.isUndefined(node.init.type) &&
+                            node.id &&
+                            node.id.name &&
+                            node.init &&
+                            node.init.type &&
                             node.init.type === 'CallExpression' &&
-                            !_.isUndefined(node.init.callee) &&
+                            node.init.callee &&
                             node.init.callee.name === 'require');
             },
             // isRequireMemberExpression
@@ -138,11 +140,13 @@
             //  e.g. var example = require('someModule').someProp;
             isRequireMemberExpression: function(node) {
                 return (node.type === 'VariableDeclarator' &&
-                            !_.isUndefined(node.init) &&
-                            !_.isUndefined(node.init.type) &&
+                            node.id &&
+                            node.id.name &&
+                            node.init &&
+                            node.init.type &&
                             node.init.type === 'MemberExpression' &&
-                            !_.isUndefined(node.init.object) &&
-                            !_.isUndefined(node.init.object.callee) &&
+                            node.init.object &&
+                            node.init.object.callee &&
                             node.init.object.callee.name === 'require');
             },
             // isRequireCallExpression
@@ -151,19 +155,21 @@
             //  e.g. var example = require('someModule').someProp();
             isRequireCallExpression: function(node) {
                 return (node.type === 'VariableDeclarator' &&
-                        !_.isUndefined(node.init) &&
-                        !_.isUndefined(node.init.type) &&
+                        node.id &&
+                        node.id.name &&
+                        node.init &&
+                        node.init.type &&
                         node.init.type === 'CallExpression' &&
-                        !_.isUndefined(node.init.callee) &&
+                        node.init.callee &&
                         node.init.callee.type === 'MemberExpression' &&
-                        !_.isUndefined(node.init.callee.object) &&
-                        !_.isUndefined(node.init.callee.object.type) &&
+                        node.init.callee.object &&
+                        node.init.callee.object.type &&
                         node.init.callee.object.type === 'CallExpression' &&
-                        !_.isUndefined(node.init.callee.object['arguments']) &&
-                        !_.isUndefined(node.init.callee.object.callee) &&
+                        node.init.callee.object['arguments'] &&
+                        node.init.callee.object.callee &&
                         node.init.callee.object.callee.name === 'require' &&
-                        !_.isUndefined(node.init.callee.property) &&
-                        !_.isUndefined(node.init.callee.property.name));
+                        node.init.callee.property &&
+                        node.init.callee.property.name);
             },
             // isObjectExpression
             // ------------------
@@ -239,7 +245,13 @@
                             },
                             'init': {
                                 'type': 'Identifier',
-                                'name': publicAPI.normalizeModuleName((node.init['arguments'][0].value) || (node.init['arguments'][0].elements[0].value))
+                                'name': (function() {
+                                    if(node.init && node.init['arguments'] && node.init['arguments'][0] && node.init['arguments'][0].elements && node.init['arguments'][0].elements[0]) {
+                                        return  publicAPI.normalizeModuleName(node.init['arguments'][0].elements[0].value);
+                                    } else {
+                                        return publicAPI.normalizeModuleName(node.init['arguments'][0].value);
+                                    }
+                                }())
                             }
                         };
                     } else if(publicAPI.isRequireMemberExpression(node)) {
@@ -481,7 +493,6 @@
                         lineNumberObj[currentLineNumber] = true;
                     });
                     publicAPI.commentLineNumbers = lineNumberObj;
-                    console.log('publicAPI.commentLineNumbers', publicAPI.commentLineNumbers);
                 }
                 var moduleName,
                     args,
