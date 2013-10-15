@@ -297,6 +297,15 @@ __Why would I use amdclean instead of Almond.js?__
 
  - Although Almond is very small (~1k gzipped and minified), most JavaScript library authors do not want to have to include it in their library's source code.  If you are not using an AMD plugin, then amdclean provides the benefit of AMD without increasing your library's file size.
 
+ __What if I don't want all define() and require() method calls to be removed?__
+
+ - If you don't want one or more define() and require() methods to be removed by `amdclean`, then you must put a comment with only the words _amdclean_ on the same line or one line above the method in question.  For example, `amdclean` would not remove the `define()` method below:
+
+ ```javascript
+// amdclean
+define('example', [], function() {});
+ ```
+
 
 ## License
 
