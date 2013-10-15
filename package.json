@@ -1,0 +1,38 @@
+{
+  "name": "amdclean",
+  "title": "AMDClean",
+  "description": "A build tool that converts AMD code to standard JavaScript",
+  "version": "0.2.4",
+  "homepage": "https://github.com/gfranko/amdclean",
+  "author": {
+    "name": "Greg Franko",
+    "email": "gregfranko5@gmail.com",
+    "url": "http://www.gregfranko.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gfranko/amdclean.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gfranko/amdclean/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/gfranko/amdclean/blob/master/LICENSE"
+    }
+  ],
+  "main": "./server/server",
+  "keywords": [
+    "AMDClean",
+    "Require.js",
+    "AMDClean Homepage"
+  ],
+  "devDependencies": {
+    "express": "3.x",
+    "grunt": "~0.4.1",
+    "grunt-contrib-requirejs": "~0.4.0",
+    "grunt-contrib-jshint": "~0.3.0",
+    "amdclean": "0.x"
+  }
+}

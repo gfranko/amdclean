@@ -1,0 +1,6 @@
+/* mobile.css */
+@import url("../libs/bootstrap.css");
+@import url("../libs/plugins/sticky-footer-navbar.css");
+@import url("../libs/codemirror.css");
+@import url("../libs/plugins/codemirror.theme.xq-light.css");
+@import url("./custom.css");

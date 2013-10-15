@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AMDClean - An AMD build tool that converts AMD code to standard JavaScript">
+    <meta name="author" content="Greg Franko">
+
+    <title>AMDclean - An AMD build tool</title>
+
+    <!--Detect if the browser is a mobile browser or a desktop browser and conditionally include your JavaScript --> 
+    <script>
+
+        // Mobile/Desktop Detection script
+        (function(ua, w, d, undefined) {
+
+          // App Environment
+          // ---------------
+          //  Tip: Set to true to turn on "production" mode
+          var production = true,
+            filesToLoad,
+            //BoilerplateMVC Helper Methods
+            boilerplateMVC = {
+              loadCSS: function(url, callback) {
+                var link = d.createElement('link');
+                link.type = 'text/css';
+                link.rel = 'stylesheet';
+                link.href = url;
+                d.getElementsByTagName('head')[0].appendChild(link);
+                if(callback) {
+                  callback();
+                }
+              },
+              loadJS: function(file, callback) {
+                var script = d.createElement('script');
+                script.type = 'text/javascript';
+                if (script.readyState) {  // IE
+                  script.onreadystatechange = function() {
+                    if (script.readyState == 'loaded' || script.readyState == 'complete') {
+                      script.onreadystatechange = null;
+                      callback();
+                    }
+                  };
+                } else {  // Other Browsers
+                  script.onload = function() {
+                    callback();
+                  };
+                }
+                if(((typeof file).toLowerCase()) === 'object' && file['data-main'] !== undefined) {
+                  script.setAttribute('data-main', file['data-main']);
+                  script.async = true;
+                  script.src = file.src;
+                } else {
+                  script.src = file;
+                }
+                d.getElementsByTagName('head')[0].appendChild(script);
+              },
+              loadFiles: function(production, obj, callback) {
+                var self = this;
+                if(production) {
+                  // Loads the production CSS file(s)
+                  self.loadCSS(obj['prod-css'], function() {
+                    // If there are production JavaScript files to load
+                    if(obj['prod-js']) {
+                      // Loads the correct initialization file (which includes Almond.js)
+                      self.loadJS(obj['prod-js'], callback);
+                    }
+                  });
+                } else {
+                  // Loads the development CSS file(s)
+                  self.loadCSS(obj['dev-css'], function() {
+                    // If there are development Javascript files to load
+                    if(obj['dev-js']) {
+                      // Loads Require.js and tells Require.js to find the correct intialization file
+                      self.loadJS(obj['dev-js'], callback);
+                    }
+                  });
+                }
+              }
+            };
+
+            // Mobile/Tablet Logic
+            if((/iPhone|iPod|iPad|Android|BlackBerry|Opera Mini|IEMobile/).test(ua)) {
+
+              // Mobile/Tablet CSS and JavaScript files to load
+              filesToLoad = {
+                // CSS file that is loaded when in development mode
+                'dev-css': 'css/app/mobile.css',
+                // CSS file that is loaded when in production mode
+                'prod-css': 'css/app/mobile.min.css',
+                // Require.js configuration file that is loaded when in development mode
+                'dev-js': { 'data-main': 'js/app/config/config.js', 'src': 'js/libs/require.js' },
+                // JavaScript initialization file that is also loaded when in development mode
+                'dev-init': 'js/app/init/MobileInit.js',
+                // JavaScript file that is loaded when in production mode
+                'prod-js': 'js/app/init/MobileInit.min.js',
+              };
+
+            }
+
+            // Desktop Logic
+            else {
+
+              // Desktop CSS and JavaScript files to load
+              filesToLoad = {
+                // CSS file that is loaded when in development mode
+                'dev-css': 'css/app/desktop.css',
+                // CSS file that is loaded when in production mode
+                'prod-css': 'css/app/desktop.min.css',
+                // Require.js configuration file that is also loaded when in development mode
+                'dev-js': { 'data-main': 'js/app/config/config.js', 'src': 'js/libs/require.js' },
+                // JavaScript initialization file that is loaded when in development mode
+                'dev-init': 'js/app/init/DesktopInit.js',
+                // JavaScript file that is loaded when in production mode
+                'prod-js': 'js/app/init/DesktopInit.min.js'
+              };
+
+            }
+
+            boilerplateMVC.loadFiles(production, filesToLoad, function() {
+              if(!production && window.require) {
+                require([filesToLoad['dev-init']]);
+              }
+            });
+
+        })(navigator.userAgent || navigator.vendor || window.opera, window, document);
+
+    </script>
+  </head>
+
+  <body>
+<span id="forkongithub"><a href="https://github.com/gfranko/amdclean">Fork me on GitHub</a></span>
+
+
+    <!-- Wrap all page content here -->
+    <div id="wrap">
+
+      <!-- Begin page content -->
+      <div class="container">
+        <div class="page-header">
+          <a href="https://github.com/gfranko/amdclean" target="_blank" class="page-header-link"><h1>AMDClean</h1></a>
+        </div>
+        <p class="lead">An AMD build tool that converts AMD code to standard JavaScript</p>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group link-to-share-container">
+              <label for="share">Link to Share</label>
+              <input type="url" class="form-control" id="link-to-share">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <h3>AMD</h3>
+            <textarea id="amd-textarea" class="form-control" rows="15">
+define('example', [], function() {
+  return 'Convert AMD code to standard JavaScript';
+});
+            </textarea>
+          </div>
+          <div class="col-md-6">
+            <h3>Standard JavaScript</h3>
+            <textarea id="standard-textarea" class="form-control" rows="15">
+            </textarea>
+          </div>
+        </div>
+        <div class="alert alert-danger code-error"></div>
+        <div class="btn-container">
+          <button type="button" class="btn btn-default btn-lg clean-btn">
+            <span class="glyphicon glyphicon-repeat"></span> Clean
+          </button>
+          <label class="auto-run-checkbox-container">
+            <input type="checkbox" checked id="auto-run-checkbox"> Auto-run JS
+          </label>
+          <a href="#" class="restore-to-defaults">Restore to Defaults</a>
+        </div>
+      </div>
+    </div>
+
+    <div id="footer">
+      <div class="container">
+        <p class="text-muted credit">Created by <a href="http://github.com/gfranko">Greg Franko</a>
+        <span class="special-thanks">Special thanks to <a href="http://esprima.org" target="_blank">Esprima</a>, <a href="https://github.com/Constellation/estraverse" target="_blank">Estraverse</a>, <a href="https://github.com/Constellation/escodegen" target="_blank">Escodegen</a>, <a href="https://lodash.com" target="_blank">Lodash</a>, and <a href="http://requirejs.org" target="_blank">Require.js</a></span>
+        </p>
+      </div>
+    </div>
+
+  </body>
+</html>

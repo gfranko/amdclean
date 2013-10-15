@@ -1,0 +1,99 @@
+.CodeMirror {
+	border: 1px solid #ccc;
+	font-family: "Lucida Console", "Monaco", monospace;
+}
+.btn-container {
+	padding: 20px 0;
+}
+.code-error {
+	display: none;
+}
+#forkongithub a {
+	background:#ccc;
+	color:#000;
+	text-decoration:none;
+	font-family:arial, sans-serif;
+	text-align:center;
+	font-weight:bold;
+	padding:5px 40px;
+	font-size:13px;
+	line-height:2rem;
+	position:relative;
+	transition:0.5s;
+}
+#forkongithub a:hover {
+	background:#5A5CAD;
+	color:#fff;
+}
+#forkongithub a::before,#forkongithub a::after {
+	content:"";
+	width:100%;
+	display:block;
+	position:absolute;
+	top:1px;
+	left:0;
+	height:1px;
+	background:#fff;
+}
+#forkongithub a::after {
+	bottom:1px;
+	top:auto;
+}
+@media screen and (min-width:800px) {
+	#forkongithub{
+		position:absolute;
+		display:block;
+		top:0;
+		right:0;
+		width:200px;
+		overflow:hidden;
+		height:200px;
+	}
+	#forkongithub a {
+		width:200px;
+		position:absolute;
+		top:60px;
+		right:-40px;
+		transform:rotate(45deg);
+		-webkit-transform:rotate(45deg);
+		box-shadow:4px 4px 10px rgba(0,0,0,0.8);
+	}
+}
+
+.auto-run-checkbox-container {
+	margin-left: 20px;
+}
+
+.link-to-share-container {
+	display: none;
+}
+
+.page-header-link {
+	text-decoration: none;
+	color: #000;
+}
+
+.page-header-link:hover {
+	text-decoration: none;
+}
+
+.restore-to-defaults {
+	float: right;
+}
+
+.special-thanks {
+	margin-right: 20px;
+	position: absolute;
+	right: 0;
+}
+
+@media screen and (max-width:700px) {
+	.special-thanks {
+		position: relative;
+		float: left;
+	}
+	.credit {
+		float: left;
+		clear: right;
+	}
+}

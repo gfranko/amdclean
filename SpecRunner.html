@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+<head>
+  <title>Jasmine Spec Runner</title>
+  <link rel="stylesheet" type="text/css" href="css/jasmine.css">
+  <script src="js/libs/jasmine.js"></script>
+  <script src="js/libs/jasmine-html.js"></script>
+  <script src="js/libs/require.js" data-main="js/app/config/config"></script>
+</head>
+<body>
+    <script>
+      // Add your Jasmine spec files here
+      require(["../../test/specs/spec.spec"], function(spec) {
+        jasmine.getEnv().addReporter(new jasmine.HtmlReporter());
+        jasmine.getEnv().execute();
+      });
+    </script>
+</body>
+</html>
