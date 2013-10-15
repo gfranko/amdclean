@@ -2,7 +2,7 @@
   "name": "amdclean",
   "title": "AMDClean",
   "description": "A build tool that converts AMD code to standard JavaScript",
-  "version": "0.2.4",
+  "version": "0.2.6",
   "homepage": "https://github.com/gfranko/amdclean",
   "author": {
     "name": "Greg Franko",
@@ -22,7 +22,6 @@
       "url": "https://github.com/gfranko/amdclean/blob/master/LICENSE"
     }
   ],
-  "main": "./server/server",
   "keywords": [
     "AMDClean",
     "Require.js",
