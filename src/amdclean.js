@@ -1,4 +1,4 @@
-/*! amdclean - v0.2.3 - 2013-10-13 
+/*! amdclean - v0.2.4 - 2013-10-15 
 * http://gregfranko.com/amdclean
 * Copyright (c) 2013 Greg Franko; Licensed MIT*/
 
@@ -34,7 +34,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            VERSION: '0.2.3',
+            VERSION: '0.2.4',
             // Environment - either node or web
             env: codeEnv,
             // Object that keeps track of module ids/names that are used
@@ -463,14 +463,39 @@
             // -------------------------
             //  Replaces define() and require() methods to standard JavaScript
             convertDefinesAndRequires: function(node, parent) {
+                if(node.type === 'Program') {
+                    var comments = (function() {
+                        var arr = [];
+                        _.each(node.comments, function(currentComment, iterator) {
+                            var currentCommentValue = (currentComment.value).trim();
+                            if(currentCommentValue === 'amdclean') {
+                                arr.push(currentComment);
+                            }
+                        });
+                        return arr;
+                    }()),
+                        currentLineNumber,
+                        lineNumberObj = {};
+                    _.each(comments, function(currentComment, iterator) {
+                        currentLineNumber = currentComment.loc.start.line;
+                        lineNumberObj[currentLineNumber] = true;
+                    });
+                    publicAPI.commentLineNumbers = lineNumberObj;
+                    console.log('publicAPI.commentLineNumbers', publicAPI.commentLineNumbers);
+                }
                 var moduleName,
                     args,
                     dependencies,
                     moduleReturnValue,
                     params,
                     isDefine = publicAPI.isDefine(node),
-                    isRequire = publicAPI.isRequire(node);
-                if((isDefine && publicAPI.hasUniqueModuleName(node)) || isRequire) {
+                    isRequire = publicAPI.isRequire(node),
+                    startLineNumber;
+                if(((isDefine && publicAPI.hasUniqueModuleName(node)) || isRequire)) {
+                    startLineNumber = node.expression.loc.start.line;
+                    if((publicAPI.commentLineNumbers[startLineNumber] || publicAPI.commentLineNumbers['' + (parseInt(startLineNumber, 10) - 1)])) {
+                        return node;
+                    }
                     args = node.expression['arguments'];
                     dependencies = (function() {
                         var deps = _.isPlainObject(args[args.length - 2]) ? args[args.length - 2].elements : [],
@@ -520,7 +545,10 @@
             createAst: function(obj) {
                 var filePath = obj.filePath,
                     code = obj.code || (filePath && publicAPI.env === 'node' ? publicAPI.readFile(filePath) : ''),
-                    esprimaDefaultOptions = {},
+                    esprimaDefaultOptions = {
+                        comment: true,
+                        loc: true
+                    },
                     esprimaOptions = _.extend(esprimaDefaultOptions, (_.isPlainObject(obj.esprima) ? obj.esprima : {}));
                 if(!code) {
                     throw new Error(publicAPI.errorMsgs.emptyCode);

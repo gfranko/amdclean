@@ -26,6 +26,13 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
+			it('should not convert defines with an /*amdclean*/ comment before it', function() {
+				var AMDcode = "/*amdclean*/define('./modules/example', ['example1', 'example2'], function(one, two) {});",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "define('./modules/example',['example1','example2'],function(one,two){});";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
 		});
 
 		describe('objects', function() {
@@ -102,6 +109,13 @@ describe('amdclean specs', function() {
 				var AMDcode = "require(['./modules/anotherModule'], function(anotherModule) { var example = true; });",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
 					standardJavaScript = "(function(anotherModule){var example=true;}(modules_anotherModule));";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should not convert requires with an /*amdclean*/ comment before it', function() {
+				var AMDcode = "/*amdclean*/require(['./modules/anotherModule'], function(anotherModule) { var example = true; });",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "require(['./modules/anotherModule'],function(anotherModule){var example=true;});";
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
