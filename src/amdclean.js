@@ -1,4 +1,4 @@
-/*! amdclean - v0.2.5 - 2013-10-15 
+/*! amdclean - v0.2.6 - 2013-10-15 
 * http://gregfranko.com/amdclean
 * Copyright (c) 2013 Greg Franko; Licensed MIT*/
 
@@ -12,8 +12,9 @@
         } else {
             factory.env = 'web';
         }
-        define([], function() {
-            return factory();
+        factory.amd = true;
+        define(['esprima', 'estraverse', 'escodegen', 'underscore'], function(esprima, estraverse, escodegen, underscore) {
+            return factory({ 'esprima': esprima, 'estraverse': estraverse, 'escodegen': escodegen, 'underscore': underscore });
         });
     } else if (typeof exports !== 'undefined') {
         factory.env = 'node';
@@ -22,23 +23,21 @@
         factory.env = 'web';
         root.amdclean = factory();
     }
-}(this, function cleanamd() {
+}(this, function cleanamd(amdDependencies) {
     // Environment - either node or web
     var codeEnv = cleanamd.env,
         // Third-Party Dependencies
-        esprima = codeEnv === 'node' ? require('esprima'): window.esprima,
-        estraverse = codeEnv === 'node' ? require('estraverse'): window.estraverse,
-        escodegen = codeEnv === 'node' ? require('escodegen'): window.escodegen,
-        _ = codeEnv === 'node' ? require('lodash'): window._,
+        esprima = cleanamd.amd ? amdDependencies.esprima : codeEnv === 'node' ? require('esprima') : window.esprima,
+        estraverse = cleanamd.amd ? amdDependencies.estraverse : codeEnv === 'node' ? require('estraverse'): window.estraverse,
+        escodegen = cleanamd.amd ? amdDependencies.escodegen.generate ? amdDependencies.escodegen : codeEnv === 'node' ? require('escodegen') : window.escodegen : require('escodegen'),
+        _ = cleanamd.amd ? amdDependencies.underscore : codeEnv === 'node' ? require('lodash'): window._,
         fs = codeEnv === 'node' ? require('fs'): {}, // End Third-Party Dependencies
         // The Public API object
         publicAPI = {
             // Current project version number
-            VERSION: '0.2.5',
+            VERSION: '0.2.6',
             // Environment - either node or web
             env: codeEnv,
-            // Object that keeps track of module ids/names that are used
-            moduleNamesStore: {},
             // All of the error messages presented to users
             errorMsgs: {
                 // A module is defined more than one time
@@ -206,27 +205,6 @@
                     }
                 } else {
                     return name;
-                }
-            },
-            // hasUniqueModelName
-            // ------------------
-            //  Returns if the current module id/name has already been used
-            hasUniqueModuleName: function(node) {
-                var moduleName;
-                if( node.expression['arguments'] &&
-                    Array.isArray(node.expression['arguments']) &&
-                    _.isPlainObject(node.expression['arguments'][0]) &&
-                    node.expression['arguments'][0].value ) {
-                        moduleName = node.expression['arguments'][0].value;
-                        if(_.isString(moduleName) && moduleName.length > 0 && !publicAPI.moduleNamesStore[moduleName]) {
-                            publicAPI.moduleNamesStore[moduleName] = true;
-                            return true;
-                        }
-                        else {
-                            throw new Error(publicAPI.errorMsgs.uniqueModuleName.error(moduleName) + publicAPI.errorMsgs.uniqueModuleName.fix + publicAPI.errorMsgs.uniqueModuleName.exiting);
-                        }
-                } else {
-                    return true;
                 }
             },
             // convertCommonJSDeclaration
@@ -502,7 +480,7 @@
                     isDefine = publicAPI.isDefine(node),
                     isRequire = publicAPI.isRequire(node),
                     startLineNumber;
-                if(((isDefine && publicAPI.hasUniqueModuleName(node)) || isRequire)) {
+                if(isDefine || isRequire) {
                     startLineNumber = node.expression.loc.start.line;
                     if((publicAPI.commentLineNumbers[startLineNumber] || publicAPI.commentLineNumbers['' + (parseInt(startLineNumber, 10) - 1)])) {
                         return node;
@@ -647,7 +625,6 @@
                     });
                 }
                 escodegenOptions = _.isPlainObject(obj.escodegen) ? obj.escodegen : {};
-                publicAPI.moduleNamesStore = {};
                 return publicAPI.generateCode(ast, escodegenOptions);
             }
         };
