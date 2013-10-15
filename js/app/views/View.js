@@ -107,7 +107,7 @@ define(['jquery',
             },
 
             buildURL: function() {
-                return location.protocol + '//' + location.host + location.pathname + '?code=' + this.amdEditor.getValue();
+                return location.protocol + '//' + location.host + location.pathname + '?code=' + encodeURIComponent(this.amdEditor.getValue());
             },
 
             restoreToDefaults: function() {
