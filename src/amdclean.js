@@ -118,8 +118,6 @@
             //  e.g. require('someModule');
             isCommonJS: function(node) {
                 if(!node) return false;
-                var callee = node.callee,
-                    obj = node.object;
                 return (publicAPI.isRequireExpression || publicAPI.isRequireMemberExpression(node) || isRequireCallExpression(node));
             },
             // isRequireExpression
