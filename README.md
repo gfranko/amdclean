@@ -9,7 +9,7 @@ A build tool that converts AMD code to standard JavaScript.
 
 ## Use Case
 
-**Single file** client-side JavaScript libraries or applications that use AMD, but do not use AMD plugins (e.g. text! plugin).
+**Single file** client-side JavaScript libraries that use AMD, but do not use AMD plugins (e.g. text! plugin).
 
 
 ## Why
@@ -306,9 +306,9 @@ __What if I don't want all define() and require() method calls to be removed?__
 define('example', [], function() {});
  ```
 
-__Files that do not use define() to define modules get a define() placeholder inserted for them?__
+__Why are define() method placeholder functions inserted into my source?__
 
-- This is the default behavior of r.js and can be overridden using `skipModuleInsertion: true` in your build configuration.
+- This is the default behavior of r.js when a module(s) is not wrapped in a define() method.  Luckily,  this behavior can be overridden by setting the `skipModuleInsertion` option to `true` in your build configuration.
 
 
 ## License
