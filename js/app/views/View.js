@@ -39,7 +39,8 @@ define(['jquery',
                     mode: 'javascript',
                     tabMode: 'indent',
                     lineNumbers: true,
-                    readOnly: 'nocursor'
+                    readOnly: true,
+                    cursorHeight: 0
                 });
 
                 this.autoRunJS = $('#auto-run-checkbox');
