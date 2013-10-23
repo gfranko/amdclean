@@ -292,7 +292,7 @@
                         return node;
                     }
                 } catch(e) {
-                    console.log(publicAPI.errorMsgs.commonjs + '\n\n' + e);
+                    // console.log(publicAPI.errorMsgs.commonjs + '\n\n' + e);
                     return node;
                 }
 
@@ -603,9 +603,10 @@
                 });
                 // Removes all empty statements from the source so that there are no single semicolons and
                 // Make sure that all require() CommonJS calls are converted
-                if(ast && _.isArray(ast.body)) {
+                if(ast) {
                     estraverse.replace(ast, {
                         enter: function(node, parent) {
+                            // console.log('node', node);
                             if(node === undefined || node.type === 'EmptyStatement') {
                                 _.each(parent.body, function(currentNode, iterator) {
                                     if(currentNode === undefined || currentNode.type === 'EmptyStatement') {
