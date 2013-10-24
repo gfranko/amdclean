@@ -9,7 +9,7 @@ A build tool that converts AMD code to standard JavaScript.
 
 ## Use Case
 
-**Single file** client-side JavaScript libraries that use AMD, but do not use AMD plugins (e.g. text! plugin).
+**Single file** client-side JavaScript libraries that want to use AMD to structure and build their code, but don't want an AMD footprint.
 
 
 ## Why
