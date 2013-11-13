@@ -82,7 +82,7 @@ paths: {
 
 ```javascript
 onBuildWrite: function (moduleName, path, contents) {
-    return require('amdclean').clean(contents);
+    return module.require('amdclean').clean(contents);
 }
 ```
 
@@ -106,7 +106,7 @@ module.exports = function(grunt) {
           include: ['first'],
           out: 'src/js/app/exampleLib.js',
           onBuildWrite: function( name, path, contents ) {
-            return require('amdclean').clean(contents);
+            return module.require('amdclean').clean(contents);
           }
         }
       }
