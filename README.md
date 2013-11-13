@@ -106,7 +106,7 @@ module.exports = function(grunt) {
           include: ['first'],
           out: 'src/js/app/exampleLib.js',
           onBuildWrite: function( name, path, contents ) {
-            return module.require('amdclean').clean(contents);
+            return require('amdclean').clean(contents);
           }
         }
       }
