@@ -182,6 +182,10 @@
             isFunctionExpression: function(expression) {
                 return expression && _.isPlainObject(expression) && expression.type === 'FunctionExpression';
             },
+            // getJavaScriptIdentifier
+            getJavaScriptIdentifier: function(name) {
+                return '__amdclean_'+ name.replace(/[^a-z0-9]/gi, '_');
+            },
             // normalizeModuleName
             // -------------------
             //  Returns a normalized module name (removes relative file path urls)
@@ -197,14 +201,14 @@
                     folderName = (moduleName.substring((moduleName.lastIndexOf('/') + 1), moduleName.length)).replace(/\W/g, '');
                     fileName = (name.substring((lastIndex + 1), name.length)).replace(/\W/g, '');
                     if(folderName && fileName) {
-                        return folderName + '_' + fileName;
+                        return publicAPI.getJavaScriptIdentifier(folderName + '_' + fileName);
                     } else if(!folderName && fileName) {
-                        return fileName;
+                        return publicAPI.getJavaScriptIdentifier(fileName);
                     } else {
                         throw new Error(publicAPI.errorMsgs.malformedModuleName(name));
                     }
                 } else {
-                    return name;
+                    return publicAPI.getJavaScriptIdentifier(name);
                 }
             },
             // convertCommonJSDeclaration
