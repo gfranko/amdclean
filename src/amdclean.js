@@ -194,7 +194,7 @@
                     containsRelativePath = name.lastIndexOf('/') !== -1;
                 if(containsRelativePath) {
                     moduleName = moduleName.substring(0, lastIndex);
-                    folderName = (moduleName.substring((moduleName.lastIndexOf('/') + 1), moduleName.length)).replace(/\W/g, '');
+                    folderName = (moduleName.substring((moduleName.lastIndexOf('/') + 1), moduleName.length)).replace(/[^A-Za-z0-9_$]/g, '');
                     fileName = (name.substring((lastIndex + 1), name.length)).replace(/\W/g, '');
                     if(folderName && fileName) {
                         return folderName + '_' + fileName;
