@@ -182,6 +182,20 @@
             isFunctionExpression: function(expression) {
                 return expression && _.isPlainObject(expression) && expression.type === 'FunctionExpression';
             },
+            // getJavaScriptIdentifier
+            prefixReservedWords: function(name) {
+                var reservedWord = false;
+                try {
+                  eval('var ' + name + ' = 1');
+                } catch (e) {
+                  reservedWord = true;
+                }
+                if(reservedWord === true) {
+                    return '_' + name;
+                } else {
+                    return name;
+                }
+            },
             // normalizeModuleName
             // -------------------
             //  Returns a normalized module name (removes relative file path urls)
@@ -191,21 +205,23 @@
                     folderName,
                     fileName,
                     lastIndex = name.lastIndexOf('/'),
-                    containsRelativePath = name.lastIndexOf('/') !== -1;
+                    containsRelativePath = name.lastIndexOf('/') !== -1,
+                    fullName;
                 if(containsRelativePath) {
                     moduleName = moduleName.substring(0, lastIndex);
-                    folderName = (moduleName.substring((moduleName.lastIndexOf('/') + 1), moduleName.length)).replace(/\W/g, '');
-                    fileName = (name.substring((lastIndex + 1), name.length)).replace(/\W/g, '');
+                    folderName = moduleName.substring((moduleName.lastIndexOf('/') + 1), moduleName.length).replace(/[^A-Za-z0-9_$]/g, '');
+                    fileName = name.substring((lastIndex + 1), name.length).replace(/[^A-Za-z0-9_$]/g, '');
                     if(folderName && fileName) {
-                        return folderName + '_' + fileName;
+                        fullName = folderName + '_' + fileName;
                     } else if(!folderName && fileName) {
-                        return fileName;
+                        fullName = fileName;
                     } else {
                         throw new Error(publicAPI.errorMsgs.malformedModuleName(name));
                     }
                 } else {
-                    return name;
+                    fullName = name;
                 }
+                return publicAPI.prefixReservedWords(fullName.replace(/[^A-Za-z0-9_$]/g, ''));
             },
             // convertCommonJSDeclaration
             // --------------------------

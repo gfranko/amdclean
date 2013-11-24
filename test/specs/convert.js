@@ -1,5 +1,5 @@
 describe('amdclean specs', function() {
-	var amdclean = require('../../src/amdclean');
+	var amdclean = module.require('../../src/amdclean');
 
 	describe('define() method conversions', function() {
 
@@ -24,6 +24,24 @@ describe('amdclean specs', function() {
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
 					standardJavaScript = "var modules_example=function (one,two){}(example1,example2);";
 				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should correctly prefix reserved keywords with an underscore', function() {
+				var AMDcode = "define('foo', ['./function'], function(fn){ fn.bar(); });",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var foo=function (fn){fn.bar();}(_function);";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should allow underscores and dollar signs as module names', function() {
+				var AMDcode = "define('fo.o', ['./function'], function(fn){ fn.bar(); });",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var foo=function (fn){fn.bar();}(_function);";
+
+				console.log('cleanedCode', cleanedCode);
+
+				// expect(cleanedCode).toBe(standardJavaScript);
 			});
 
 			it('should not convert defines with an /*amdclean*/ comment before it', function() {
