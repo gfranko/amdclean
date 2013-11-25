@@ -539,29 +539,31 @@
                 }
                 if(_.isArray(globalModules)) {
                     _.each(globalModules, function(currentModule) {
-                        ast.body.push({
-                            'type': 'ExpressionStatement',
-                            'expression': {
-                                'type': 'AssignmentExpression',
-                                'operator': '=',
-                                'left': {
-                                    'type': 'MemberExpression',
-                                    'computed': false,
-                                    'object': {
-                                        'type': 'Identifier',
-                                        'name': 'window'
+                        if(_.isString(currentModule) && currentModule.length) {
+                            ast.body.push({
+                                'type': 'ExpressionStatement',
+                                'expression': {
+                                    'type': 'AssignmentExpression',
+                                    'operator': '=',
+                                    'left': {
+                                        'type': 'MemberExpression',
+                                        'computed': false,
+                                        'object': {
+                                            'type': 'Identifier',
+                                            'name': 'window'
+                                        },
+                                        'property': {
+                                            'type': 'Identifier',
+                                            'name': currentModule
+                                        }
                                     },
-                                    'property': {
+                                    'right': {
                                         'type': 'Identifier',
                                         'name': currentModule
                                     }
-                                },
-                                'right': {
-                                    'type': 'Identifier',
-                                    'name': currentModule
                                 }
-                            }
-                        });
+                            });
+                        }
                     });
                 }
                 escodegenOptions = _.isPlainObject(obj.escodegen) ? obj.escodegen : {};
