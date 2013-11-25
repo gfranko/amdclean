@@ -24,7 +24,14 @@ define(['jquery',
 
                 this.standardTextarea = $('#standard-textarea');
 
-                this.standardTextarea.val(amdclean.clean(this.amdTextarea.val()));
+                this.autoRunJS = $('#auto-run-checkbox');
+
+                this.globalObject = $('#global-object-checkbox');
+
+                this.standardTextarea.val(amdclean.clean({
+                    'code': this.amdTextarea.val(),
+                    'globalObject': this.globalObject.is(':checked') ? true : false
+                }));
 
                 this.amdEditor = CodeMirror.fromTextArea(document.getElementById('amd-textarea'), {
                     mode: 'javascript',
@@ -42,8 +49,6 @@ define(['jquery',
                     readOnly: true,
                     cursorHeight: 0
                 });
-
-                this.autoRunJS = $('#auto-run-checkbox');
 
                 this.amdEditor.on('change', _.bind(function () {
                     if(this.autoRunJS.is(':checked')) {
@@ -66,6 +71,7 @@ define(['jquery',
             // View Event Handlers
             events: {
                 'click .clean-btn': 'optimizeCode',
+                'click #global-object-checkbox': 'optimizeCode',
                 'change #auto-run-checkbox': 'autorun',
                 'click .restore-to-defaults': 'restoreToDefaults',
                 'click a[href=#]': function(e) {
@@ -75,7 +81,10 @@ define(['jquery',
 
             optimizeCode: function() {
                 try {
-                    var cleanedCode = amdclean.clean($.trim(this.amdEditor.getValue()));
+                    var cleanedCode = amdclean.clean({
+                        'code': $.trim(this.amdEditor.getValue()),
+                        'globalObject': this.globalObject.is(':checked') ? true : false
+                    });
                     this.standardEditor.setValue(cleanedCode);
                     this.codeError.empty().hide();
                     this.linkToShare.val(this.buildURL());

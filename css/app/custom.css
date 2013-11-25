@@ -60,7 +60,7 @@
 	}
 }
 
-.auto-run-checkbox-container {
+.auto-run-checkbox-container, .global-object-checkbox-container {
 	margin-left: 20px;
 }
 
