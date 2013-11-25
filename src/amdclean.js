@@ -1,4 +1,4 @@
-/*! amdclean - v0.3.0 - 2013-11-25
+/*! amdclean - v0.3.1 - 2013-11-25
 * http://gregfranko.com/amdclean
 * Copyright (c) 2013 Greg Franko; Licensed MIT*/
 
