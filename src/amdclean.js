@@ -35,7 +35,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            VERSION: '0.2.7',
+            VERSION: '0.3.1',
             // Default Options
             defaultOptions: {
                 'globalObject': false,
@@ -225,11 +225,7 @@
                                             'raw': "" + moduleName + ""
                                         }
                                     },
-                                    "right": {
-                                        "type": "CallExpression",
-                                        "callee": moduleReturnValue,
-                                        "arguments": []
-                                    }
+                                    "right": moduleReturnValue
                                 }
                             };
                         } else {

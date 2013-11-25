@@ -92,6 +92,13 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
+			it('should convert object return values to a global object', function() {
+				var AMDcode = "define('third', { exampleProp: 'This is an example' });",
+					cleanedCode = amdclean.clean({ globalObject: true, code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var amdclean={};amdclean['third']={exampleProp:'This is an example'};";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
 		});
 
 		describe('CommonJS Variable Declarations', function() {
