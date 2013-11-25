@@ -36,6 +36,11 @@
         publicAPI = {
             // Current project version number
             VERSION: '0.2.6',
+            // Default Options
+            defaultOptions: {
+                'globalObject': false,
+                'globalObjectName': 'amdclean'
+            },
             // Environment - either node or web
             env: codeEnv,
             // All of the error messages presented to users
@@ -198,21 +203,53 @@
             convertToObjectDeclaration: function(obj) {
                 var node = obj.node,
                     moduleName  = obj.moduleName,
-                    moduleReturnValue = obj.moduleReturnValue;
-                return {
-                    'type': 'VariableDeclaration',
-                    'declarations': [
-                        {
-                            'type': 'VariableDeclarator',
-                            'id': {
-                                'type': 'Identifier',
-                                'name': moduleName
-                            },
-                            'init': moduleReturnValue
+                    moduleReturnValue = obj.moduleReturnValue,
+                    options = publicAPI.options,
+                    updatedNode = (function() {
+                        if(options.globalObject === true && options.globalObjectName) {
+                            return {
+                                'type': 'ExpressionStatement',
+                                'expression': {
+                                    'type': 'AssignmentExpression',
+                                    'operator': '=',
+                                    'left': {
+                                        'type': 'MemberExpression',
+                                        'computed': true,
+                                        'object': {
+                                            'type': 'Identifier',
+                                            'name': options.globalObjectName
+                                        },
+                                        'property': {
+                                            'type': 'Literal',
+                                            'value': moduleName,
+                                            'raw': "" + moduleName + ""
+                                        }
+                                    },
+                                    "right": {
+                                        "type": "CallExpression",
+                                        "callee": moduleReturnValue,
+                                        "arguments": []
+                                    }
+                                }
+                            };
+                        } else {
+                            return {
+                                'type': 'VariableDeclaration',
+                                'declarations': [
+                                    {
+                                        'type': 'VariableDeclarator',
+                                        'id': {
+                                            'type': 'Identifier',
+                                            'name': moduleName
+                                        },
+                                        'init': moduleReturnValue
+                                    }
+                                ],
+                                'kind': 'var'
+                            };
                         }
-                    ],
-                    'kind': 'var'
-                };
+                    }());
+                    return updatedNode;
             },
             // convertToIIFE
             // -------------
@@ -248,37 +285,66 @@
                 var moduleName = obj.moduleName,
                     callbackFuncParams = obj.callbackFuncParams,
                     callbackFunc = obj.callbackFunc,
-                    dependencyNames = obj.dependencyNames;
-                return {
-                    'type': 'VariableDeclaration',
-                    'declarations': [
-                        {
-                            'type': 'VariableDeclarator',
+                    dependencyNames = obj.dependencyNames,
+                    options = publicAPI.options,
+                    cb = {
+                        'type': 'CallExpression',
+                        'callee': {
+                            'type': 'FunctionExpression',
                             'id': {
                                 'type': 'Identifier',
-                                'name': moduleName
+                                'name': ''
                             },
-                            'init': {
-                                'type': 'CallExpression',
-                                'callee': {
-                                    'type': 'FunctionExpression',
-                                    'id': {
-                                        'type': 'Identifier',
-                                        'name': ''
+                            'params': callbackFuncParams,
+                            'defaults': [],
+                            'body': callbackFunc.body,
+                            'rest': callbackFunc.rest,
+                            'generator': callbackFunc.generator,
+                            'expression': callbackFunc.expression
+                        },
+                        'arguments': dependencyNames
+                    },
+                    updatedNode = (function() {
+                        if(options.globalObject === true && options.globalObjectName) {
+                            return {
+                                'type': 'ExpressionStatement',
+                                'expression': {
+                                    'type': 'AssignmentExpression',
+                                    'operator': '=',
+                                    'left': {
+                                        'type': 'MemberExpression',
+                                        'computed': true,
+                                        'object': {
+                                            'type': 'Identifier',
+                                            'name': options.globalObjectName
+                                        },
+                                        'property': {
+                                            'type': 'Literal',
+                                            'value': moduleName,
+                                            'raw': "" + moduleName + ""
+                                        }
                                     },
-                                    'params': callbackFuncParams,
-                                    'defaults': [],
-                                    'body': callbackFunc.body,
-                                    'rest': callbackFunc.rest,
-                                    'generator': callbackFunc.generator,
-                                    'expression': callbackFunc.expression
-                                },
-                                'arguments': dependencyNames
-                            }
+                                    "right": cb
+                                }
+                            };
+                        } else {
+                            return {
+                                'type': 'VariableDeclaration',
+                                'declarations': [
+                                    {
+                                        'type': 'VariableDeclarator',
+                                        'id': {
+                                            'type': 'Identifier',
+                                            'name': moduleName
+                                        },
+                                        'init': cb
+                                    }
+                                ],
+                                'kind': 'var'
+                            };
                         }
-                    ],
-                    'kind': 'var'
-                };
+                    }());
+                    return updatedNode;
             },
             // convertToFunctionExpression
             // ---------------------------
@@ -498,7 +564,14 @@
                 var code = {},
                     ast = {},
                     escodegenOptions = {},
-                    globalModules = obj.globalModules;
+                    globalModules = obj.globalModules,
+                    options = {};
+
+                publicAPI.options = publicAPI.defaultOptions;
+
+                if(_.isPlainObject(obj)) {
+                    publicAPI.options = options = _.extend({}, publicAPI.options, obj);
+                }
                 if(!_ || !_.isPlainObject) {
                     throw new Error(publicAPI.errorMsgs.lodash);
                 }
@@ -564,6 +637,25 @@
                                 }
                             });
                         }
+                    });
+                }
+                if(options.globalObject === true && options.globalObjectName) {
+                    ast.body.unshift({
+                        'type': 'VariableDeclaration',
+                        'declarations': [
+                            {
+                                'type': 'VariableDeclarator',
+                                'id': {
+                                    'type': 'Identifier',
+                                    'name': options.globalObjectName
+                                },
+                                'init': {
+                                    'type': 'ObjectExpression',
+                                    'properties': []
+                                }
+                            }
+                        ],
+                        'kind': 'var'
                     });
                 }
                 escodegenOptions = _.isPlainObject(obj.escodegen) ? obj.escodegen : {};

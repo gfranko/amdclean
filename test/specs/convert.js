@@ -51,11 +51,26 @@ describe('amdclean specs', function() {
 
 			it('should support the simplified CJS wrapper', function() {
 				var AMDcode = "define('foo', ['require', 'exports', './bar'], function(require, exports){exports.bar = require('./bar');});",
-					cleanedCode = amdclean.clean({ globalModules: ['example'], code: AMDcode, escodegen: { format: { compact: true } } }),
-					standardJavaScript = "define('./modules/example',['example1','example2'],function(one,two){});";
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var foo=function (require,exports,bar){exports.bar=bar;return exports;}({},{},bar);";
 
-				console.log('cleanedCode', cleanedCode);
-				// expect(cleanedCode).toBe(standardJavaScript);
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should support global modules', function() {
+				var AMDcode = "define('foo', ['require', 'exports', './bar'], function(require, exports){exports.bar = require('./bar');});",
+					cleanedCode = amdclean.clean({ globalModules: ['foo'], code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var foo=function (require,exports,bar){exports.bar=bar;return exports;}({},{},bar);window.foo=foo;";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should support storing modules inside of a global object', function() {
+				var AMDcode = "define('foo', ['require', 'exports', './bar'], function(require, exports){exports.bar = require('./bar');});",
+					cleanedCode = amdclean.clean({ globalObject: true, globalObjectName: 'yeabuddy', code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var yeabuddy={};yeabuddy['foo']=function (require,exports,bar){exports.bar=bar;return exports;}({},{},bar);";
+
+				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
 		});
