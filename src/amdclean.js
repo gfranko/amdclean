@@ -497,7 +497,8 @@
             clean: function(obj) {
                 var code = {},
                     ast = {},
-                    escodegenOptions = {};
+                    escodegenOptions = {},
+                    globalModules = obj.globalModules;
                 if(!_ || !_.isPlainObject) {
                     throw new Error(publicAPI.errorMsgs.lodash);
                 }
@@ -534,6 +535,33 @@
                             }
 
                         }
+                    });
+                }
+                if(_.isArray(globalModules)) {
+                    _.each(globalModules, function(currentModule) {
+                        ast.body.push({
+                            'type': 'ExpressionStatement',
+                            'expression': {
+                                'type': 'AssignmentExpression',
+                                'operator': '=',
+                                'left': {
+                                    'type': 'MemberExpression',
+                                    'computed': false,
+                                    'object': {
+                                        'type': 'Identifier',
+                                        'name': 'window'
+                                    },
+                                    'property': {
+                                        'type': 'Identifier',
+                                        'name': currentModule
+                                    }
+                                },
+                                'right': {
+                                    'type': 'Identifier',
+                                    'name': currentModule
+                                }
+                            }
+                        });
                     });
                 }
                 escodegenOptions = _.isPlainObject(obj.escodegen) ? obj.escodegen : {};
