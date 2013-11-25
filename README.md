@@ -40,6 +40,12 @@ It is best used for libraries or apps that use AMD and:
 
 * `define()` and `require()` calls.
 
+* [Simplified CJS wrapper](https://github.com/jrburke/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#wiki-cjs)
+
+* Exporting global modules to the `window` object
+
+* Storing all local modules inside of a global object (Helps scoping issues for certain use cases)
+
 ## Download
 
 Node - `npm install amdclean`
@@ -278,6 +284,13 @@ The amdclean `clean()` method accepts a string or an object.  Below is an exampl
 amdclean.clean({
 	// The source code you would like to be 'cleaned'
 	code: 'define("example", [], function(one, two) {});',
+  // The modules that you would like to set as window properties
+  // An array of strings (module names)
+  globalModules: [],
+  // Determines if all of your local modules are stored in a single global object (helps with scoping in certain cases)
+  globalObject: false,
+  // Determines the name of your global object that stores all of your global modules
+  globalObjectName: 'amdclean',
 	// All esprima API options are supported: http://esprima.org/doc/
 	esprima: {},
 	// All escodegen API options are supported: https://github.com/Constellation/escodegen/wiki/API
@@ -309,6 +322,14 @@ define('example', [], function() {});
 __Why are define() method placeholder functions inserted into my source?__
 
 - This is the default behavior of r.js when a module(s) is not wrapped in a define() method.  Luckily,  this behavior can be overridden by setting the `skipModuleInsertion` option to `true` in your build configuration.
+
+__How would I expose one or more modules as a global window property?__
+
+- You can use the `globalModules` option to list all of the modules that you would like to expose as a `window` property
+
+__I am having a scope problem with all of the local module variables.  What can I do?__
+
+- You can use the `globalObject` option to store all of your modules in a global object that uses the top-most function scope.
 
 
 ## License
