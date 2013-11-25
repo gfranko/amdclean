@@ -57,6 +57,14 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
+			it('should support the plain simplified CJS wrapper', function() {
+				var AMDcode = "define('foo',['require','exports','module','bar'],function(require, exports){exports.bar = require('bar');});",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var foo=function (require,exports,module,bar){exports.bar=bar;return exports;}({},{},{},bar);";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
 			it('should support global modules', function() {
 				var AMDcode = "define('foo', ['require', 'exports', './bar'], function(require, exports){exports.bar = require('./bar');});",
 					cleanedCode = amdclean.clean({ globalModules: ['foo'], code: AMDcode, escodegen: { format: { compact: true } } }),
