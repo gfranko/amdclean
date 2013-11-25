@@ -357,11 +357,34 @@
                     moduleName  = obj.moduleName,
                     dependencies = obj.dependencies,
                     depLength = dependencies.length,
+                    options = publicAPI.options,
                     dependencyNames = (function() {
                         var deps = [],
-                            iterator = -1;
+                            iterator = -1,
+                            currentName;
                         while(++iterator < depLength) {
-                            deps.push({ type: 'Identifier', name: publicAPI.normalizeModuleName(dependencies[iterator]) });
+                            currentName = dependencies[iterator];
+                            if(options.globalObject === true && options.globalObjectName && currentName !== '{}') {
+                                deps.push({
+                                    'type': 'MemberExpression',
+                                    'computed': true,
+                                    'object': {
+                                        'type': 'Identifier',
+                                        'name': options.globalObjectName
+                                    },
+                                    'property': {
+                                        'type': 'Literal',
+                                        'value': publicAPI.normalizeModuleName(currentName),
+                                        'raw': "" + publicAPI.normalizeModuleName(currentName) + ""
+                                    },
+                                    'name': publicAPI.normalizeModuleName(currentName)
+                                });
+                            } else {
+                                deps.push({
+                                    'type': 'Identifier',
+                                    'name': publicAPI.normalizeModuleName(currentName)
+                                });
+                            }
                         }
                         return deps;
                     }()),
@@ -393,7 +416,10 @@
                             if(currentName === 'exports') {
                                 hasExportsParam = true;
                             }
-                            deps.push({ 'type': 'Identifier', 'name': currentName });
+                            deps.push({
+                                'type': 'Identifier',
+                                'name': currentName
+                            });
                         }
                         return deps;
                     }());

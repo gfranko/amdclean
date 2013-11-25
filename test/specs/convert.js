@@ -68,7 +68,7 @@ describe('amdclean specs', function() {
 			it('should support storing modules inside of a global object', function() {
 				var AMDcode = "define('foo', ['require', 'exports', './bar'], function(require, exports){exports.bar = require('./bar');});",
 					cleanedCode = amdclean.clean({ globalObject: true, globalObjectName: 'yeabuddy', code: AMDcode, escodegen: { format: { compact: true } } }),
-					standardJavaScript = "var yeabuddy={};yeabuddy['foo']=function (require,exports,bar){exports.bar=bar;return exports;}({},{},bar);";
+					standardJavaScript = "var yeabuddy={};yeabuddy['foo']=function (require,exports,bar){exports.bar=bar;return exports;}({},{},yeabuddy['bar']);";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
