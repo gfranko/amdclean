@@ -39,9 +39,7 @@ describe('amdclean specs', function() {
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
 					standardJavaScript = "var foo=function (fn){fn.bar();}(_function);";
 
-				console.log('cleanedCode', cleanedCode);
-
-				// expect(cleanedCode).toBe(standardJavaScript);
+				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
 			it('should not convert defines with an /*amdclean*/ comment before it', function() {
@@ -49,6 +47,15 @@ describe('amdclean specs', function() {
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
 					standardJavaScript = "define('./modules/example',['example1','example2'],function(one,two){});";
 				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should support the simplified CJS wrapper', function() {
+				var AMDcode = "define('foo', ['require', 'exports', './bar'], function(require, exports){exports.bar = require('./bar');});",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "define('./modules/example',['example1','example2'],function(one,two){});";
+
+				console.log('cleanedCode', cleanedCode);
+				// expect(cleanedCode).toBe(standardJavaScript);
 			});
 
 		});
