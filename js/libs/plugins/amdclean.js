@@ -1,4 +1,4 @@
-/*! amdclean - v0.2.7 - 2013-11-25
+/*! amdclean - v0.3.0 - 2013-11-25
 * http://gregfranko.com/amdclean
 * Copyright (c) 2013 Greg Franko; Licensed MIT*/
 
@@ -415,6 +415,9 @@
                             }
                             if(currentName === 'exports') {
                                 hasExportsParam = true;
+                            }
+                            if(currentName === '{}') {
+                                currentName = 'module';
                             }
                             deps.push({
                                 'type': 'Identifier',
