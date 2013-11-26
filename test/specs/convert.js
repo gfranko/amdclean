@@ -26,6 +26,13 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
+			it('should correctly normalize multi-level relative file paths', function() {
+				var AMDcode = "define('./foo/prototype/commonMethodName.js', ['example1', 'example2'], function(one, two) {});",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var foo_prototype_commonMethodNamejs=function (one,two){}(example1,example2);";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
 			it('should correctly prefix reserved keywords with an underscore', function() {
 				var AMDcode = "define('foo', ['./function'], function(fn){ fn.bar(); });",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
