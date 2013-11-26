@@ -157,7 +157,7 @@
             // -------------------
             //  Returns a normalized module name (removes relative file path urls)
             normalizeModuleName: function(name) {
-                 name = name || '';
+                name = name || '';
                 if(name === '{}') {
                     return name;
                 }
