@@ -1,4 +1,4 @@
-/*! amdclean - v0.3.1 - 2013-11-25
+/*! amdclean - v0.3.2 - 2013-11-26
 * http://gregfranko.com/amdclean
 * Copyright (c) 2013 Greg Franko; Licensed MIT*/
 
@@ -35,7 +35,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            VERSION: '0.3.1',
+            VERSION: '0.3.2',
             // Default Options
             defaultOptions: {
                 'globalObject': false,
@@ -161,27 +161,8 @@
                 if(name === '{}') {
                     return name;
                 }
-                var moduleName = name,
-                    folderName,
-                    fileName,
-                    lastIndex = name.lastIndexOf('/'),
-                    containsRelativePath = name.lastIndexOf('/') !== -1,
-                    fullName;
-                if(containsRelativePath) {
-                    moduleName = moduleName.substring(0, lastIndex);
-                    folderName = moduleName.substring((moduleName.lastIndexOf('/') + 1), moduleName.length).replace(/[^A-Za-z0-9_$]/g, '');
-                    fileName = name.substring((lastIndex + 1), name.length).replace(/[^A-Za-z0-9_$]/g, '');
-                    if(folderName && fileName) {
-                        fullName = folderName + '_' + fileName;
-                    } else if(!folderName && fileName) {
-                        fullName = fileName;
-                    } else {
-                        throw new Error(publicAPI.errorMsgs.malformedModuleName(name));
-                    }
-                } else {
-                    fullName = name;
-                }
-                return publicAPI.prefixReservedWords(fullName.replace(/[^A-Za-z0-9_$]/g, ''));
+                var normalized = name.replace(/\./g,'').replace(/[^A-Za-z0-9_$]/g,'_').replace(/^_+/,'');
+                return publicAPI.prefixReservedWords(normalized);
             },
             // returnExpressionIdentifier
             // --------------------------
@@ -255,6 +236,7 @@
                 var callbackFuncParams = obj.callbackFuncParams,
                     callbackFunc = obj.callbackFunc,
                     dependencyNames = obj.dependencyNames;
+
                 return {
                     'type': 'ExpressionStatement',
                     'expression': {
@@ -486,10 +468,15 @@
                     if((publicAPI.commentLineNumbers[startLineNumber] || publicAPI.commentLineNumbers['' + (parseInt(startLineNumber, 10) - 1)])) {
                         return node;
                     }
-                    args = node.expression['arguments'];
+                    args = Array.prototype.slice.call(node.expression['arguments'], 0);
                     dependencies = (function() {
-                        var deps = _.isPlainObject(args[args.length - 2]) ? args[args.length - 2].elements : [],
+                        var deps = isRequire ? args[0] : args[args.length - 2],
                             depNames = [];
+                        if(_.isPlainObject(deps)) {
+                            deps = deps.elements || [];
+                        } else {
+                            deps = [];
+                        }
                         if(Array.isArray(deps) && deps.length) {
                             _.each(deps, function(currentDependency) {
                                 if(publicAPI.dependencyBlacklist[currentDependency.value]) {
@@ -501,7 +488,7 @@
                         }
                         return depNames;
                     }());
-                    moduleReturnValue = args[args.length - 1];
+                    moduleReturnValue = isRequire ? args[1] : args[args.length - 1];
                     moduleName = publicAPI.normalizeModuleName(node.expression['arguments'][0].value);
                     params = {
                             node: node,
