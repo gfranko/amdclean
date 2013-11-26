@@ -161,27 +161,8 @@
                 if(name === '{}') {
                     return name;
                 }
-                var moduleName = name,
-                    folderName,
-                    fileName,
-                    lastIndex = name.lastIndexOf('/'),
-                    containsRelativePath = name.lastIndexOf('/') !== -1,
-                    fullName;
-                if(containsRelativePath) {
-                    moduleName = moduleName.substring(0, lastIndex);
-                    folderName = moduleName.substring((moduleName.lastIndexOf('/') + 1), moduleName.length).replace(/[^A-Za-z0-9_$]/g, '');
-                    fileName = name.substring((lastIndex + 1), name.length).replace(/[^A-Za-z0-9_$]/g, '');
-                    if(folderName && fileName) {
-                        fullName = folderName + '_' + fileName;
-                    } else if(!folderName && fileName) {
-                        fullName = fileName;
-                    } else {
-                        throw new Error(publicAPI.errorMsgs.malformedModuleName(name));
-                    }
-                } else {
-                    fullName = name;
-                }
-                return publicAPI.prefixReservedWords(fullName.replace(/[^A-Za-z0-9_$]/g, ''));
+                var normalized = name.replace(/\./g,'').replace(/[^A-Za-z0-9_$]/g,'_').replace(/^_+/,'');
+                return publicAPI.prefixReservedWords(normalized);
             },
             // returnExpressionIdentifier
             // --------------------------
