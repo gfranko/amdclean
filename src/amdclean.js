@@ -255,6 +255,7 @@
                 var callbackFuncParams = obj.callbackFuncParams,
                     callbackFunc = obj.callbackFunc,
                     dependencyNames = obj.dependencyNames;
+
                 return {
                     'type': 'ExpressionStatement',
                     'expression': {
@@ -486,10 +487,15 @@
                     if((publicAPI.commentLineNumbers[startLineNumber] || publicAPI.commentLineNumbers['' + (parseInt(startLineNumber, 10) - 1)])) {
                         return node;
                     }
-                    args = node.expression['arguments'];
+                    args = Array.prototype.slice.call(node.expression['arguments'], 0);
                     dependencies = (function() {
-                        var deps = _.isPlainObject(args[args.length - 2]) ? args[args.length - 2].elements : [],
+                        var deps = isRequire ? args[0] : args[args.length - 2],
                             depNames = [];
+                        if(_.isPlainObject(deps)) {
+                            deps = deps.elements || [];
+                        } else {
+                            deps = [];
+                        }
                         if(Array.isArray(deps) && deps.length) {
                             _.each(deps, function(currentDependency) {
                                 if(publicAPI.dependencyBlacklist[currentDependency.value]) {
@@ -501,7 +507,7 @@
                         }
                         return depNames;
                     }());
-                    moduleReturnValue = args[args.length - 1];
+                    moduleReturnValue = isRequire ? args[1] : args[args.length - 1];
                     moduleName = publicAPI.normalizeModuleName(node.expression['arguments'][0].value);
                     params = {
                             node: node,

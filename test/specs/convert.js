@@ -181,6 +181,13 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
+			it('should not bomb on extra parameters being passed to the require() method', function() {
+				var AMDcode = "require(['blah'], function(blahParam) { var two = 1 + 1; }, undefined, true);",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "(function(blahParam){var two=1+1;}(blah));";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
 		});
 
 	});
