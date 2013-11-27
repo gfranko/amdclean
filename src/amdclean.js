@@ -46,20 +46,6 @@
             env: codeEnv,
             // All of the error messages presented to users
             errorMsgs: {
-                // A module is defined more than one time
-                'uniqueModuleName': {
-                    'error': function(moduleName) {
-                        return 'Error: ' + 'Not a unique module name: ' + moduleName + '\n';
-                    },
-                    'fix': 'Fix: ' + 'Make sure that you assign unique module paths using the require.config() method.  Take a look at http://requirejs.org/docs/api.html#config for more details\n',
-                    'exiting': 'Result: Did not complete and exiting...'
-                },
-                // Malformed module name
-                malformedModuleName: function(moduleName) {
-                    return 'This module name is malformed: ' + moduleName;
-                },
-                // CommonJS converting issues
-                'commonjs': 'There was an error parsing a CommonJS require include.  Please create a ticket at https://github.com/gfranko/amdclean/issues',
                 // The user has not supplied the cliean method with any code
                 'emptyCode': 'There is no code to generate the AST with',
                 // An AST has not been correctly returned by Esprima
