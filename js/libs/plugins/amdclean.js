@@ -1,4 +1,4 @@
-/*! amdclean - v0.3.2 - 2013-11-26
+/*! amdclean - v0.3.3 - 2013-11-27
 * http://gregfranko.com/amdclean
 * Copyright (c) 2013 Greg Franko; Licensed MIT*/
 
@@ -35,11 +35,12 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            VERSION: '0.3.2',
+            VERSION: '0.3.3',
             // Default Options
             defaultOptions: {
                 'globalObject': false,
-                'globalObjectName': 'amdclean'
+                'globalObjectName': 'amdclean',
+                'rememberGlobalObject': true
             },
             // Environment - either node or web
             env: codeEnv,
@@ -651,7 +652,11 @@
                         }
                     });
                 }
-                if(options.globalObject === true && options.globalObjectName) {
+
+                if(options.globalObject === true && options.globalObjectName && !publicAPI.createdGlobalObject) {
+                    if(options.rememberGlobalObject === true) {
+                        publicAPI.createdGlobalObject = true;
+                    }
                     ast.body.unshift({
                         'type': 'VariableDeclaration',
                         'declarations': [
