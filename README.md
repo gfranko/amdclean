@@ -284,6 +284,8 @@ The amdclean `clean()` method accepts a string or an object.  Below is an exampl
 amdclean.clean({
   // The source code you would like to be 'cleaned'
   code: 'define("example", [], function(one, two) {});',
+  // The relative file path of the file to be cleaned.  Use this option if you are not using the code option.
+  filePath: '',
   // The modules that you would like to set as window properties
   // An array of strings (module names)
   globalModules: [],
@@ -301,7 +303,7 @@ amdclean.clean({
 
 ## Unit Tests
 
-All unit tests are written using the [jasmine-node](https://github.com/mhevery/jasmine-node) library and can be found in the `test/specs/` folder.
+All unit tests are written using the [jasmine-node](https://github.com/mhevery/jasmine-node) library and can be found in the `test/specs/` folder.  You can run the unit tests by typing: `npm test`
 
 
 ## FAQ
