@@ -282,8 +282,8 @@ The amdclean `clean()` method accepts a string or an object.  Below is an exampl
 
 ```javascript
 amdclean.clean({
-	// The source code you would like to be 'cleaned'
-	code: 'define("example", [], function(one, two) {});',
+  // The source code you would like to be 'cleaned'
+  code: 'define("example", [], function(one, two) {});',
   // The modules that you would like to set as window properties
   // An array of strings (module names)
   globalModules: [],
@@ -291,10 +291,10 @@ amdclean.clean({
   globalObject: false,
   // Determines the name of your global object that stores all of your global modules
   globalObjectName: 'amdclean',
-	// All esprima API options are supported: http://esprima.org/doc/
-	esprima: {},
-	// All escodegen API options are supported: https://github.com/Constellation/escodegen/wiki/API
-	escodegen: {}
+  // All esprima API options are supported: http://esprima.org/doc/
+  esprima: {},
+  // All escodegen API options are supported: https://github.com/Constellation/escodegen/wiki/API
+  escodegen: {}
 })
 ```
 
