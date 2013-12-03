@@ -4,7 +4,7 @@ A build tool that converts AMD code to standard JavaScript.
 
 [![Build Status](https://travis-ci.org/gfranko/amdclean.png?branch=master)](https://travis-ci.org/gfranko/amdclean)
 
-`npm install amdclean`
+`npm install amdclean --save-dev`
 
 
 ## Use Case
@@ -48,7 +48,7 @@ It is best used for libraries or apps that use AMD and:
 
 ## Download
 
-Node - `npm install amdclean`
+Node - `npm install amdclean --save-dev`
 
 Web - [Latest release](https://github.com/gfranko/amdclean/blob/master/src/amdclean.js)
 
@@ -68,7 +68,7 @@ There are a few different ways that amdclean can be used including:
 
 * [Download the RequireJS optimizer](http://requirejs.org/docs/download.html#rjs).
 
-* `npm install amdclean`
+* `npm install amdclean --save-dev`
 
 * Make sure that each of your AMD modules have a module ID `path` alias name
 
@@ -126,7 +126,7 @@ module.exports = function(grunt) {
 
 ###Node Module
 
-* `npm install amdclean`
+* `npm install amdclean --save-dev`
 
 * Require the module
 
