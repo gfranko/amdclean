@@ -13,9 +13,11 @@ A build tool that converts AMD code to standard JavaScript.
 
 ## Used By
 
-AddThis - Smart Layers widget suite
-Ractive.js - Next-generation DOM manipulation
-Mod.js - JavaScript Workflow Tooling 
+* [AddThis Smart Layers](https://www.addthis.com/get/smart-layers) - Third-party social widgets suite
+
+* [Ractive.js](http://www.ractivejs.org/) - Next-generation DOM manipulation
+
+* [Mod.js](http://madscript.com/modjs/) - JavaScript Workflow Tooling 
 
 
 ## Why
