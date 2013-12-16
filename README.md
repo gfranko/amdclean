@@ -11,6 +11,12 @@ A build tool that converts AMD code to standard JavaScript.
 
 **Single file** client-side JavaScript libraries that want to use AMD to structure and build their code, but don't want an AMD footprint.
 
+## Used By
+
+AddThis - Smart Layers widget suite
+Ractive.js - Next-generation DOM manipulation
+Mod.js - JavaScript Workflow Tooling 
+
 
 ## Why
 
