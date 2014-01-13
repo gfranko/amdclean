@@ -285,6 +285,7 @@ amdclean.clean({
   // The source code you would like to be 'cleaned'
   code: 'define("example", [], function(one, two) {});',
   // The relative file path of the file to be cleaned.  Use this option if you are not using the code option.
+  // Hint: Use the __dirname trick
   filePath: '',
   // The modules that you would like to set as window properties
   // An array of strings (module names)
@@ -296,7 +297,13 @@ amdclean.clean({
   // All esprima API options are supported: http://esprima.org/doc/
   esprima: {},
   // All escodegen API options are supported: https://github.com/Constellation/escodegen/wiki/API
-  escodegen: {}
+  escodegen: {},
+  // If there is a comment (that contains the following text) on the same line or one line above a specific module, the module will not be removed
+  commentCleanName: 'amdclean',
+  // The ids of all of the modules that you would not like to be removed
+  ignoreModules: [],
+  // Determines if all of the require() method calls will be removed
+  removeAllRequires: false
 })
 ```
 
@@ -304,6 +311,22 @@ amdclean.clean({
 ## Unit Tests
 
 All unit tests are written using the [jasmine-node](https://github.com/mhevery/jasmine-node) library and can be found in the `test/specs/` folder.  You can run the unit tests by typing: `npm test`.
+
+## Contributing
+
+Please send all PR's to the `dev` branch.
+
+If your PR is a code change:
+
+1.  Update `amdclean.js` inside of the `src` directory.
+2.  Add a Jasmine unit test to `convert.js` inside of the `test/specs` folder
+3.  Install all node.js dev dependencies: `npm install`
+4.  Install gulp.js globally: `sudo npm install gulp -g`
+5.  Lint, Minify, and Run all unit tests with Gulp: `gulp`
+6.  Verify that the minified output file has been updated in `build/amdclean.min.js`
+7.  Send the PR!
+
+**Note:** There is a gulp `watch` set up called, `amdclean-watch`, that will automatically lint, minify, and run all the AMDClean unit tests when `src/amdclean.js` is changed.  Feel free to use it.
 
 
 ## FAQ
@@ -314,12 +337,14 @@ __Why would I use amdclean instead of Almond.js?__
 
 __What if I don't want all define() and require() method calls to be removed?__
 
- - If you don't want one or more define() and require() methods to be removed by `amdclean`, then you must put a comment with only the words _amdclean_ on the same line or one line above the method in question.  For example, `amdclean` would not remove the `define()` method below:
+ - If you don't want one or more define() and require() methods to be removed by `amdclean`, you have a few options.  If the module has a named module id associated with it, then you can add the associated module id to the `ignoreModules` option array.  If there is not an associated module id, then you must put a comment with only the words _amdclean_ on the same line or one line above the method in question.  For example, `amdclean` would not remove the `define()` method below:
 
  ```javascript
 // amdclean
 define('example', [], function() {});
  ```
+
+If you want to use different text than `amdclean`, you can customize the comment name by using the `ignoreModules` option.
 
 __Why are define() method placeholder functions inserted into my source?__
 
@@ -336,4 +361,4 @@ __I am having a scope problem with all of the local module variables.  What can 
 
 ## License
 
-Copyright (c) 2013 Greg Franko Licensed under the MIT license.
+Copyright (c) 2014 Greg Franko Licensed under the MIT license.

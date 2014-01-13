@@ -12,6 +12,12 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
+			it('should passing a file path instead of the code directly', function() {
+				var cleanedCode = amdclean.clean({ filePath: __dirname + '/../filePathTest.js', escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var example=function (){}();";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
 			it('should correctly set callback parameters to the callback function', function() {
 				var AMDcode = "define('example', ['example1', 'example2'], function(one, two) {});",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
@@ -53,6 +59,20 @@ describe('amdclean specs', function() {
 				var AMDcode = "/*amdclean*/define('./modules/example', ['example1', 'example2'], function(one, two) {});",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
 					standardJavaScript = "define('./modules/example',['example1','example2'],function(one,two){});";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should not convert defines with a custom commentCleanName comment before it', function() {
+				var AMDcode = "/*donotremove*/define('./modules/example', ['example1', 'example2'], function(one, two) {});",
+					cleanedCode = amdclean.clean({ code: AMDcode, commentCleanName: 'donotremove', escodegen: { format: { compact: true } } }),
+					standardJavaScript = "define('./modules/example',['example1','example2'],function(one,two){});";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should not convert defines that are added to the ignoreModules options array', function() {
+				var AMDcode = "define('exampleModule', ['example1', 'example2'], function(one, two) {});",
+					cleanedCode = amdclean.clean({ code: AMDcode, ignoreModules: ['exampleModule'], escodegen: { format: { compact: true } } }),
+					standardJavaScript = "define('exampleModule',['example1','example2'],function(one,two){});";
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
@@ -184,6 +204,27 @@ describe('amdclean specs', function() {
 			it('should remove require() calls with no callback functions', function() {
 				var AMDcode = "require(['anotherModule']);",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should remove require() calls with an empty callback function', function() {
+				var AMDcode = "require(['testModule'], function() {});",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should not remove require() calls with a non-empty callback function', function() {
+				var AMDcode = "require(['testModule'], function() {var test=true;});",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "(function(testModule){var test=true;}(testModule));";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should remove all require() calls when the removeAllRequires option is set to true', function() {
+				var AMDcode = "require(['testModule'], function() {var test=true;});",
+					cleanedCode = amdclean.clean({ code: AMDcode, removeAllRequires: true, escodegen: { format: { compact: true } } }),
 					standardJavaScript = "";
 				expect(cleanedCode).toBe(standardJavaScript);
 			});

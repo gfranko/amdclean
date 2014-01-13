@@ -1,6 +1,6 @@
-/*! amdclean - v0.3.3 - 2013-11-27
+/*! amdclean - v0.4.0 - 2014-01-12
 * http://gregfranko.com/amdclean
-* Copyright (c) 2013 Greg Franko; Licensed MIT*/
+* Copyright (c) 2014 Greg Franko; Licensed MIT*/
 
 (function (root, factory, undefined) {
     'use strict';
@@ -35,17 +35,26 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            VERSION: '0.3.3',
+            'VERSION': '0.4.0',
             // Default Options
-            defaultOptions: {
+            'defaultOptions': {
                 'globalObject': false,
                 'globalObjectName': 'amdclean',
-                'rememberGlobalObject': true
+                'rememberGlobalObject': true,
+                'removeAllRequires': false,
+                'ignoreModules': [],
+                'escodegen': {},
+                'esprima': {
+                    'comment': true,
+                    'loc': true
+                },
+                'globalModules': [],
+                'commentCleanName': 'amdclean'
             },
             // Environment - either node or web
-            env: codeEnv,
+            'env': codeEnv,
             // All of the error messages presented to users
-            errorMsgs: {
+            'errorMsgs': {
                 // The user has not supplied the cliean method with any code
                 'emptyCode': 'There is no code to generate the AST with',
                 // An AST has not been correctly returned by Esprima
@@ -65,7 +74,7 @@
             // Dependency blacklist
             // --------------------
             //  Variable names that are not allowed as dependencies to functions
-            dependencyBlacklist: {
+            'dependencyBlacklist': {
                 'require': true,
                 'exports': true,
                 'module': true
@@ -73,7 +82,7 @@
             // readFile
             // --------
             //  Synchronous file reading for node
-            readFile: function(path) {
+            'readFile': function(path) {
                 if(publicAPI.env !== 'node') {
                     return '';
                 }
@@ -82,7 +91,7 @@
             // isDefine
             // --------
             //  Returns if the current AST node is a define() method call
-            isDefine: function(node) {
+            'isDefine': function(node) {
                 var expression = node.expression || {},
                     callee = expression.callee;
                 return node.type === 'ExpressionStatement' &&
@@ -94,7 +103,7 @@
             // isRequire
             // ---------
             //  Returns if the current AST node is a require() method call
-            isRequire: function(node) {
+            'isRequire': function(node) {
                 var expression = node.expression || {},
                     callee = expression.callee;
                 return (node.type === 'ExpressionStatement' &&
@@ -107,25 +116,23 @@
             // -------------------
             //  Returns if the current AST node is a require() call expression
             //  e.g. var example = require('someModule');
-            isRequireExpression: function(node) {
-                return (node.type === 'CallExpression' &&
-                            node.callee &&
-                            node.callee.name === 'require');
+            'isRequireExpression': function(node) {
+                return (node.type === 'CallExpression' && node.callee && node.callee.name === 'require');
             },
             // isObjectExpression
             // ------------------
             //  Returns if the current AST node is an object literal
-            isObjectExpression: function(expression) {
+            'isObjectExpression': function(expression) {
                 return expression && _.isPlainObject(expression) && expression.type === 'ObjectExpression';
             },
             // isFunctionExpression
             // --------------------
             //  Returns if the current AST node is a function
-            isFunctionExpression: function(expression) {
+            'isFunctionExpression': function(expression) {
                 return expression && _.isPlainObject(expression) && expression.type === 'FunctionExpression';
             },
             // getJavaScriptIdentifier
-            prefixReservedWords: function(name) {
+            'prefixReservedWords': function(name) {
                 var reservedWord = false;
                 try {
                     if(name.length) {
@@ -143,7 +150,7 @@
             // normalizeModuleName
             // -------------------
             //  Returns a normalized module name (removes relative file path urls)
-            normalizeModuleName: function(name) {
+            'normalizeModuleName': function(name) {
                 name = name || '';
                 if(name === '{}') {
                     return name;
@@ -155,7 +162,7 @@
             // --------------------------
             //  Returns a single identifier
             //  e.g. module
-            returnExpressionIdentifier: function(name) {
+            'returnExpressionIdentifier': function(name) {
                 return {
                     'type': 'ExpressionStatement',
                     'expression': {
@@ -168,7 +175,7 @@
             // --------------------------
             //  Returns an object variable declaration
             //  e.g. var example = { exampleProp: true }
-            convertToObjectDeclaration: function(obj) {
+            'convertToObjectDeclaration': function(obj) {
                 var node = obj.node,
                     moduleName  = obj.moduleName,
                     moduleReturnValue = obj.moduleReturnValue,
@@ -219,7 +226,7 @@
             // -------------
             //  Returns an IIFE
             //  e.g. (function() { }())
-            convertToIIFE: function(obj) {
+            'convertToIIFE': function(obj) {
                 var callbackFuncParams = obj.callbackFuncParams,
                     callbackFunc = obj.callbackFunc,
                     dependencyNames = obj.dependencyNames;
@@ -246,7 +253,7 @@
             // ------------------------
             //  Returns a function expression that is executed immediately
             //  e.g. var example = function(){}()
-            convertToIIFEDeclaration: function(obj) {
+            'convertToIIFEDeclaration': function(obj) {
                 var moduleName = obj.moduleName,
                     callbackFuncParams = obj.callbackFuncParams,
                     callbackFunc = obj.callbackFunc,
@@ -315,7 +322,7 @@
             // ---------------------------
             //  Returns either an IIFE or variable declaration.
             //  Internally calls either convertToIIFE() or convertToIIFEDeclaration().
-            convertToFunctionExpression: function(obj) {
+            'convertToFunctionExpression': function(obj) {
                 var isDefine = obj.isDefine,
                     isRequire = obj.isRequire,
                     node = obj.node,
@@ -421,7 +428,7 @@
             // convertDefinesAndRequires
             // -------------------------
             //  Replaces define() and require() methods to standard JavaScript
-            convertDefinesAndRequires: function(node, parent) {
+            'convertDefinesAndRequires': function(node, parent) {
                 var moduleName,
                     args,
                     dependencies,
@@ -432,13 +439,14 @@
                     startLineNumber,
                     comments,
                     currentLineNumber,
-                    lineNumberObj = {};
+                    lineNumberObj = {},
+                    callbackFuncArg = false;
                 if(node.type === 'Program') {
                     comments = (function() {
                         var arr = [];
                         _.each(node.comments, function(currentComment, iterator) {
                             var currentCommentValue = (currentComment.value).trim();
-                            if(currentCommentValue === 'amdclean') {
+                            if(currentCommentValue === publicAPI.options.commentCleanName) {
                                 arr.push(currentComment);
                             }
                         });
@@ -486,17 +494,23 @@
                             isRequire: isRequire
                     };
                     if(isDefine) {
-                        if(publicAPI.isFunctionExpression(moduleReturnValue)) {
+                        if(_.isArray(publicAPI.options.ignoreModules) && publicAPI.options.ignoreModules.indexOf(moduleName) !== -1) {
+                            return node;
+                        }
+                        else if(publicAPI.isFunctionExpression(moduleReturnValue)) {
                             return publicAPI.convertToFunctionExpression(params);
                         } else if(publicAPI.isObjectExpression(moduleReturnValue)) {
                             return publicAPI.convertToObjectDeclaration(params);
                         }
                     } else if(isRequire) {
-                        if(node.expression['arguments'].length > 1) {
+                        callbackFuncArg = _.isArray(node.expression['arguments']) && node.expression['arguments'].length ? node.expression['arguments'][1] && node.expression['arguments'][1].body && node.expression['arguments'][1].body.body && node.expression['arguments'][1].body.body.length : false;
+                        if(publicAPI.options.removeAllRequires !== true && callbackFuncArg) {
                             return publicAPI.convertToFunctionExpression(params);
                         } else {
                             // Remove the require include statement from the source
-                            return { type: 'EmptyStatement' };
+                            return {
+                                type: 'EmptyStatement'
+                            };
                         }
                     }
                 } else {
@@ -506,13 +520,10 @@
             // createAst
             // ---------
             //  Returns an AST (Abstract Syntax Tree) that is generated by Esprima
-            createAst: function(obj) {
+            'createAst': function(obj) {
                 var filePath = obj.filePath,
                     code = obj.code || (filePath && publicAPI.env === 'node' ? publicAPI.readFile(filePath) : ''),
-                    esprimaDefaultOptions = {
-                        comment: true,
-                        loc: true
-                    },
+                    esprimaDefaultOptions = publicAPI.defaultOptions.esprima,
                     esprimaOptions = _.extend(esprimaDefaultOptions, (_.isPlainObject(obj.esprima) ? obj.esprima : {}));
                 if(!code) {
                     throw new Error(publicAPI.errorMsgs.emptyCode);
@@ -526,7 +537,7 @@
            // traverseAndUpdateAst
             // --------------------
             //  Uses Estraverse to traverse the AST and convert all define() and require() methods to standard JavaScript
-            traverseAndUpdateAst: function(obj) {
+            'traverseAndUpdateAst': function(obj) {
                 if(!_.isPlainObject(obj)) {
                     throw new Error(publicAPI.errorMsgs.invalidObject('traverseAndUpdateAst'));
                 }
@@ -550,7 +561,7 @@
             // generateCode
             // ------------
             //  Returns standard JavaScript generated by Escodegen
-            generateCode: function(ast, options) {
+            'generateCode': function(ast, options) {
                 if(!_.isPlainObject(escodegen) || !_.isFunction(escodegen.generate)) {
                     throw new Error(exportedProps.errorMsgs.escodegen);
                 }
@@ -559,15 +570,12 @@
             // clean
             // -----
             //  Creates an AST using Esprima, traverse and updates the AST using Estraverse, and generates standard JavaScript using Escodegen.
-            clean: function(obj) {
+            'clean': function(obj) {
                 var code = {},
                     ast = {},
-                    escodegenOptions = {},
-                    globalModules = obj.globalModules,
                     options = {};
 
                 publicAPI.options = publicAPI.defaultOptions;
-
                 if(_.isPlainObject(obj)) {
                     publicAPI.options = options = _.extend({}, publicAPI.options, obj);
                 }
@@ -575,7 +583,7 @@
                     throw new Error(publicAPI.errorMsgs.lodash);
                 }
                 if(!_.isPlainObject(obj) && _.isString(obj)) {
-                    code['code'] = obj;
+                    code.code = obj;
                 } else if(_.isPlainObject(obj)) {
                     code = obj;
                 } else {
@@ -609,8 +617,8 @@
                         }
                     });
                 }
-                if(_.isArray(globalModules)) {
-                    _.each(globalModules, function(currentModule) {
+                if(_.isArray(options.globalModules)) {
+                    _.each(options.globalModules, function(currentModule) {
                         if(_.isString(currentModule) && currentModule.length) {
                             ast.body.push({
                                 'type': 'ExpressionStatement',
@@ -661,8 +669,7 @@
                         'kind': 'var'
                     });
                 }
-                escodegenOptions = _.isPlainObject(obj.escodegen) ? obj.escodegen : {};
-                return publicAPI.generateCode(ast, escodegenOptions);
+                return publicAPI.generateCode(ast, options.escodegen);
             }
         };
         // Returns the public API for node and web environments
