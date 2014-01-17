@@ -9,7 +9,7 @@ A build tool that converts AMD code to standard JavaScript.
 
 ## Use Case
 
-**Single file** client-side JavaScript libraries that want to use AMD to structure and build their code, but don't want an AMD footprint.
+**Single file** client-side JavaScript libraries or applications that want to use AMD to structure and build their code, but don't want an AMD footprint.
 
 
 ## Why
@@ -39,6 +39,8 @@ It is best used for libraries or apps that use AMD and:
 ##What is Supported
 
 * `define()` and `require()` calls.
+
+* [Shimmed modules](http://requirejs.org/docs/api.html#config-shim)
 
 * [Simplified CJS wrapper](https://github.com/jrburke/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#wiki-cjs)
 
@@ -84,7 +86,7 @@ paths: {
 }
 ```
 
-* Update the `onBuildWrite` property in your RequireJS build configuration file.  Like this:
+* If you are **not** shimming any libraries, add an `onBuildWrite` config property to your RequireJS build configuration file.  Like this:
 
 ```javascript
 onBuildWrite: function (moduleName, path, contents) {
@@ -92,9 +94,23 @@ onBuildWrite: function (moduleName, path, contents) {
 }
 ```
 
+* If you **are** shimming any libraries, add an `onModuleBundleComplete` config property to your RequireJS build configuration file instead.  Like this:
+
+```javascript
+onModuleBundleComplete: function (data) {
+  var fs = require('fs'),
+    amdclean = require('amdclean'),
+    outputFile = data.path;
+  fs.writeFileSync(outputFile, amdclean.clean({
+    'code': fs.readFileSync(outputFile),
+    'globalObject': true
+  }));
+}
+```
+
 * Run the optimizer using [Node](http://nodejs.org) (also [works in Java](https://github.com/jrburke/r.js/blob/master/README.md)).  More details can be found in the the [r.js](https://github.com/jrburke/r.js/) repo.
 
-* If you are using the RequireJS optimizer [Grunt task](https://github.com/gruntjs/grunt-contrib-requirejs), then it is very easy to integrate amdclean using the `onBuildWrite` config option. Here is an example Grunt file that includes the RequireJS optimizer plugin with amdclean support:
+* If you are using the RequireJS optimizer [Grunt task](https://github.com/gruntjs/grunt-contrib-requirejs), then it is very easy to integrate amdclean using either the `onBuildWrite` or the `onModuleBundleComplete` config options. Here is an example Grunt file that includes the RequireJS optimizer plugin with amdclean support:
 
 ```javascript
 module.exports = function(grunt) {
@@ -222,6 +238,26 @@ var example = function (one, two) {
 _AMD_
 
 ```javascript
+define("backbone", ["underscore","jquery"], (function (global) {
+    return function () {
+        var ret, fn;
+        return ret || global.Backbone;
+    };
+}(this)));
+```
+
+
+_Standard_
+
+```javascript
+var backbone=window.Backbone;
+```
+
+---
+
+_AMD_
+
+```javascript
 define('third',{
 	exampleProp: 'This is an example'
 });
@@ -303,7 +339,10 @@ amdclean.clean({
   // The ids of all of the modules that you would not like to be removed
   ignoreModules: [],
   // Determines if all of the require() method calls will be removed
-  removeAllRequires: false
+  removeAllRequires: false,
+  // Allows you to pass an expression that will override shimmed modules return values
+  // e.g. { 'backbone': 'window.Backbone' }
+  shimOverrides: {}
 })
 ```
 
@@ -334,6 +373,22 @@ If your PR is a code change:
 __Why would I use amdclean instead of Almond.js?__
 
  - Although Almond is very small (~1k gzipped and minified), most JavaScript library authors do not want to have to include it in their library's source code.  If you are not using an AMD plugin, then amdclean provides the benefit of AMD without increasing your library's file size.
+
+ __AMDClean does not seem to be cleaning shimmed modules.  What am I doing wrong?__
+
+ - Since Require.js does not expose the [shim](http://requirejs.org/docs/api.html#config-shim) functionality within the `onBuildWrite` config property, you must use the `onModuleBundleComplete` config property instead.  Like this:
+
+ ```javascript
+onModuleBundleComplete: function (data) {
+  var fs = require('fs'),
+    amdclean = require('amdclean'),
+    outputFile = data.path;
+  fs.writeFileSync(outputFile, amdclean.clean({
+    'code': fs.readFileSync(outputFile),
+    'globalObject': true
+  }));
+}
+ ```
 
 __What if I don't want all define() and require() method calls to be removed?__
 
