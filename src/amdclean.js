@@ -1,4 +1,4 @@
-/*! amdclean - v0.4.0 - 2014-01-12
+/*! amdclean - v0.5.0 - 2014-01-17
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko; Licensed MIT*/
 
@@ -35,7 +35,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            'VERSION': '0.4.0',
+            'VERSION': '0.5.0',
             // Default Options
             'defaultOptions': {
                 'globalObject': false,
@@ -49,7 +49,8 @@
                     'loc': true
                 },
                 'globalModules': [],
-                'commentCleanName': 'amdclean'
+                'commentCleanName': 'amdclean',
+                'shimOverrides': {}
             },
             // Environment - either node or web
             'env': codeEnv,
@@ -94,11 +95,12 @@
             'isDefine': function(node) {
                 var expression = node.expression || {},
                     callee = expression.callee;
-                return node.type === 'ExpressionStatement' &&
-                    !_.isUndefined(expression) &&
+                return (_.isObject(node) &&
+                    node.type === 'ExpressionStatement' &&
+                    _.isObject(expression) &&
                     expression.type === 'CallExpression' &&
                     callee.type === 'Identifier' &&
-                    callee.name === 'define';
+                    callee.name === 'define');
             },
             // isRequire
             // ---------
@@ -106,8 +108,9 @@
             'isRequire': function(node) {
                 var expression = node.expression || {},
                     callee = expression.callee;
-                return (node.type === 'ExpressionStatement' &&
-                    !_.isUndefined(expression) &&
+                return (_.isObject(node) &&
+                    node.type === 'ExpressionStatement' &&
+                    _.isObject(expression) &&
                     expression.type === 'CallExpression' &&
                     callee.type === 'Identifier' &&
                     callee.name === 'require');
@@ -117,19 +120,35 @@
             //  Returns if the current AST node is a require() call expression
             //  e.g. var example = require('someModule');
             'isRequireExpression': function(node) {
-                return (node.type === 'CallExpression' && node.callee && node.callee.name === 'require');
+                return (node.type === 'CallExpression' &&
+                    node.callee &&
+                    node.callee.name === 'require');
             },
             // isObjectExpression
             // ------------------
             //  Returns if the current AST node is an object literal
             'isObjectExpression': function(expression) {
-                return expression && _.isPlainObject(expression) && expression.type === 'ObjectExpression';
+                return (expression &&
+                    _.isPlainObject(expression) &&
+                    expression.type === 'ObjectExpression');
             },
             // isFunctionExpression
             // --------------------
             //  Returns if the current AST node is a function
             'isFunctionExpression': function(expression) {
-                return expression && _.isPlainObject(expression) && expression.type === 'FunctionExpression';
+                return (expression &&
+                    _.isPlainObject(expression) &&
+                    expression.type === 'FunctionExpression');
+            },
+            // isFunctionCallExpression
+            // ------------------------
+            //  Returns if the current AST node is a function call expression
+            'isFunctionCallExpression': function(expression) {
+                return (expression &&
+                    _.isPlainObject(expression) &&
+                    expression.type === 'CallExpression' &&
+                    _.isPlainObject(expression.callee) &&
+                    expression.callee.type === 'FunctionExpression');
             },
             // getJavaScriptIdentifier
             'prefixReservedWords': function(name) {
@@ -175,10 +194,53 @@
             // --------------------------
             //  Returns an object variable declaration
             //  e.g. var example = { exampleProp: true }
-            'convertToObjectDeclaration': function(obj) {
+            'convertToObjectDeclaration': function(obj, type) {
                 var node = obj.node,
                     moduleName  = obj.moduleName,
-                    moduleReturnValue = obj.moduleReturnValue,
+                    moduleReturnValue = (function() {
+                        var modReturnValue,
+                            callee,
+                            params,
+                            returnStatement,
+                            nestedReturnStatement,
+                            internalFunctionExpression;
+                        if(type === 'functionCallExpression') {
+                            modReturnValue = obj.moduleReturnValue;
+                            callee = modReturnValue.callee;
+                            params = callee.params;
+                            if(params && params.length && _.isArray(params) && _.where(params, { 'name': 'global' })) {
+                                if(_.isObject(callee.body)) {
+                                    if(_.isArray(callee.body.body)) {
+                                        returnStatement = _.where(callee.body.body, { 'type': 'ReturnStatement' })[0];
+                                        if(_.isObject(returnStatement) && _.isObject(returnStatement.argument) && returnStatement.argument.type === 'FunctionExpression') {
+                                            internalFunctionExpression = returnStatement.argument;
+                                            if(_.isObject(internalFunctionExpression.body) && _.isArray(internalFunctionExpression.body.body)) {
+                                                nestedReturnStatement = _.where(internalFunctionExpression.body.body, { 'type': 'ReturnStatement' })[0];
+                                                if(_.isObject(nestedReturnStatement.argument) && _.isObject(nestedReturnStatement.argument.right) && _.isObject(nestedReturnStatement.argument.right.property)) {
+                                                    if(nestedReturnStatement.argument.right.property.name) {
+                                                        modReturnValue = {
+                                                            'type': 'MemberExpression',
+                                                            'computed': false,
+                                                            'object': {
+                                                                'type': 'Identifier',
+                                                                'name': 'window'
+                                                            },
+                                                            'property': {
+                                                                'type': 'Identifier',
+                                                                'name': nestedReturnStatement.argument.right.property.name
+                                                            }
+                                                        };
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        modReturnValue = modReturnValue || obj.moduleReturnValue;
+                        return modReturnValue;
+                    }()),
                     options = publicAPI.options,
                     updatedNode = (function() {
                         if(options.globalObject === true && options.globalObjectName) {
@@ -440,7 +502,8 @@
                     comments,
                     currentLineNumber,
                     lineNumberObj = {},
-                    callbackFuncArg = false;
+                    callbackFuncArg = false,
+                    type = '';
                 if(node.type === 'Program') {
                     comments = (function() {
                         var arr = [];
@@ -494,13 +557,27 @@
                             isRequire: isRequire
                     };
                     if(isDefine) {
+                        if(_.isObject(publicAPI.options.shimOverrides) && publicAPI.options.shimOverrides[moduleName]) {
+                            params.moduleReturnValue = publicAPI.createAst({
+                                'code': publicAPI.options.shimOverrides[moduleName]
+                            });
+                            if(_.isArray(params.moduleReturnValue.body) && _.isObject(params.moduleReturnValue.body[0])) {
+                                if(_.isObject(params.moduleReturnValue.body[0].expression)) {
+                                    params.moduleReturnValue = params.moduleReturnValue.body[0].expression;
+                                    type = 'objectExpression';
+                                }
+                            } else {
+                                params.moduleReturnValue = moduleReturnValue;
+                            }
+                        }
                         if(_.isArray(publicAPI.options.ignoreModules) && publicAPI.options.ignoreModules.indexOf(moduleName) !== -1) {
                             return node;
-                        }
-                        else if(publicAPI.isFunctionExpression(moduleReturnValue)) {
+                        } else if(publicAPI.isFunctionExpression(moduleReturnValue)) {
                             return publicAPI.convertToFunctionExpression(params);
-                        } else if(publicAPI.isObjectExpression(moduleReturnValue)) {
+                        } else if(publicAPI.isObjectExpression(moduleReturnValue) || type === 'objectExpression') {
                             return publicAPI.convertToObjectDeclaration(params);
+                        } else if(publicAPI.isFunctionCallExpression(moduleReturnValue)) {
+                            return publicAPI.convertToObjectDeclaration(params, 'functionCallExpression');
                         }
                     } else if(isRequire) {
                         callbackFuncArg = _.isArray(node.expression['arguments']) && node.expression['arguments'].length ? node.expression['arguments'][1] && node.expression['arguments'][1].body && node.expression['arguments'][1].body.body && node.expression['arguments'][1].body.body.length : false;

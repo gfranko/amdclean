@@ -108,6 +108,22 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
+			it('should support converting shimmed modules that export a global object', function() {
+				var AMDcode = "define('backbone', ['underscore', 'jquery'], (function (global) { return function () { var ret, fn; return ret || global.Backbone; }; }(this)));",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var backbone=window.Backbone;";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should support setting the module return value via the shimOverrides option', function() {
+				var AMDcode = "define('backbone', ['underscore', 'jquery'], (function (global) { return function () { var ret, fn; return ret || global.Backbone; }; }(this)));",
+					cleanedCode = amdclean.clean({ shimOverrides: { 'backbone': 'window.Backbone' }, code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var backbone=window.Backbone;";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
 		});
 
 		describe('objects', function() {
