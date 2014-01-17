@@ -374,7 +374,7 @@ __Why would I use amdclean instead of Almond.js?__
 
  - Although Almond is very small (~1k gzipped and minified), most JavaScript library authors do not want to have to include it in their library's source code.  If you are not using an AMD plugin, then amdclean provides the benefit of AMD without increasing your library's file size.
 
- __AMDClean does not seem to be cleaning shimmed modules.  What am I doing wrong?__
+__AMDClean does not seem to be cleaning shimmed modules.  What am I doing wrong?__
 
  - Since Require.js does not expose the [shim](http://requirejs.org/docs/api.html#config-shim) functionality within the `onBuildWrite` config property, you must use the `onModuleBundleComplete` config property instead.  Like this:
 
