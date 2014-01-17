@@ -12,6 +12,15 @@ A build tool that converts AMD code to standard JavaScript.
 **Single file** client-side JavaScript libraries or applications that want to use AMD to structure and build their code, but don't want an AMD footprint.
 
 
+## Used By
+
+* [AddThis Smart Layers](https://www.addthis.com/get/smart-layers) - Third-party social widgets suite
+
+* [Ractive.js](http://www.ractivejs.org/) - Next-generation DOM manipulation
+
+* [Mod.js](http://madscript.com/modjs/) - JavaScript Workflow Tooling 
+
+
 ## Why
 
 Many developers like to use the AMD API to write modular JavaScript, but do not want to include a full AMD loader (e.g. [require.js](https://github.com/jrburke/requirejs)), or AMD shim (e.g. [almond.js](https://github.com/jrburke/almond)) because of file size/source code readability.
@@ -414,14 +423,6 @@ __I am having a scope problem with all of the local module variables.  What can 
 - You can use the `globalObject` option to store all of your modules in a global object that uses the top-most function scope.
 
 
-## Used By
-
-* [AddThis Smart Layers](https://www.addthis.com/get/smart-layers) - Third-party social widgets suite
-
-* [Ractive.js](http://www.ractivejs.org/) - Next-generation DOM manipulation
-
-* [Mod.js](http://madscript.com/modjs/) - JavaScript Workflow Tooling 
-
-## License
+## Liense
 
 Copyright (c) 2014 Greg Franko Licensed under the MIT license.
