@@ -1,5 +1,14 @@
 module.exports = function(grunt) {
-  var amdclean = require('amdclean');
+  var amdclean = require('amdclean'),
+    fs = require('fs'),
+    amdclean_logic = function (data) {
+      var outputFile = data.path;
+      fs.writeFileSync(outputFile, amdclean.clean({
+        'code': fs.readFileSync(outputFile),
+        'globalObject': true,
+        'globalObjectName': 'amdclean_website'
+      }));
+    };
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     requirejs: {
@@ -12,10 +21,11 @@ module.exports = function(grunt) {
           wrap: true,
           preserveLicenseComments: false,
           optimize: 'none',
-          name: '../libs/almond',
+          // name: '../libs/almond',
           mainConfigFile: './js/app/config/config.js',
           include: ['mobile'],
-          out: './js/app/init/MobileInit.min.js'
+          out: './js/app/init/MobileInit.min.js',
+          onModuleBundleComplete: amdclean_logic
         }
       },
       mobileCSS: {
@@ -34,10 +44,10 @@ module.exports = function(grunt) {
           wrap: true,
           preserveLicenseComments: false,
           optimize: 'none',
-          name: '../libs/almond',
           mainConfigFile: './js/app/config/config.js',
           include: ['desktop'],
-          out: './js/app/init/DesktopInit.min.js'
+          out: './js/app/init/DesktopInit.min.js',
+          onModuleBundleComplete: amdclean_logic
         }
       },
       desktopCSS: {
