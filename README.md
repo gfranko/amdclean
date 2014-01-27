@@ -14,9 +14,11 @@ A build tool that converts AMD code to standard JavaScript.
 
 ## Used By
 
-* [AddThis Smart Layers](https://www.addthis.com/get/smart-layers) - Third-party social widgets suite
+* [Backbone-Require-Boilerplate](https://github.com/BoilerplateMVC/Backbone-Require-Boilerplate) - A Rad Backbone.js and Require.js Boilerplate Project
 
 * [Ractive.js](http://www.ractivejs.org/) - Next-generation DOM manipulation
+
+* [AddThis Smart Layers](https://www.addthis.com/get/smart-layers) - Third-party social widgets suite
 
 * [Mod.js](http://madscript.com/modjs/) - JavaScript Workflow Tooling 
 
