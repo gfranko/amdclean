@@ -1,4 +1,4 @@
-/*! amdclean - v0.6.1 - 2014-01-26
+/*! amdclean - v0.6.2 - 2014-01-26
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko; Licensed MIT*/
 
@@ -34,7 +34,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            'VERSION': '0.6.1',
+            'VERSION': '0.6.2',
             // Default Options
             'defaultOptions': {
                 'globalObject': false,
@@ -154,7 +154,12 @@
             //  Returns if the current AST node is an if statement AMD check
             //  e.g. if(typeof define === 'function') {}
             'isAMDConditional': function(node) {
-                if(node.type !== 'IfStatement' || !_.isObject(node.test) || !_.isObject(node.test.left)) return false;
+                if(node && node.type !== 'IfStatement' ||
+                    !_.isObject(node.test) ||
+                    !_.isObject(node.test.left) ||
+                    _.isNull(node.test.left.value)) {
+                    return false;
+                }
                 var matchObject = {
                     'left': {
                         'operator': 'typeof',
