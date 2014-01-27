@@ -6,7 +6,8 @@ module.exports = function(grunt) {
       fs.writeFileSync(outputFile, amdclean.clean({
         'code': fs.readFileSync(outputFile),
         'globalObject': true,
-        'globalObjectName': 'amdclean_website'
+        'globalObjectName': 'amdclean_website',
+        'rememberGlobalObject': false
       }));
     };
   grunt.initConfig({
