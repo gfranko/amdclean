@@ -351,7 +351,11 @@ amdclean.clean({
   removeAllRequires: false,
   // Allows you to pass an expression that will override shimmed modules return values
   // e.g. { 'backbone': 'window.Backbone' }
-  shimOverrides: {}
+  shimOverrides: {},
+  // Prevents multiple global objects from being instantiated when using the onBuildWrite Require.js hook
+  // Set this to false if you are using AMDClean for more than one build AND
+  // are using the onModuleBundleComplete Require.js hook
+  rememberGlobalObject: true
 })
 ```
 
