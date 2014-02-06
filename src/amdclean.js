@@ -716,9 +716,7 @@
             'createAst': function(obj) {
                 var filePath = obj.filePath,
                     code = obj.code || (filePath && publicAPI.env === 'node' ? publicAPI.readFile(filePath) : ''),
-                    esprimaDefaultOptions = publicAPI.defaultOptions.esprima,
-                    esprimaOptions = _.extend(esprimaDefaultOptions, (_.isPlainObject(obj.esprima) ? obj.esprima : {})),
-                    ast = {};
+                    esprimaOptions = publicAPI.options.esprima;
                 if(!code) {
                     throw new Error(publicAPI.errorMsgs.emptyCode);
                 } else {
