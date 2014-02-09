@@ -436,14 +436,24 @@ onModuleBundleComplete: function (data) {
 
 __What if I don't want all define() and require() method calls to be removed?__
 
- - If you don't want one or more define() and require() methods to be removed by `amdclean`, you have a few options.  If the module has a named module id associated with it, then you can add the associated module id to the `ignoreModules` option array.  If there is not an associated module id, then you must put a comment with only the words _amdclean_ on the same line or one line above the method in question.  For example, `amdclean` would not remove the `define()` method below:
+ - If you don't want one or more define() and require() methods to be removed by `amdclean`, you have a few options.  If the module has a named module id associated with it, then you can add the associated module id to the `ignoreModules` option array.  Like this:
+
+ ```javascript
+var amdclean = require('amdclean');
+amdclean.clean({
+  'code': 'define("randomExample", function() { console.log("I am a random example"); });',
+  'ignoreModules': ['randomExample']
+});
+ ```
+
+ If there is not an associated module id, then you must put a comment with only the words _amdclean_ on the same line or one line above the method in question.  For example, `amdclean` would not remove the `define()` method below:
 
  ```javascript
 // amdclean
 define('example', [], function() {});
  ```
 
-If you want to use different text than `amdclean`, you can customize the comment name by using the `ignoreModules` option.
+If you want to use different text than `amdclean`, you can customize the comment name by using the `commentCleanName` option.
 
 __Why are define() method placeholder functions inserted into my source?__
 
@@ -455,9 +465,9 @@ __How would I expose one or more modules as a global window property?__
 
 __I am having a scope problem with all of the local module variables.  What can I do?__
 
-- You can use the `globalObject` option to store all of your modules in a global object that uses the top-most function scope.
+- You can use the `globalObject` option to store all of your modules in a single global object that uses the top-most function scope.  You can even name that global object whatever you prefer by using the `globalObjectName` option.
 
 
-## Liense
+## License
 
 Copyright (c) 2014 Greg Franko Licensed under the MIT license.
