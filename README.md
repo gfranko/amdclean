@@ -387,6 +387,8 @@ amdclean.clean({
   ignoreModules: [],
   // Determines if all of the require() method calls will be removed
   removeAllRequires: false,
+  // Determines if all of the 'use strict' statements will be removed
+  removeUseStricts: true,
   // Allows you to pass an expression that will override shimmed modules return values
   // e.g. { 'backbone': 'window.Backbone' }
   shimOverrides: {},

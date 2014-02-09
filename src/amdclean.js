@@ -1,4 +1,4 @@
-/*! amdclean - v1.0.0 - 2014-02-09
+/*! amdclean - v1.1.0 - 2014-02-09
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko; Licensed MIT*/
 
@@ -34,13 +34,14 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            'VERSION': '1.0.0',
+            'VERSION': '1.1.0',
             // Default Options
             'defaultOptions': {
                 'globalObject': false,
                 'globalObjectName': 'amdclean',
                 'rememberGlobalObject': true,
                 'removeAllRequires': false,
+                'removeUseStricts': true,
                 'ignoreModules': [],
                 'escodegen': {
                     'comment': true
@@ -152,6 +153,16 @@
                     expression.type === 'CallExpression' &&
                     _.isPlainObject(expression.callee) &&
                     expression.callee.type === 'FunctionExpression');
+            },
+            // isUseStrict
+            // -----------
+            //  Returns if the current AST node is a 'use strict' expression
+            //  e.g. 'use strict'
+            'isUseStrict': function(expression) {
+                return (expression &&
+                    _.isPlainObject(expression) &&
+                    expression.type === 'Literal' &&
+                    expression.value === 'use strict');
             },
             // isAMDConditional
             // ----------------
@@ -353,7 +364,7 @@
                     isOptimized = obj.isOptimized,
                     callbackFunc = (function() {
                         var cbFunc = obj.callbackFunc;
-                        if(cbFunc.type === 'Identifier') {
+                        if(cbFunc.type === 'Identifier' && cbFunc.name !== 'undefined') {
                             cbFunc = {
                                 'type': 'FunctionExpression',
                                 'id': null,
@@ -383,7 +394,7 @@
                     dependencyNames = obj.dependencyNames,
                     options = publicAPI.options,
                     cb = (function() {
-                        if(callbackFunc.type === 'Literal' || isOptimized === true) {
+                        if(callbackFunc.type === 'Literal' || (callbackFunc.type === 'Identifier' && callbackFunc.name === 'undefined') || isOptimized === true) {
                             return callbackFunc;
                         } else {
                             return {
@@ -498,9 +509,13 @@
                             returnStatementArg;
                         // If the module has NO dependencies and the callback function is not empty
                         if(!depLength && callbackFunc && callbackFunc.type === 'FunctionExpression' && callbackFunc.body && _.isArray(callbackFunc.body.body) && callbackFunc.body.body.length) {
-                            body = callbackFunc.body.body;
+                            // Filter 'use strict' statements
+                            body = _.filter(callbackFunc.body.body, function(node) {
+                                if(publicAPI.options.removeUseStricts === true) return !publicAPI.isUseStrict(node.expression);
+                                else return node;
+                            });
                             // Returns an array of all return statements
-                            returnStatements = _.where(callbackFunc.body.body, { 'type': 'ReturnStatement' });
+                            returnStatements = _.where(body, { 'type': 'ReturnStatement' });
                             // If there is a return statement
                             if(returnStatements.length) {
                                 firstReturnStatement = returnStatements[0];
@@ -519,6 +534,12 @@
                                     }
                                 }
                             }
+                        } else if(callbackFunc && callbackFunc.type === 'FunctionExpression' && callbackFunc.body && _.isArray(callbackFunc.body.body) && callbackFunc.body.body.length === 0) {
+                            callbackFunc = {
+                                'type': 'Identifier',
+                                'name': 'undefined'
+                            };
+                            depLength = 0;
                         }
                         return callbackFunc;
                     }()),
