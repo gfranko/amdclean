@@ -153,6 +153,16 @@
                     _.isPlainObject(expression.callee) &&
                     expression.callee.type === 'FunctionExpression');
             },
+            // isUseStrict
+            // -----------
+            //  Returns if the current AST node is a 'use strict' expression
+            //  e.g. 'use strict'
+            'isUseStrict': function(expression) {
+                return (expression &&
+                    _.isPlainObject(expression) &&
+                    expression.type === 'Literal' &&
+                    expression.value === 'use strict');
+            },
             // isAMDConditional
             // ----------------
             //  Returns if the current AST node is an if statement AMD check
@@ -350,6 +360,7 @@
             'convertToIIFEDeclaration': function(obj) {
                 var moduleName = obj.moduleName,
                     callbackFuncParams = obj.callbackFuncParams,
+                    isOptimized = obj.isOptimized,
                     callbackFunc = (function() {
                         var cbFunc = obj.callbackFunc;
                         if(cbFunc.type === 'Identifier') {
@@ -381,23 +392,29 @@
                     }()),
                     dependencyNames = obj.dependencyNames,
                     options = publicAPI.options,
-                    cb = {
-                        'type': 'CallExpression',
-                        'callee': {
-                            'type': 'FunctionExpression',
-                            'id': {
-                                'type': 'Identifier',
-                                'name': ''
-                            },
-                            'params': callbackFuncParams,
-                            'defaults': [],
-                            'body': callbackFunc.body,
-                            'rest': callbackFunc.rest,
-                            'generator': callbackFunc.generator,
-                            'expression': callbackFunc.expression
-                        },
-                        'arguments': dependencyNames
-                    },
+                    cb = (function() {
+                        if(callbackFunc.type === 'Literal' || isOptimized === true) {
+                            return callbackFunc;
+                        } else {
+                            return {
+                                'type': 'CallExpression',
+                                'callee': {
+                                    'type': 'FunctionExpression',
+                                    'id': {
+                                        'type': 'Identifier',
+                                        'name': ''
+                                    },
+                                    'params': callbackFuncParams,
+                                    'defaults': [],
+                                    'body': callbackFunc.body,
+                                    'rest': callbackFunc.rest,
+                                    'generator': callbackFunc.generator,
+                                    'expression': callbackFunc.expression
+                                },
+                                'arguments': dependencyNames
+                            }
+                        }
+                    }()),
                     updatedNode = (function() {
                         if(options.globalObject === true && options.globalObjectName) {
                             return {
@@ -418,7 +435,7 @@
                                             'raw': "" + moduleName + ""
                                         }
                                     },
-                                    "right": cb
+                                    'right': cb
                                 }
                             };
                         } else {
@@ -447,6 +464,7 @@
             'convertToFunctionExpression': function(obj) {
                 var isDefine = obj.isDefine,
                     isRequire = obj.isRequire,
+                    isOptimized = false,
                     node = obj.node,
                     moduleName  = obj.moduleName,
                     dependencies = obj.dependencies,
@@ -482,7 +500,33 @@
                         }
                         return deps;
                     }()),
-                    callbackFunc = obj.moduleReturnValue,
+                    callbackFunc = (function() {
+                        var callbackFunc = obj.moduleReturnValue,
+                            body,
+                            returnStatements,
+                            firstReturnStatement;
+                        // If the module has NO dependencies and the callback function is not empty
+                        if(!depLength && callbackFunc && callbackFunc.type === 'FunctionExpression' && callbackFunc.body && _.isArray(callbackFunc.body.body) && callbackFunc.body.body.length) {
+                            body = callbackFunc.body.body;
+                            // Returns an array of all return statements
+                            returnStatements = _.where(callbackFunc.body.body, { 'type': 'ReturnStatement' });
+                            // If there is only one AST child node in the body of the modula and there is a return statement
+                            if(returnStatements.length) {
+                                firstReturnStatement = returnStatements[0];
+                                if(firstReturnStatement) {
+                                    if(!publicAPI.isFunctionExpression(firstReturnStatement) && body.length > 1) {
+                                        return callbackFunc;
+                                    }
+                                    callbackFunc = firstReturnStatement.argument;
+                                    isOptimized = true;
+                                    if(callbackFunc.params) {
+                                        depLength = callbackFunc.params.length
+                                    }
+                                }
+                            }
+                        }
+                        return callbackFunc;
+                    }()),
                     hasReturnStatement = (function() {
                         var returns = [];
                         if(callbackFunc && callbackFunc.body && _.isArray(callbackFunc.body.body)) {
@@ -537,7 +581,8 @@
                         dependencyNames: dependencyNames,
                         callbackFuncParams: callbackFuncParams,
                         hasExportsParam: hasExportsParam,
-                        callbackFunc: callbackFunc
+                        callbackFunc: callbackFunc,
+                        isOptimized: isOptimized
                     });
                 } else if(isRequire) {
                     return publicAPI.convertToIIFE({
