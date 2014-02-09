@@ -500,13 +500,16 @@
                             body = callbackFunc.body.body;
                             // Returns an array of all return statements
                             returnStatements = _.where(callbackFunc.body.body, { 'type': 'ReturnStatement' });
-                            // If there is only one AST child node in the body of the modula and there is a return statement
+                            // If there is a return statement
                             if(returnStatements.length) {
                                 firstReturnStatement = returnStatements[0];
-                                if(firstReturnStatement) {
-                                    if(!publicAPI.isFunctionExpression(firstReturnStatement) && body.length > 1) {
-                                        return callbackFunc;
-                                    }
+                                // If something other than a function expression is getting returned
+                                // and there is more than one AST child node in the factory function
+                                // return early
+                                if(!publicAPI.isFunctionExpression(firstReturnStatement) && body.length > 1) {
+                                    return callbackFunc;
+                                } else {
+                                    // Optimize the AMD module by setting the callback function to the return statement argument
                                     callbackFunc = firstReturnStatement.argument;
                                     isOptimized = true;
                                     if(callbackFunc.params) {
