@@ -1,4 +1,4 @@
-/*! amdclean - v0.6.2 - 2014-01-26
+/*! amdclean - v0.7.0 - 2014-02-08
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko; Licensed MIT*/
 
@@ -34,7 +34,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            'VERSION': '0.6.2',
+            'VERSION': '0.7.0',
             // Default Options
             'defaultOptions': {
                 'globalObject': false,
@@ -42,10 +42,14 @@
                 'rememberGlobalObject': true,
                 'removeAllRequires': false,
                 'ignoreModules': [],
-                'escodegen': {},
+                'escodegen': {
+                    'comment': true
+                },
                 'esprima': {
                     'comment': true,
-                    'loc': true
+                    'loc': true,
+                    'range': true,
+                    'tokens': true
                 },
                 'globalModules': [],
                 'commentCleanName': 'amdclean',
@@ -346,6 +350,7 @@
             'convertToIIFEDeclaration': function(obj) {
                 var moduleName = obj.moduleName,
                     callbackFuncParams = obj.callbackFuncParams,
+                    isOptimized = obj.isOptimized,
                     callbackFunc = (function() {
                         var cbFunc = obj.callbackFunc;
                         if(cbFunc.type === 'Identifier') {
@@ -377,23 +382,29 @@
                     }()),
                     dependencyNames = obj.dependencyNames,
                     options = publicAPI.options,
-                    cb = {
-                        'type': 'CallExpression',
-                        'callee': {
-                            'type': 'FunctionExpression',
-                            'id': {
-                                'type': 'Identifier',
-                                'name': ''
-                            },
-                            'params': callbackFuncParams,
-                            'defaults': [],
-                            'body': callbackFunc.body,
-                            'rest': callbackFunc.rest,
-                            'generator': callbackFunc.generator,
-                            'expression': callbackFunc.expression
-                        },
-                        'arguments': dependencyNames
-                    },
+                    cb = (function() {
+                        if(callbackFunc.type === 'Literal' || isOptimized === true) {
+                            return callbackFunc;
+                        } else {
+                            return {
+                                'type': 'CallExpression',
+                                'callee': {
+                                    'type': 'FunctionExpression',
+                                    'id': {
+                                        'type': 'Identifier',
+                                        'name': ''
+                                    },
+                                    'params': callbackFuncParams,
+                                    'defaults': [],
+                                    'body': callbackFunc.body,
+                                    'rest': callbackFunc.rest,
+                                    'generator': callbackFunc.generator,
+                                    'expression': callbackFunc.expression
+                                },
+                                'arguments': dependencyNames
+                            };
+                        }
+                    }()),
                     updatedNode = (function() {
                         if(options.globalObject === true && options.globalObjectName) {
                             return {
@@ -414,7 +425,7 @@
                                             'raw': "" + moduleName + ""
                                         }
                                     },
-                                    "right": cb
+                                    'right': cb
                                 }
                             };
                         } else {
@@ -443,6 +454,7 @@
             'convertToFunctionExpression': function(obj) {
                 var isDefine = obj.isDefine,
                     isRequire = obj.isRequire,
+                    isOptimized = false,
                     node = obj.node,
                     moduleName  = obj.moduleName,
                     dependencies = obj.dependencies,
@@ -478,7 +490,36 @@
                         }
                         return deps;
                     }()),
-                    callbackFunc = obj.moduleReturnValue,
+                    callbackFunc = (function() {
+                        var callbackFunc = obj.moduleReturnValue,
+                            body,
+                            returnStatements,
+                            firstReturnStatement;
+                        // If the module has NO dependencies and the callback function is not empty
+                        if(!depLength && callbackFunc && callbackFunc.type === 'FunctionExpression' && callbackFunc.body && _.isArray(callbackFunc.body.body) && callbackFunc.body.body.length) {
+                            body = callbackFunc.body.body;
+                            // Returns an array of all return statements
+                            returnStatements = _.where(callbackFunc.body.body, { 'type': 'ReturnStatement' });
+                            // If there is a return statement
+                            if(returnStatements.length) {
+                                firstReturnStatement = returnStatements[0];
+                                // If something other than a function expression is getting returned
+                                // and there is more than one AST child node in the factory function
+                                // return early
+                                if(!publicAPI.isFunctionExpression(firstReturnStatement) && body.length > 1) {
+                                    return callbackFunc;
+                                } else {
+                                    // Optimize the AMD module by setting the callback function to the return statement argument
+                                    callbackFunc = firstReturnStatement.argument;
+                                    isOptimized = true;
+                                    if(callbackFunc.params) {
+                                        depLength = callbackFunc.params.length;
+                                    }
+                                }
+                            }
+                        }
+                        return callbackFunc;
+                    }()),
                     hasReturnStatement = (function() {
                         var returns = [];
                         if(callbackFunc && callbackFunc.body && _.isArray(callbackFunc.body.body)) {
@@ -533,7 +574,8 @@
                         dependencyNames: dependencyNames,
                         callbackFuncParams: callbackFuncParams,
                         hasExportsParam: hasExportsParam,
-                        callbackFunc: callbackFunc
+                        callbackFunc: callbackFunc,
+                        isOptimized: isOptimized
                     });
                 } else if(isRequire) {
                     return publicAPI.convertToIIFE({
@@ -712,8 +754,7 @@
             'createAst': function(obj) {
                 var filePath = obj.filePath,
                     code = obj.code || (filePath && publicAPI.env === 'node' ? publicAPI.readFile(filePath) : ''),
-                    esprimaDefaultOptions = publicAPI.defaultOptions.esprima,
-                    esprimaOptions = _.extend(esprimaDefaultOptions, (_.isPlainObject(obj.esprima) ? obj.esprima : {}));
+                    esprimaOptions = publicAPI.options.esprima;
                 if(!code) {
                     throw new Error(publicAPI.errorMsgs.emptyCode);
                 } else {
@@ -751,10 +792,17 @@
             // ------------
             //  Returns standard JavaScript generated by Escodegen
             'generateCode': function(ast, options) {
+                var esprimaOptions = options.esprima || {},
+                    escodegenOptions = options.escodegen || {};
                 if(!_.isPlainObject(escodegen) || !_.isFunction(escodegen.generate)) {
                     throw new Error(publicAPI.errorMsgs.escodegen);
                 }
-                return escodegen.generate(ast, options);
+                // Check if both the esprima and escodegen comment options are set to true
+                if(esprimaOptions.comment === true && escodegenOptions.comment === true) {
+                    // Needed to keep source code comments when generating the code with escodegen
+                    ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
+                }
+                return escodegen.generate(ast, escodegenOptions);
             },
             // clean
             // -----
@@ -762,12 +810,10 @@
             'clean': function(obj) {
                 var code = {},
                     ast = {},
-                    options = {};
-
-                publicAPI.options = publicAPI.defaultOptions;
-                if(_.isPlainObject(obj)) {
-                    publicAPI.options = options = _.extend({}, publicAPI.options, obj);
-                }
+                    options = {},
+                    defaultOptions = _.cloneDeep(publicAPI.defaultOptions) || {},
+                    userOptions = _.cloneDeep(obj) || {};
+                publicAPI.options = options = _.merge(defaultOptions, userOptions);
                 if(!_ || !_.isPlainObject) {
                     throw new Error(publicAPI.errorMsgs.lodash);
                 }
@@ -858,7 +904,7 @@
                         'kind': 'var'
                     });
                 }
-                return publicAPI.generateCode(ast, options.escodegen);
+                return publicAPI.generateCode(ast, options);
             }
         };
         // Returns the public API for node and web environments

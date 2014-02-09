@@ -38,12 +38,11 @@ So, you get great code cleanliness with AMD, reduced file sizes, improved code r
 
 ## Restrictions
 
-**Note:** Same restrictions as almond.js, plus a few more.
+**Note:** Same restrictions as almond.js.
 
 It is best used for libraries or apps that use AMD and:
 
 * optimize all the modules into one file -- no dynamic code loading.
-* do not use AMD loader plugins (e.g. text! plugin)
 * only have **one** require.config() call
 
 
@@ -55,9 +54,9 @@ It is best used for libraries or apps that use AMD and:
 
 * [Simplified CJS wrapper](https://github.com/jrburke/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#wiki-cjs)
 
-* Exporting global modules to the `window` object
+* Exporting global modules to the global `window` object
 
-* Storing all local modules inside of a global object (Helps scoping issues for certain use cases)
+* Storing all local modules inside of a single global object (Helps scoping issues for certain use cases)
 
 ## Download
 
@@ -230,6 +229,42 @@ var example = function () {
 _AMD_
 
 ```javascript
+define('example', [], function() {
+  return function(name) {
+    return 'Hello ' + name;
+  };
+});
+```
+
+_Standard_
+
+```javascript
+var example = function (name) {
+  return 'Hello ' + name;
+};
+```
+
+---
+
+_AMD_
+
+```javascript
+define('example', [], function() {
+  return 'I love AMDClean';
+});
+```
+
+_Standard_
+
+```javascript
+var example = 'I love AMDClean';
+```
+
+---
+
+_AMD_
+
+```javascript
 define('example', ['example1', 'example2'], function(one, two) {
 
 });
@@ -261,7 +296,7 @@ define("backbone", ["underscore","jquery"], (function (global) {
 _Standard_
 
 ```javascript
-var backbone=window.Backbone;
+var backbone = window.Backbone;
 ```
 
 ---
@@ -325,7 +360,7 @@ _Standard_
 
 ##Options
 
-The amdclean `clean()` method accepts a string or an object.  Below is an example objects with all of the available configuration options:
+The amdclean `clean()` method accepts a string or an object.  Below is an example object with all of the available configuration options:
 
 ```javascript
 amdclean.clean({
@@ -407,14 +442,24 @@ onModuleBundleComplete: function (data) {
 
 __What if I don't want all define() and require() method calls to be removed?__
 
- - If you don't want one or more define() and require() methods to be removed by `amdclean`, you have a few options.  If the module has a named module id associated with it, then you can add the associated module id to the `ignoreModules` option array.  If there is not an associated module id, then you must put a comment with only the words _amdclean_ on the same line or one line above the method in question.  For example, `amdclean` would not remove the `define()` method below:
+ - If you don't want one or more define() and require() methods to be removed by `amdclean`, you have a few options.  If the module has a named module id associated with it, then you can add the associated module id to the `ignoreModules` option array.  Like this:
+
+ ```javascript
+var amdclean = require('amdclean');
+amdclean.clean({
+    'code': 'define("randomExample", function() { console.log("I am a random example"); });',
+    'ignoreModules': ['randomExample']
+});
+ ```
+
+ If there is not an associated module id, then you must put a comment with only the words _amdclean_ on the same line or one line above the method in question.  For example, `amdclean` would not remove the `define()` method below:
 
  ```javascript
 // amdclean
 define('example', [], function() {});
  ```
 
-If you want to use different text than `amdclean`, you can customize the comment name by using the `ignoreModules` option.
+If you want to use different text than `amdclean`, you can customize the comment name by using the `commentCleanName` option.
 
 __Why are define() method placeholder functions inserted into my source?__
 
@@ -426,9 +471,9 @@ __How would I expose one or more modules as a global window property?__
 
 __I am having a scope problem with all of the local module variables.  What can I do?__
 
-- You can use the `globalObject` option to store all of your modules in a global object that uses the top-most function scope.
+- You can use the `globalObject` option to store all of your modules in a single global object that uses the top-most function scope.  You can even name that global object whatever you prefer by using the `globalObjectName` option.
 
 
-## Liense
+## License
 
 Copyright (c) 2014 Greg Franko Licensed under the MIT license.
