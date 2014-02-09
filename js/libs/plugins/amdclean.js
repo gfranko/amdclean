@@ -1,4 +1,4 @@
-/*! amdclean - v0.7.1 - 2014-02-08
+/*! amdclean - v1.0.0 - 2014-02-09
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko; Licensed MIT*/
 
@@ -34,7 +34,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            'VERSION': '0.7.1',
+            'VERSION': '1.0.0',
             // Default Options
             'defaultOptions': {
                 'globalObject': false,
