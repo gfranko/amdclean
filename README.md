@@ -230,7 +230,7 @@ _AMD_
 define('example', [], function() {
   return function(name) {
     return 'Hello ' + name;
-  }
+  };
 });
 ```
 
@@ -294,7 +294,7 @@ define("backbone", ["underscore","jquery"], (function (global) {
 _Standard_
 
 ```javascript
-var backbone=window.Backbone;
+var backbone = window.Backbone;
 ```
 
 ---
@@ -358,7 +358,7 @@ _Standard_
 
 ##Options
 
-The amdclean `clean()` method accepts a string or an object.  Below is an example objects with all of the available configuration options:
+The amdclean `clean()` method accepts a string or an object.  Below is an example object with all of the available configuration options:
 
 ```javascript
 amdclean.clean({
@@ -441,8 +441,8 @@ __What if I don't want all define() and require() method calls to be removed?__
  ```javascript
 var amdclean = require('amdclean');
 amdclean.clean({
-  'code': 'define("randomExample", function() { console.log("I am a random example"); });',
-  'ignoreModules': ['randomExample']
+    'code': 'define("randomExample", function() { console.log("I am a random example"); });',
+    'ignoreModules': ['randomExample']
 });
  ```
 
