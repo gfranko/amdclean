@@ -20,10 +20,10 @@ module.exports = function(grunt) {
             'mobile': 'init/MobileInit'
           },
           wrap: true,
-          preserveLicenseComments: false,
           optimize: 'none',
           // name: '../libs/almond',
           mainConfigFile: './js/app/config/config.js',
+          useStrict: true,
           include: ['mobile'],
           out: './js/app/init/MobileInit.min.js',
           onModuleBundleComplete: amdclean_logic
@@ -46,6 +46,7 @@ module.exports = function(grunt) {
           preserveLicenseComments: false,
           optimize: 'none',
           mainConfigFile: './js/app/config/config.js',
+          useStrict: true,
           include: ['desktop'],
           out: './js/app/init/DesktopInit.min.js',
           onModuleBundleComplete: amdclean_logic
