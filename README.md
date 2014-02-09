@@ -36,12 +36,11 @@ So, you get great code cleanliness with AMD, reduced file sizes, improved code r
 
 ## Restrictions
 
-**Note:** Same restrictions as almond.js, plus a few more.
+**Note:** Same restrictions as almond.js.
 
 It is best used for libraries or apps that use AMD and:
 
 * optimize all the modules into one file -- no dynamic code loading.
-* do not use AMD loader plugins (e.g. text! plugin)
 * only have **one** require.config() call
 
 
@@ -53,9 +52,9 @@ It is best used for libraries or apps that use AMD and:
 
 * [Simplified CJS wrapper](https://github.com/jrburke/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#wiki-cjs)
 
-* Exporting global modules to the `window` object
+* Exporting global modules to the global `window` object
 
-* Storing all local modules inside of a global object (Helps scoping issues for certain use cases)
+* Storing all local modules inside of a single global object (Helps scoping issues for certain use cases)
 
 ## Download
 
@@ -221,6 +220,42 @@ _Standard_
 var example = function () {
 
 }();
+```
+
+---
+
+_AMD_
+
+```javascript
+define('example', [], function() {
+  return function(name) {
+    return 'Hello ' + name;
+  }
+});
+```
+
+_Standard_
+
+```javascript
+var example = function (name) {
+  return 'Hello ' + name;
+};
+```
+
+---
+
+_AMD_
+
+```javascript
+define('example', [], function() {
+  return 'I love AMDClean';
+});
+```
+
+_Standard_
+
+```javascript
+var example = 'I love AMDClean';
 ```
 
 ---
