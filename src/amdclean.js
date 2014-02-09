@@ -153,16 +153,6 @@
                     _.isPlainObject(expression.callee) &&
                     expression.callee.type === 'FunctionExpression');
             },
-            // isUseStrict
-            // -----------
-            //  Returns if the current AST node is a 'use strict' expression
-            //  e.g. 'use strict'
-            'isUseStrict': function(expression) {
-                return (expression &&
-                    _.isPlainObject(expression) &&
-                    expression.type === 'Literal' &&
-                    expression.value === 'use strict');
-            },
             // isAMDConditional
             // ----------------
             //  Returns if the current AST node is an if statement AMD check
@@ -412,7 +402,7 @@
                                     'expression': callbackFunc.expression
                                 },
                                 'arguments': dependencyNames
-                            }
+                            };
                         }
                     }()),
                     updatedNode = (function() {
@@ -520,7 +510,7 @@
                                     callbackFunc = firstReturnStatement.argument;
                                     isOptimized = true;
                                     if(callbackFunc.params) {
-                                        depLength = callbackFunc.params.length
+                                        depLength = callbackFunc.params.length;
                                     }
                                 }
                             }
