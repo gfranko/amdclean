@@ -1,4 +1,4 @@
-/*! amdclean - v0.7.0 - 2014-02-08
+/*! amdclean - v0.7.1 - 2014-02-08
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko; Licensed MIT*/
 
@@ -34,7 +34,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            'VERSION': '0.7.0',
+            'VERSION': '0.7.1',
             // Default Options
             'defaultOptions': {
                 'globalObject': false,
@@ -494,7 +494,8 @@
                         var callbackFunc = obj.moduleReturnValue,
                             body,
                             returnStatements,
-                            firstReturnStatement;
+                            firstReturnStatement,
+                            returnStatementArg;
                         // If the module has NO dependencies and the callback function is not empty
                         if(!depLength && callbackFunc && callbackFunc.type === 'FunctionExpression' && callbackFunc.body && _.isArray(callbackFunc.body.body) && callbackFunc.body.body.length) {
                             body = callbackFunc.body.body;
@@ -503,14 +504,15 @@
                             // If there is a return statement
                             if(returnStatements.length) {
                                 firstReturnStatement = returnStatements[0];
+                                returnStatementArg = firstReturnStatement.argument;
                                 // If something other than a function expression is getting returned
                                 // and there is more than one AST child node in the factory function
                                 // return early
-                                if(!publicAPI.isFunctionExpression(firstReturnStatement) && body.length > 1) {
+                                if((!publicAPI.isFunctionExpression(firstReturnStatement) && body.length > 1) || (returnStatementArg && returnStatementArg.type === 'Identifier')) {
                                     return callbackFunc;
                                 } else {
                                     // Optimize the AMD module by setting the callback function to the return statement argument
-                                    callbackFunc = firstReturnStatement.argument;
+                                    callbackFunc = returnStatementArg;
                                     isOptimized = true;
                                     if(callbackFunc.params) {
                                         depLength = callbackFunc.params.length;
@@ -799,8 +801,10 @@
                 }
                 // Check if both the esprima and escodegen comment options are set to true
                 if(esprimaOptions.comment === true && escodegenOptions.comment === true) {
-                    // Needed to keep source code comments when generating the code with escodegen
-                    ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
+                    try {
+                        // Needed to keep source code comments when generating the code with escodegen
+                        ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
+                    } catch(e) {}
                 }
                 return escodegen.generate(ast, escodegenOptions);
             },
