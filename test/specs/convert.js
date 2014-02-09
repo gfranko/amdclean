@@ -204,6 +204,13 @@ describe('amdclean specs', function() {
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
 
+				it('should not optimize basic define() methods that return an identifier', function() {
+					var AMDcode = "define('jquery', [], function() {return jQuery;});",
+						cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+						standardJavaScript = "var jquery=function (){return jQuery;}();";
+					expect(cleanedCode).toBe(standardJavaScript);
+				});
+
 			});
 
 		});
