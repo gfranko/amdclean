@@ -420,7 +420,7 @@ If your PR is a code change:
 
 __Why would I use amdclean instead of Almond.js?__
 
- - Although Almond is very small (~1k gzipped and minified), most JavaScript library authors do not want to have to include it in their library's source code.  If you are not using an AMD plugin, then amdclean provides the benefit of AMD without increasing your library's file size.
+ - Although Almond is very small (~1k gzipped and minified), most JavaScript library authors do not want to have to include it in their library's source code.  AMDClean allows you to use AMD without increasing your library's file size.
 
 __AMDClean does not seem to be cleaning shimmed modules.  What am I doing wrong?__
 
@@ -437,6 +437,14 @@ onModuleBundleComplete: function (data) {
   }));
 }
  ```
+ 
+__Is AMDClean only for libraries, or can I use it for my web app?__
+
+ - You can use it for both!  The [0.6.0](https://github.com/gfranko/amdclean/releases/tag/0.6.0) release provided support for web apps.
+
+__My comments seem to be getting removed when I use AMDClean.  What am I doing wrong?__
+
+ - Before the `1.0.0` release, this was the default behavior.  If you update to `1.0.0` or later, you should see your comments still there after the cleaning process.  Also, if you would like your comments to be removed, then you can set the `comment` **escodegen** option to `false`.
 
 __What if I don't want all define() and require() method calls to be removed?__
 
