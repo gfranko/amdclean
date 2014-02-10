@@ -26,7 +26,7 @@ A build tool that converts AMD code to standard JavaScript.
 
 ## Why
 
-Many developers like to use the AMD API to write modular JavaScript, but do not want to include a full AMD loader (e.g. [require.js](https://github.com/jrburke/requirejs)), or AMD shim (e.g. [almond.js](https://github.com/jrburke/almond)) because of file size/source code readability.
+Many developers like to use the AMD API to write modular JavaScript, but do not want to include a full AMD loader (e.g. [require.js](https://github.com/jrburke/requirejs)), or AMD shim (e.g. [almond.js](https://github.com/jrburke/almond)) because of file size/source code readability concerns.
 
 By incorporating amdclean.js into the build process, there is no need for Require or Almond.
 
@@ -34,17 +34,12 @@ Since AMDclean rewrites your source code into standard JavaScript, it is a great
 fit for JavaScript library authors who want a tiny download in one file after using the
 [RequireJS Optimizer](http://requirejs.org/docs/optimization.html).
 
-So, you get great code cleanliness with AMD, reduced file sizes, improved code readability, and easy integration with other developers who may not use AMD.
-
 
 ## Restrictions
 
 **Note:** Same restrictions as almond.js.
 
-It is best used for libraries or apps that use AMD and:
-
-* optimize all the modules into one file -- no dynamic code loading.
-* only have **one** require.config() call
+It is best used for libraries or apps that use AMD and optimize all the modules into one file -- no dynamic code loading.
 
 
 ##What is Supported
