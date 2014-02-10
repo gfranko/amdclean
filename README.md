@@ -418,7 +418,7 @@ If your PR is a code change:
 
 ## FAQ
 
-__Why would I use amdclean instead of Almond.js?__
+__Why would I use AMDClean instead of Almond.js?__
 
  - Although Almond is very small (~1k gzipped and minified), most JavaScript library authors do not want to have to include it in their library's source code.  AMDClean allows you to use AMD without increasing your library's file size.
 
