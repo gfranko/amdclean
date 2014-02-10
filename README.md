@@ -65,7 +65,7 @@ Web - [Latest release](https://github.com/gfranko/amdclean/blob/master/src/amdcl
 
 There are a few different ways that amdclean can be used including:
 
-* With the RequireJS Optimizer (Grunt is also supported)
+* With the RequireJS Optimizer (plain node, Grunt, Gulp, etc)
 
 * As a standalone node module
 
