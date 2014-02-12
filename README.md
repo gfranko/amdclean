@@ -170,10 +170,10 @@ var cleanedCode = cleanAMD.clean(code);
 
 ```html
 <script src="http://esprima.org/esprima.js"></script>
-<script src="http://esprima.org/test/3rdparty/escodegen.browser.js"></script>
-<script src="http://gregfranko.com/javascripts/estraverse.js"></script>
+<script src="http://constellation.github.io/escodegen/escodegen.browser.js"></script>
+<script src="https://rawgithub.com/Constellation/estraverse/master/estraverse.js"></script>
 <script src="http://cdnjs.cloudflare.com/ajax/libs/lodash.js/2.2.1/lodash.js"></script>
-<script src="http://gregfranko.com/javascripts/amdclean.js"></script>
+<script src="https://rawgithub.com/gfranko/amdclean/master/src/amdclean.js"></script>
 ```
 
 * Use the global `amdclean` object and `clean()` method
