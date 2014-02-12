@@ -26,7 +26,7 @@ A build tool that converts AMD code to standard JavaScript.
 
 ## Why
 
-Many developers like to use the AMD API to write modular JavaScript, but do not want to include a full AMD loader (e.g. [require.js](https://github.com/jrburke/requirejs)), or AMD shim (e.g. [almond.js](https://github.com/jrburke/almond)) because of file size/source code readability.
+Many developers like to use the AMD API to write modular JavaScript, but do not want to include a full AMD loader (e.g. [require.js](https://github.com/jrburke/requirejs)), or AMD shim (e.g. [almond.js](https://github.com/jrburke/almond)) because of file size/source code readability concerns.
 
 By incorporating amdclean.js into the build process, there is no need for Require or Almond.
 
@@ -34,17 +34,12 @@ Since AMDclean rewrites your source code into standard JavaScript, it is a great
 fit for JavaScript library authors who want a tiny download in one file after using the
 [RequireJS Optimizer](http://requirejs.org/docs/optimization.html).
 
-So, you get great code cleanliness with AMD, reduced file sizes, improved code readability, and easy integration with other developers who may not use AMD.
-
 
 ## Restrictions
 
 **Note:** Same restrictions as almond.js.
 
-It is best used for libraries or apps that use AMD and:
-
-* optimize all the modules into one file -- no dynamic code loading.
-* only have **one** require.config() call
+It is best used for libraries or apps that use AMD and optimize all the modules into one file -- no dynamic code loading.
 
 
 ##What is Supported
@@ -70,7 +65,7 @@ Web - [Latest release](https://github.com/gfranko/amdclean/blob/master/src/amdcl
 
 There are a few different ways that amdclean can be used including:
 
-* With the RequireJS Optimizer (Grunt is also supported)
+* With the RequireJS Optimizer (plain node, Grunt, Gulp, etc)
 
 * As a standalone node module
 
@@ -175,10 +170,10 @@ var cleanedCode = cleanAMD.clean(code);
 
 ```html
 <script src="http://esprima.org/esprima.js"></script>
-<script src="http://esprima.org/test/3rdparty/escodegen.browser.js"></script>
-<script src="http://gregfranko.com/javascripts/estraverse.js"></script>
+<script src="http://constellation.github.io/escodegen/escodegen.browser.js"></script>
+<script src="https://rawgithub.com/Constellation/estraverse/master/estraverse.js"></script>
 <script src="http://cdnjs.cloudflare.com/ajax/libs/lodash.js/2.2.1/lodash.js"></script>
-<script src="http://gregfranko.com/javascripts/amdclean.js"></script>
+<script src="https://rawgithub.com/gfranko/amdclean/master/src/amdclean.js"></script>
 ```
 
 * Use the global `amdclean` object and `clean()` method
@@ -423,9 +418,9 @@ If your PR is a code change:
 
 ## FAQ
 
-__Why would I use amdclean instead of Almond.js?__
+__Why would I use AMDClean instead of Almond.js?__
 
- - Although Almond is very small (~1k gzipped and minified), most JavaScript library authors do not want to have to include it in their library's source code.  If you are not using an AMD plugin, then amdclean provides the benefit of AMD without increasing your library's file size.
+ - Although Almond is very small (~1k gzipped and minified), most JavaScript library authors do not want to have to include it in their library's source code.  AMDClean allows you to use AMD without increasing your library's file size.
 
 __AMDClean does not seem to be cleaning shimmed modules.  What am I doing wrong?__
 
@@ -442,6 +437,14 @@ onModuleBundleComplete: function (data) {
   }));
 }
  ```
+ 
+__Is AMDClean only for libraries, or can I use it for my web app?__
+
+ - You can use it for both!  The [0.6.0](https://github.com/gfranko/amdclean/releases/tag/0.6.0) release provided support for web apps.
+
+__My comments seem to be getting removed when I use AMDClean.  What am I doing wrong?__
+
+ - Before the `1.0.0` release, this was the default behavior.  If you update to `1.0.0` or later, you should see your comments still there after the cleaning process.  Also, if you would like your comments to be removed, then you can set the `comment` **escodegen** option to `false`.
 
 __What if I don't want all define() and require() method calls to be removed?__
 
