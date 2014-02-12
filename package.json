@@ -1,6 +1,6 @@
 {
   "name": "amdclean",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A build tool that converts AMD code to standard JavaScript",
   "main": "./src/amdclean",
   "repository": {
