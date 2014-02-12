@@ -21,7 +21,6 @@ module.exports = function(grunt) {
           },
           wrap: true,
           optimize: 'none',
-          // name: '../libs/almond',
           mainConfigFile: './js/app/config/config.js',
           useStrict: true,
           include: ['mobile'],
@@ -43,7 +42,6 @@ module.exports = function(grunt) {
             'desktop': 'init/DesktopInit'
           },
           wrap: true,
-          preserveLicenseComments: false,
           optimize: 'none',
           mainConfigFile: './js/app/config/config.js',
           useStrict: true,

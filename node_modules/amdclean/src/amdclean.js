@@ -13,23 +13,63 @@
         }
         factory.amd = true;
         define(['esprima', 'estraverse', 'escodegen', 'underscore'], function(esprima, estraverse, escodegen, underscore) {
-            return factory({ 'esprima': esprima, 'estraverse': estraverse, 'escodegen': escodegen, 'underscore': underscore });
+            return factory({
+                'esprima': esprima,
+                'estraverse': estraverse,
+                'escodegen': escodegen,
+                'underscore': underscore
+            }, root);
         });
     } else if (typeof exports !== 'undefined') {
         factory.env = 'node';
-        factory();
+        factory(null, root);
     } else {
         factory.env = 'web';
-        root.amdclean = factory();
+        root.amdclean = factory(null, root);
     }
-}(this, function cleanamd(amdDependencies) {
+}(this, function cleanamd(amdDependencies, scope) {
+    'use strict';
+    amdDependencies = amdDependencies || {};
     // Environment - either node or web
     var codeEnv = cleanamd.env,
+        that = scope,
         // Third-Party Dependencies
-        esprima = cleanamd.amd ? amdDependencies.esprima : codeEnv === 'node' ? require('esprima') : window.esprima,
-        estraverse = cleanamd.amd ? amdDependencies.estraverse : codeEnv === 'node' ? require('estraverse'): window.estraverse,
-        escodegen = cleanamd.amd ? amdDependencies.escodegen && amdDependencies.escodegen.generate ? amdDependencies.escodegen : codeEnv === 'node' ? require('escodegen') : window.escodegen : require('escodegen'),
-        _ = cleanamd.amd ? amdDependencies.underscore : codeEnv === 'node' ? require('lodash'): window._,
+        esprima = (function() {
+            if(cleanamd.amd && amdDependencies.esprima) {
+                return amdDependencies.esprima;
+            } else if(that && that.esprima) {
+                return that.esprima;
+            } else if(codeEnv === 'node') {
+                return require('esprima');
+            }
+        }()),
+        estraverse = (function() {
+            if(cleanamd.amd && amdDependencies.estraverse) {
+                return amdDependencies.estraverse;
+            } else if(that && that.estraverse) {
+                return that.estraverse;
+            } else if(codeEnv === 'node') {
+                return require('estraverse');
+            }
+        }()),
+        escodegen = (function() {
+            if(cleanamd.amd && amdDependencies.escodegen) {
+                return amdDependencies.escodegen;
+            } else if(that && that.escodegen) {
+                return that.escodegen;
+            } else if(codeEnv === 'node') {
+                return require('escodegen');
+            }
+        }()),
+        _ = (function() {
+            if(cleanamd.amd && amdDependencies.underscore) {
+                return amdDependencies.underscore;
+            } else if(that && that._) {
+                return that._;
+            } else if(codeEnv === 'node') {
+                return require('lodash');
+            }
+        }()),
         fs = codeEnv === 'node' ? require('fs'): {}, // End Third-Party Dependencies
         // The Public API object
         publicAPI = {
@@ -382,7 +422,7 @@
                                                 },
                                                 'arguments': []
                                             }
-                                    }],
+                                    }]
                                 },
                                 'rest': null,
                                 'generator': false,
@@ -864,10 +904,10 @@
                                     }
                                 });
                             } else if(publicAPI.isRequireExpression(node)) {
-                                if(node.arguments && node.arguments[0] && node.arguments[0].value) {
+                                if(node['arguments'] && node['arguments'][0] && node['arguments'][0].value) {
                                     return {
                                         'type': 'Identifier',
-                                        'name': publicAPI.normalizeModuleName(node.arguments[0].value)
+                                        'name': publicAPI.normalizeModuleName(node['arguments'][0].value)
                                     };
                                 } else {
                                     return node;
