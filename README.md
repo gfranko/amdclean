@@ -422,6 +422,10 @@ __Why would I use AMDClean instead of Almond.js?__
 
  - Although Almond is very small (~1k gzipped and minified), most JavaScript library authors do not want to have to include it in their library's source code.  AMDClean allows you to use AMD without increasing your library's file size.
 
+__Some of the dependencies in my web app are returning undefined. How do I fix this?__
+
+- You can set the `globalObject` option to `true` to store all of your modules in a single global object that uses the top-most function scope.  You can even name that global object whatever you prefer by using the `globalObjectName` option.  You can also make this object local by wrapping an IIFE (Immediately Invoked Function Expression) around it.
+
 __AMDClean does not seem to be cleaning shimmed modules.  What am I doing wrong?__
 
  - Since Require.js does not expose the [shim](http://requirejs.org/docs/api.html#config-shim) functionality within the `onBuildWrite` config property, you must use the `onModuleBundleComplete` config property instead.  Like this:
@@ -474,10 +478,6 @@ __Why are define() method placeholder functions inserted into my source?__
 __How would I expose one or more modules as a global window property?__
 
 - You can use the `globalModules` option to list all of the modules that you would like to expose as a `window` property
-
-__I am having a scope problem with all of the local module variables.  What can I do?__
-
-- You can use the `globalObject` option to store all of your modules in a single global object that uses the top-most function scope.  You can even name that global object whatever you prefer by using the `globalObjectName` option.
 
 
 ## License
