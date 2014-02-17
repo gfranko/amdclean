@@ -77,24 +77,51 @@
             'VERSION': '1.1.1',
             // Default Options
             'defaultOptions': {
+                // The source code you would like to be 'cleaned'
+                'code': '',
+                // The relative file path of the file to be cleaned.  Use this option if you are not using the code option.
+                // Hint: Use the __dirname trick
+                'filePath': '',
+                  // The modules that you would like to set as window properties
+                  // An array of strings (module names)
+                'globalModules': [],
+                // Determines if all of your local modules are stored in a single global object (helps with scoping in certain cases)
                 'globalObject': false,
+                // Determines the name of your global object that stores all of your global modules
                 'globalObjectName': 'amdclean',
-                'rememberGlobalObject': true,
-                'removeAllRequires': false,
-                'removeUseStricts': true,
-                'ignoreModules': [],
-                'escodegen': {
-                    'comment': true
-                },
+                // All esprima API options are supported: http://esprima.org/doc/
                 'esprima': {
                     'comment': true,
                     'loc': true,
                     'range': true,
                     'tokens': true
                 },
-                'globalModules': [],
+                // All escodegen API options are supported: https://github.com/Constellation/escodegen/wiki/API
+                'escodegen': {
+                    'comment': true
+                },
+                // If there is a comment (that contains the following text) on the same line or one line above a specific module, the module will not be removed
                 'commentCleanName': 'amdclean',
-                'shimOverrides': {}
+                // The ids of all of the modules that you would not like to be removed
+                'ignoreModules': [],
+                // Determines if all of the require() method calls will be removed
+                'removeAllRequires': false,
+                // Determines if all of the 'use strict' statements will be removed
+                'removeUseStricts': true,
+                // Allows you to pass an expression that will override shimmed modules return values
+                // e.g. { 'backbone': 'window.Backbone' }
+                'shimOverrides': {},
+                // Prevents multiple global objects from being instantiated when using the onBuildWrite Require.js hook
+                // Set this to false if you are using AMDClean for more than one build AND
+                // are using the onModuleBundleComplete Require.js hook
+                'rememberGlobalObject': true,
+                // Determines how to prefix a module name with when a non-JavaScript compatible character is found 
+                // 'standard' or 'camelCase'
+                // 'standard' example: 'utils/example' -> 'utils_example'
+                // 'camelCase' example: 'utils/example' -> 'utilsExample'
+                'prefixMode': 'standard',
+                // A hook that allows you add your own custom logic to how each moduleName is prefixed/normalized
+                'prefixTransform': function(moduleName) { return moduleName; }
             },
             // Environment - either node or web
             'env': codeEnv,
@@ -233,6 +260,12 @@
                     _.where(node.test.left, matchObject).length ||
                     _.where([node.test.left], matchObject).length);
             },
+            convertToCamelCase: function(input, delimiter) {
+                delimiter = delimiter || '_';
+                return input.replace(new RegExp(delimiter + '(.)', 'g'), function(match, group1) {
+                    return group1.toUpperCase();
+                });
+            },
             // getJavaScriptIdentifier
             'prefixReservedWords': function(name) {
                 var reservedWord = false;
@@ -253,12 +286,26 @@
             // -------------------
             //  Returns a normalized module name (removes relative file path urls)
             'normalizeModuleName': function(name) {
+                var pre_normalized,
+                    post_normalized,
+                    prefixMode = publicAPI.options.prefixMode,
+                    prefixTransform = publicAPI.options.prefixTransform,
+                    prefixTransformValue;
                 name = name || '';
                 if(name === '{}') {
                     return name;
                 }
-                var normalized = name.replace(/\./g,'').replace(/[^A-Za-z0-9_$]/g,'_').replace(/^_+/,'');
-                return publicAPI.prefixReservedWords(normalized);
+                pre_normalized = publicAPI.prefixReservedWords(name.replace(/\./g,'').
+                    replace(/[^A-Za-z0-9_$]/g,'_').
+                    replace(/^_+/,''));
+                post_normalized = prefixMode === 'camelCase' ? publicAPI.convertToCamelCase(pre_normalized) : pre_normalized;
+                if(_.isFunction(prefixTransform)) {
+                    prefixTransformValue = prefixTransform(post_normalized);
+                    if(_.isString(prefixTransformValue) && prefixTransformValue.length) {
+                        return prefixTransformValue;
+                    }
+                }
+                return post_normalized;
             },
             // returnExpressionIdentifier
             // --------------------------
@@ -876,9 +923,10 @@
                 var code = {},
                     ast = {},
                     options = {},
-                    defaultOptions = _.cloneDeep(publicAPI.defaultOptions) || {},
-                    userOptions = _.cloneDeep(obj) || {};
-                publicAPI.options = options = _.merge(defaultOptions, userOptions);
+                    defaultOptions = _.cloneDeep(publicAPI.defaultOptions || {}),
+                    userOptions = obj || {},
+                    mergedOptions = _.merge(defaultOptions, userOptions);
+                publicAPI.options = options = mergedOptions;
                 if(!_ || !_.isPlainObject) {
                     throw new Error(publicAPI.errorMsgs.lodash);
                 }

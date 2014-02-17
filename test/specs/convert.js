@@ -239,6 +239,37 @@ describe('amdclean specs', function() {
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
 
+				it('should convert CommonJS require() calls and use the character prefix', function() {
+					var AMDcode = "var example = require('bb_customs');",
+						cleanedCode = amdclean.clean({ prefixMode: 'camelCase', code: AMDcode, escodegen: { format: { compact: true } } }),
+						standardJavaScript = "var example=bbCustoms;";
+					expect(cleanedCode).toBe(standardJavaScript);
+				});
+
+				it('should convert CommonJS require() calls and use the character prefix', function() {
+					var AMDcode = "var example = require('util/anotherModule');",
+						cleanedCode = amdclean.clean({ prefixMode: 'camelCase', code: AMDcode, escodegen: { format: { compact: true } } }),
+						standardJavaScript = "var example=utilAnotherModule;";
+					expect(cleanedCode).toBe(standardJavaScript);
+				});
+
+				it('should correctly transform each module name when using the prefixTransform option', function() {
+					var AMDcode = "var example = require('util/anotherModule');",
+						cleanedCode = amdclean.clean({
+							code: AMDcode,
+							escodegen: {
+								format: {
+									compact: true
+								}
+							},
+							prefixTransform: function(moduleName) {
+								return moduleName.substring(moduleName.lastIndexOf('_') + 1, moduleName.length);
+							}
+						}),
+						standardJavaScript = "var example=anotherModule;";
+					expect(cleanedCode).toBe(standardJavaScript);
+				});
+
 			});
 
 		});
