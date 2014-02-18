@@ -22,7 +22,7 @@
         });
     } else if (typeof exports !== 'undefined') {
         factory.env = 'node';
-        factory(null, root);
+        module.exports = factory(null, root);
     } else {
         factory.env = 'web';
         root.amdclean = factory(null, root);
@@ -123,7 +123,14 @@
                 // 'camelCase' example: 'utils/example' -> 'utilsExample'
                 'prefixMode': 'standard',
                 // A hook that allows you add your own custom logic to how each moduleName is prefixed/normalized
-                'prefixTransform': function(moduleName) { return moduleName; }
+                'prefixTransform': function(moduleName) { return moduleName; },
+                // Wrap any build bundle in a start and end text specified by wrap
+                // This should only be used when using the onModuleBundleComplete RequireJS Optimizer build hook
+                // If it is used with the onBuildWrite RequireJS Optimizer build hook, each module will get wrapped
+                'wrap': {
+                    'start': '',
+                    'end': ''
+                }
             },
             // Environment - either node or web
             'env': codeEnv,
@@ -939,7 +946,8 @@
                     options = {},
                     defaultOptions = _.cloneDeep(publicAPI.defaultOptions || {}),
                     userOptions = obj || {},
-                    mergedOptions = _.merge(defaultOptions, userOptions);
+                    mergedOptions = _.merge(defaultOptions, userOptions),
+                    generatedCode;
                 publicAPI.options = options = mergedOptions;
                 if(!_ || !_.isPlainObject) {
                     throw new Error(publicAPI.errorMsgs.lodash);
@@ -1031,13 +1039,17 @@
                         'kind': 'var'
                     });
                 }
-                return publicAPI.generateCode(ast, options);
+                generatedCode = publicAPI.generateCode(ast, options);
+                if(_.isObject(publicAPI.options.wrap)) {
+                    if(_.isString(publicAPI.options.wrap.start) && publicAPI.options.wrap.start.length) {
+                        generatedCode = publicAPI.options.wrap.start + generatedCode;
+                    }
+                    if(_.isString(publicAPI.options.wrap.end) && publicAPI.options.wrap.end.length) {
+                        generatedCode = generatedCode + publicAPI.options.wrap.end;
+                    }
+                }
+                return generatedCode;
             }
         };
-        // Returns the public API for node and web environments
-        if(codeEnv === 'node') {
-            module.exports = publicAPI;
-        } else {
-            return publicAPI;
-        }
+        return publicAPI;
 })); // End of amdclean module
