@@ -1,4 +1,4 @@
-/*! amdclean - v1.1.1 - 2014-02-12
+/*! amdclean - v1.2.0 - 2014-02-17
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko; Licensed MIT*/
 
@@ -74,7 +74,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            'VERSION': '1.1.1',
+            'VERSION': '1.2.0',
             // Default Options
             'defaultOptions': {
                 // The source code you would like to be 'cleaned'
@@ -88,6 +88,7 @@
                 // Determines if all of your local modules are stored in a single global object (helps with scoping in certain cases)
                 'globalObject': false,
                 // Determines the name of your global object that stores all of your global modules
+                // Note: If using a global object, try to override this name with a smaller name since it will be referenced throughout the code
                 'globalObjectName': 'amdclean',
                 // All esprima API options are supported: http://esprima.org/doc/
                 'esprima': {
