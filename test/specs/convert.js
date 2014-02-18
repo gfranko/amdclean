@@ -140,9 +140,16 @@ describe('amdclean specs', function() {
 			});
 
 			it('should not remove comments from the source code', function() {
-				var AMDcode = "//Test comment define('example', [], function() {});",
+				var AMDcode = "//Test comment\n define('example', [], function() {});",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
-					standardJavaScript = "//Test comment define('example', [], function() {});";
+					standardJavaScript = "//Test comment\nvar example=undefined;";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should not automatically convert conditional AMD checks that are using the appropriate commentCleanName', function() {
+				var AMDcode = "//amdclean\n if(typeof define === 'function') {}",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "//amdclean\nif(typeof define==='function'){}";
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
