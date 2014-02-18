@@ -77,6 +77,13 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
+			it('should remove defines that are added to the removeModules options array', function() {
+				var AMDcode = "define('exampleModule', ['example1', 'example2'], function(one, two) {});define('exampleModule2', function() {})",
+					cleanedCode = amdclean.clean({ code: AMDcode, removeModules: ['exampleModule'], escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var exampleModule2=undefined;";
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
 			it('should support the simplified CJS wrapper', function() {
 				var AMDcode = "define('foo', ['require', 'exports', './bar'], function(require, exports){exports.bar = require('./bar');});",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),

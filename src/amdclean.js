@@ -104,6 +104,8 @@
                 'commentCleanName': 'amdclean',
                 // The ids of all of the modules that you would not like to be 'cleaned'
                 'ignoreModules': [],
+                // Determines which modules will be removed from the cleaned code
+                'removeModules': [],
                 // Determines if all of the require() method calls will be removed
                 'removeAllRequires': false,
                 // Determines if all of the 'use strict' statements will be removed
@@ -259,6 +261,10 @@
                     _.where([node.test], matchObject).length ||
                     _.where(node.test.left, matchObject).length ||
                     _.where([node.test.left], matchObject).length);
+            },
+            arrayContains: function(arr, name) {
+                if(!_.isArray(arr)) return false;
+                return arr.indexOf(name) !== -1;
             },
             convertToCamelCase: function(input, delimiter) {
                 delimiter = delimiter || '_';
@@ -711,13 +717,14 @@
                     currentLineNumber,
                     lineNumberObj = {},
                     callbackFuncArg = false,
-                    type = '';
+                    type = '',
+                    options = publicAPI.options;
                 if(node.type === 'Program') {
                     comments = (function() {
                         var arr = [];
                         _.each(node.comments, function(currentComment, iterator) {
                             var currentCommentValue = (currentComment.value).trim();
-                            if(currentCommentValue === publicAPI.options.commentCleanName) {
+                            if(currentCommentValue === options.commentCleanName) {
                                 arr.push(currentComment);
                             }
                         });
@@ -773,9 +780,15 @@
                             isRequire: isRequire
                     };
                     if(isDefine) {
-                        if(_.isObject(publicAPI.options.shimOverrides) && publicAPI.options.shimOverrides[moduleName]) {
+                        if(publicAPI.arrayContains(options.removeModules, moduleName)) {
+                            // Remove the current module from the source
+                            return {
+                                type: 'EmptyStatement'
+                            };
+                        }
+                        if(_.isObject(options.shimOverrides) && options.shimOverrides[moduleName]) {
                             params.moduleReturnValue = publicAPI.createAst({
-                                'code': publicAPI.options.shimOverrides[moduleName]
+                                'code': options.shimOverrides[moduleName]
                             });
                             if(_.isArray(params.moduleReturnValue.body) && _.isObject(params.moduleReturnValue.body[0])) {
                                 if(_.isObject(params.moduleReturnValue.body[0].expression)) {
@@ -789,7 +802,7 @@
                         if(params.moduleReturnValue && params.moduleReturnValue.type === 'Identifier') {
                             type = 'functionExpression';
                         }
-                        if(_.isArray(publicAPI.options.ignoreModules) && publicAPI.options.ignoreModules.indexOf(moduleName) !== -1) {
+                        if(publicAPI.arrayContains(options.ignoreModules, moduleName)) {
                             return node;
                         } else if(publicAPI.isFunctionExpression(moduleReturnValue) || type === 'functionExpression') {
                             return publicAPI.convertToFunctionExpression(params);
@@ -800,7 +813,7 @@
                         }
                     } else if(isRequire) {
                         callbackFuncArg = _.isArray(node.expression['arguments']) && node.expression['arguments'].length ? node.expression['arguments'][1] && node.expression['arguments'][1].body && node.expression['arguments'][1].body.body && node.expression['arguments'][1].body.body.length : false;
-                        if(publicAPI.options.removeAllRequires !== true && callbackFuncArg) {
+                        if(options.removeAllRequires !== true && callbackFuncArg) {
                             return publicAPI.convertToFunctionExpression(params);
                         } else {
                             // Remove the require include statement from the source
