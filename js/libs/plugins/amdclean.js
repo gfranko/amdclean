@@ -1,4 +1,4 @@
-/*! amdclean - v1.1.0 - 2014-02-09
+/*! amdclean - v1.2.1 - 2014-02-17
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko; Licensed MIT*/
 
@@ -22,7 +22,7 @@
         });
     } else if (typeof exports !== 'undefined') {
         factory.env = 'node';
-        factory(null, root);
+        module.exports = factory(null, root);
     } else {
         factory.env = 'web';
         root.amdclean = factory(null, root);
@@ -35,27 +35,27 @@
         that = scope,
         // Third-Party Dependencies
         esprima = (function() {
-            if(cleanamd.amd && amdDependencies.esprima) {
+            if(cleanamd.amd && amdDependencies.esprima && amdDependencies.esprima.parse) {
                 return amdDependencies.esprima;
-            } else if(that && that.esprima) {
+            } else if(that && that.esprima && that.esprima.parse) {
                 return that.esprima;
             } else if(codeEnv === 'node') {
                 return require('esprima');
             }
         }()),
         estraverse = (function() {
-            if(cleanamd.amd && amdDependencies.estraverse) {
+            if(cleanamd.amd && amdDependencies.estraverse && amdDependencies.estraverse.traverse) {
                 return amdDependencies.estraverse;
-            } else if(that && that.estraverse) {
+            } else if(that && that.estraverse && that.estraverse.traverse) {
                 return that.estraverse;
             } else if(codeEnv === 'node') {
                 return require('estraverse');
             }
         }()),
         escodegen = (function() {
-            if(cleanamd.amd && amdDependencies.escodegen) {
+            if(cleanamd.amd && amdDependencies.escodegen && amdDependencies.escodegen.generate) {
                 return amdDependencies.escodegen;
-            } else if(that && that.escodegen) {
+            } else if(that && that.escodegen && that.escodegen.generate) {
                 return that.escodegen;
             } else if(codeEnv === 'node') {
                 return require('escodegen');
@@ -74,27 +74,64 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            'VERSION': '1.1.0',
+            'VERSION': '1.2.1',
             // Default Options
             'defaultOptions': {
+                // The source code you would like to be 'cleaned'
+                'code': '',
+                // The relative file path of the file to be cleaned.  Use this option if you are not using the code option.
+                // Hint: Use the __dirname trick
+                'filePath': '',
+                // The modules that you would like to set as window properties
+                // An array of strings (module names)
+                'globalModules': [],
+                // Determines if all of your local modules are stored in a single global object (helps with scoping in certain cases)
                 'globalObject': false,
+                // Determines the name of your global object that stores all of your global modules
+                // Note: If using a global object, try to override this name with a smaller name since it will be referenced throughout the code
                 'globalObjectName': 'amdclean',
-                'rememberGlobalObject': true,
-                'removeAllRequires': false,
-                'removeUseStricts': true,
-                'ignoreModules': [],
-                'escodegen': {
-                    'comment': true
-                },
+                // All esprima API options are supported: http://esprima.org/doc/
                 'esprima': {
                     'comment': true,
                     'loc': true,
                     'range': true,
                     'tokens': true
                 },
-                'globalModules': [],
+                // All escodegen API options are supported: https://github.com/Constellation/escodegen/wiki/API
+                'escodegen': {
+                    'comment': true
+                },
+                // If there is a comment (that contains the following text) on the same line or one line above a specific module, the module will not be removed
                 'commentCleanName': 'amdclean',
-                'shimOverrides': {}
+                // The ids of all of the modules that you would not like to be 'cleaned'
+                'ignoreModules': [],
+                // Determines which modules will be removed from the cleaned code
+                'removeModules': [],
+                // Determines if all of the require() method calls will be removed
+                'removeAllRequires': false,
+                // Determines if all of the 'use strict' statements will be removed
+                'removeUseStricts': true,
+                // Allows you to pass an expression that will override shimmed modules return values
+                // e.g. { 'backbone': 'window.Backbone' }
+                'shimOverrides': {},
+                // Prevents multiple global objects from being instantiated when using the onBuildWrite Require.js hook
+                // Set this to false if you are using AMDClean for more than one build AND
+                // are using the onModuleBundleComplete Require.js hook
+                'rememberGlobalObject': true,
+                // Determines how to prefix a module name with when a non-JavaScript compatible character is found 
+                // 'standard' or 'camelCase'
+                // 'standard' example: 'utils/example' -> 'utils_example'
+                // 'camelCase' example: 'utils/example' -> 'utilsExample'
+                'prefixMode': 'standard',
+                // A hook that allows you add your own custom logic to how each moduleName is prefixed/normalized
+                'prefixTransform': function(moduleName) { return moduleName; },
+                // Wrap any build bundle in a start and end text specified by wrap
+                // This should only be used when using the onModuleBundleComplete RequireJS Optimizer build hook
+                // If it is used with the onBuildWrite RequireJS Optimizer build hook, each module will get wrapped
+                'wrap': {
+                    'start': '',
+                    'end': ''
+                }
             },
             // Environment - either node or web
             'env': codeEnv,
@@ -233,6 +270,16 @@
                     _.where(node.test.left, matchObject).length ||
                     _.where([node.test.left], matchObject).length);
             },
+            arrayContains: function(arr, name) {
+                if(!_.isArray(arr)) return false;
+                return arr.indexOf(name) !== -1;
+            },
+            convertToCamelCase: function(input, delimiter) {
+                delimiter = delimiter || '_';
+                return input.replace(new RegExp(delimiter + '(.)', 'g'), function(match, group1) {
+                    return group1.toUpperCase();
+                });
+            },
             // getJavaScriptIdentifier
             'prefixReservedWords': function(name) {
                 var reservedWord = false;
@@ -253,12 +300,26 @@
             // -------------------
             //  Returns a normalized module name (removes relative file path urls)
             'normalizeModuleName': function(name) {
+                var pre_normalized,
+                    post_normalized,
+                    prefixMode = publicAPI.options.prefixMode,
+                    prefixTransform = publicAPI.options.prefixTransform,
+                    prefixTransformValue;
                 name = name || '';
                 if(name === '{}') {
                     return name;
                 }
-                var normalized = name.replace(/\./g,'').replace(/[^A-Za-z0-9_$]/g,'_').replace(/^_+/,'');
-                return publicAPI.prefixReservedWords(normalized);
+                pre_normalized = publicAPI.prefixReservedWords(name.replace(/\./g,'').
+                    replace(/[^A-Za-z0-9_$]/g,'_').
+                    replace(/^_+/,''));
+                post_normalized = prefixMode === 'camelCase' ? publicAPI.convertToCamelCase(pre_normalized) : pre_normalized;
+                if(_.isFunction(prefixTransform)) {
+                    prefixTransformValue = prefixTransform(post_normalized);
+                    if(_.isString(prefixTransformValue) && prefixTransformValue.length) {
+                        return prefixTransformValue;
+                    }
+                }
+                return post_normalized;
             },
             // returnExpressionIdentifier
             // --------------------------
@@ -664,13 +725,14 @@
                     currentLineNumber,
                     lineNumberObj = {},
                     callbackFuncArg = false,
-                    type = '';
+                    type = '',
+                    options = publicAPI.options;
                 if(node.type === 'Program') {
                     comments = (function() {
                         var arr = [];
                         _.each(node.comments, function(currentComment, iterator) {
                             var currentCommentValue = (currentComment.value).trim();
-                            if(currentCommentValue === publicAPI.options.commentCleanName) {
+                            if(currentCommentValue === options.commentCleanName) {
                                 arr.push(currentComment);
                             }
                         });
@@ -682,6 +744,10 @@
                     });
                     publicAPI.commentLineNumbers = lineNumberObj;
                 }
+                startLineNumber = isDefine || isRequire ? node.expression.loc.start.line : node && node.loc && node.loc.start ? node.loc.start.line : null;
+                if((publicAPI.commentLineNumbers[startLineNumber] || publicAPI.commentLineNumbers['' + (parseInt(startLineNumber, 10) - 1)])) {
+                    return node;
+                }
                 if(publicAPI.isAMDConditional(node)) {
                     node.test = {
                         'type': 'Literal',
@@ -691,10 +757,6 @@
                     return node;
                 }
                 if(isDefine || isRequire) {
-                    startLineNumber = node.expression.loc.start.line;
-                    if((publicAPI.commentLineNumbers[startLineNumber] || publicAPI.commentLineNumbers['' + (parseInt(startLineNumber, 10) - 1)])) {
-                        return node;
-                    }
                     args = Array.prototype.slice.call(node.expression['arguments'], 0);
                     dependencies = (function() {
                         var deps = isRequire ? args[0] : args[args.length - 2],
@@ -726,9 +788,15 @@
                             isRequire: isRequire
                     };
                     if(isDefine) {
-                        if(_.isObject(publicAPI.options.shimOverrides) && publicAPI.options.shimOverrides[moduleName]) {
+                        if(publicAPI.arrayContains(options.removeModules, moduleName)) {
+                            // Remove the current module from the source
+                            return {
+                                type: 'EmptyStatement'
+                            };
+                        }
+                        if(_.isObject(options.shimOverrides) && options.shimOverrides[moduleName]) {
                             params.moduleReturnValue = publicAPI.createAst({
-                                'code': publicAPI.options.shimOverrides[moduleName]
+                                'code': options.shimOverrides[moduleName]
                             });
                             if(_.isArray(params.moduleReturnValue.body) && _.isObject(params.moduleReturnValue.body[0])) {
                                 if(_.isObject(params.moduleReturnValue.body[0].expression)) {
@@ -742,7 +810,7 @@
                         if(params.moduleReturnValue && params.moduleReturnValue.type === 'Identifier') {
                             type = 'functionExpression';
                         }
-                        if(_.isArray(publicAPI.options.ignoreModules) && publicAPI.options.ignoreModules.indexOf(moduleName) !== -1) {
+                        if(publicAPI.arrayContains(options.ignoreModules, moduleName)) {
                             return node;
                         } else if(publicAPI.isFunctionExpression(moduleReturnValue) || type === 'functionExpression') {
                             return publicAPI.convertToFunctionExpression(params);
@@ -753,7 +821,7 @@
                         }
                     } else if(isRequire) {
                         callbackFuncArg = _.isArray(node.expression['arguments']) && node.expression['arguments'].length ? node.expression['arguments'][1] && node.expression['arguments'][1].body && node.expression['arguments'][1].body.body && node.expression['arguments'][1].body.body.length : false;
-                        if(publicAPI.options.removeAllRequires !== true && callbackFuncArg) {
+                        if(options.removeAllRequires !== true && callbackFuncArg) {
                             return publicAPI.convertToFunctionExpression(params);
                         } else {
                             // Remove the require include statement from the source
@@ -856,7 +924,8 @@
             //  Returns standard JavaScript generated by Escodegen
             'generateCode': function(ast, options) {
                 var esprimaOptions = options.esprima || {},
-                    escodegenOptions = options.escodegen || {};
+                    escodegenOptions = options.escodegen || {},
+                    code = escodegen.generate(ast, escodegenOptions);
                 if(!_.isPlainObject(escodegen) || !_.isFunction(escodegen.generate)) {
                     throw new Error(publicAPI.errorMsgs.escodegen);
                 }
@@ -876,9 +945,11 @@
                 var code = {},
                     ast = {},
                     options = {},
-                    defaultOptions = _.cloneDeep(publicAPI.defaultOptions) || {},
-                    userOptions = _.cloneDeep(obj) || {};
-                publicAPI.options = options = _.merge(defaultOptions, userOptions);
+                    defaultOptions = _.cloneDeep(publicAPI.defaultOptions || {}),
+                    userOptions = obj || {},
+                    mergedOptions = _.merge(defaultOptions, userOptions),
+                    generatedCode;
+                publicAPI.options = options = mergedOptions;
                 if(!_ || !_.isPlainObject) {
                     throw new Error(publicAPI.errorMsgs.lodash);
                 }
@@ -969,13 +1040,17 @@
                         'kind': 'var'
                     });
                 }
-                return publicAPI.generateCode(ast, options);
+                generatedCode = publicAPI.generateCode(ast, options);
+                if(_.isObject(publicAPI.options.wrap)) {
+                    if(_.isString(publicAPI.options.wrap.start) && publicAPI.options.wrap.start.length) {
+                        generatedCode = publicAPI.options.wrap.start + generatedCode;
+                    }
+                    if(_.isString(publicAPI.options.wrap.end) && publicAPI.options.wrap.end.length) {
+                        generatedCode = generatedCode + publicAPI.options.wrap.end;
+                    }
+                }
+                return generatedCode;
             }
         };
-        // Returns the public API for node and web environments
-        if(codeEnv === 'node') {
-            module.exports = publicAPI;
-        } else {
-            return publicAPI;
-        }
+        return publicAPI;
 })); // End of amdclean module

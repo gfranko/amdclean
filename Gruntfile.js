@@ -7,7 +7,11 @@ module.exports = function(grunt) {
         'code': fs.readFileSync(outputFile),
         'globalObject': true,
         'globalObjectName': 'amdclean_website',
-        'rememberGlobalObject': false
+        'rememberGlobalObject': false,
+        'wrap': {
+          'start': '(function() {',
+          'end': '}());'
+        }
       }));
     };
   grunt.initConfig({
@@ -20,7 +24,7 @@ module.exports = function(grunt) {
             'mobile': 'init/MobileInit'
           },
           wrap: true,
-          optimize: 'none',
+          optimize: 'uglify',
           mainConfigFile: './js/app/config/config.js',
           useStrict: true,
           include: ['mobile'],
@@ -42,7 +46,7 @@ module.exports = function(grunt) {
             'desktop': 'init/DesktopInit'
           },
           wrap: true,
-          optimize: 'none',
+          optimize: 'uglify',
           mainConfigFile: './js/app/config/config.js',
           useStrict: true,
           include: ['desktop'],
