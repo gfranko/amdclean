@@ -515,6 +515,14 @@ __I replaced Almond.js with AMDClean and my file is bigger.  Why Is This?__
 
   *  Many of your individual module names are pretty long since they include the full path to a file.  An example is `text_templates_headinghtml`.  This module name could be changed to just `headinghtml` to save space. You can override the AMDClean module naming logic with the `prefixTransform` option to save some space.
 
+__I am building a JavaScript library and want to provide conditional AMD support, but AMDClean seems to be wiping away my if statement.  How do I fix this?__
+
+- Make sure that you have a comment (that matches your AMDClean `commentCleanName` option) one line above your conditional AMD if statement
+
+__I don't like the way AMDClean normalizes the names of my modules with underscores.  Can I change this?__
+
+- You sure can.  You can either use the `prefixMode` and change it to camelCase, or you can override all of the logic with your own logic by using the `prefixTransform` option hook.
+
 
 ## License
 

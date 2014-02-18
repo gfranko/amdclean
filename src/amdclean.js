@@ -1,4 +1,4 @@
-/*! amdclean - v1.2.0 - 2014-02-17
+/*! amdclean - v1.2.1 - 2014-02-17
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko; Licensed MIT*/
 
@@ -35,27 +35,27 @@
         that = scope,
         // Third-Party Dependencies
         esprima = (function() {
-            if(cleanamd.amd && amdDependencies.esprima) {
+            if(cleanamd.amd && amdDependencies.esprima && amdDependencies.esprima.parse) {
                 return amdDependencies.esprima;
-            } else if(that && that.esprima) {
+            } else if(that && that.esprima && that.esprima.parse) {
                 return that.esprima;
             } else if(codeEnv === 'node') {
                 return require('esprima');
             }
         }()),
         estraverse = (function() {
-            if(cleanamd.amd && amdDependencies.estraverse) {
+            if(cleanamd.amd && amdDependencies.estraverse && amdDependencies.estraverse.traverse) {
                 return amdDependencies.estraverse;
-            } else if(that && that.estraverse) {
+            } else if(that && that.estraverse && that.estraverse.traverse) {
                 return that.estraverse;
             } else if(codeEnv === 'node') {
                 return require('estraverse');
             }
         }()),
         escodegen = (function() {
-            if(cleanamd.amd && amdDependencies.escodegen) {
+            if(cleanamd.amd && amdDependencies.escodegen && amdDependencies.escodegen.generate) {
                 return amdDependencies.escodegen;
-            } else if(that && that.escodegen) {
+            } else if(that && that.escodegen && that.escodegen.generate) {
                 return that.escodegen;
             } else if(codeEnv === 'node') {
                 return require('escodegen');
@@ -74,7 +74,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            'VERSION': '1.2.0',
+            'VERSION': '1.2.1',
             // Default Options
             'defaultOptions': {
                 // The source code you would like to be 'cleaned'
