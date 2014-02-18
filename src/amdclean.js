@@ -82,8 +82,8 @@
                 // The relative file path of the file to be cleaned.  Use this option if you are not using the code option.
                 // Hint: Use the __dirname trick
                 'filePath': '',
-                  // The modules that you would like to set as window properties
-                  // An array of strings (module names)
+                // The modules that you would like to set as window properties
+                // An array of strings (module names)
                 'globalModules': [],
                 // Determines if all of your local modules are stored in a single global object (helps with scoping in certain cases)
                 'globalObject': false,

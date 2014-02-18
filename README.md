@@ -365,8 +365,8 @@ amdclean.clean({
   // The relative file path of the file to be cleaned.  Use this option if you are not using the code option.
   // Hint: Use the __dirname trick
   'filePath': '',
-    // The modules that you would like to set as window properties
-    // An array of strings (module names)
+  // The modules that you would like to set as window properties
+  // An array of strings (module names)
   'globalModules': [],
   // Determines if all of your local modules are stored in a single global object (helps with scoping in certain cases)
   'globalObject': false,
@@ -513,7 +513,7 @@ __I replaced Almond.js with AMDClean and my file is bigger.  Why Is This?__
 
   * You are using AMDClean `0.6.0` or earlier.  The latest versions of AMDClean do a better job of optimizing modules.  Check out these release notes about optimization improvements: https://github.com/gfranko/amdclean/releases/tag/0.7.0 https://github.com/gfranko/amdclean/releases/tag/1.1.0
 
-  *  Many of your individual module names are pretty long since they include the full path to the file.  An example is `text_templates_headinghtml`.  This module name could be changed to just `headinghtml` to save space. You can override the AMDClean module naming logic with the `prefixTransform` option.
+  *  Many of your individual module names are pretty long since they include the full path to a file.  An example is `text_templates_headinghtml`.  This module name could be changed to just `headinghtml` to save space. You can override the AMDClean module naming logic with the `prefixTransform` option to save some space.
 
 
 ## License
