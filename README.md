@@ -83,11 +83,11 @@ There are a few different ways that amdclean can be used including:
 ```javascript
 paths: {
 
-	'first': '../modules/firstModule',
+  'first': '../modules/firstModule',
 
-	'second': '../modules/secondModule',
+  'second': '../modules/secondModule',
 
-	'third': '../modules/thirdModule'
+  'third': '../modules/thirdModule'
 
 }
 ```
@@ -301,7 +301,7 @@ _AMD_
 
 ```javascript
 define('third',{
-	exampleProp: 'This is an example'
+  exampleProp: 'This is an example'
 });
 ```
 
@@ -309,7 +309,7 @@ _Standard_
 
 ```javascript
 var third = {
-	exampleProp: 'This is an example'
+  exampleProp: 'This is an example'
 };
 ```
 
@@ -323,7 +323,7 @@ _AMD_
 
 ```javascript
 require([], function() {
-	var example = true;
+  var example = true;
 });
 ```
 
@@ -341,7 +341,7 @@ _AMD_
 
 ```javascript
 require(['anotherModule'], function(anotherModule) {
-	var example = true;
+  var example = true;
 });
 ```
 
