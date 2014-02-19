@@ -507,8 +507,6 @@ __I replaced Almond.js with AMDClean and my file is bigger.  Why Is This?__
 
 - There could be a couple of reasons:
 
-  * The `globalObjectName` you are using is really long.  Remember that this object is being referenced EVERYWHERE, so try to pick a 1-3 character name.  You can get around this issue by using the `wrap` AMDClean option and a minfier, such as UglifyJS.
-
   * Unneccessary files are still being included with your build. Make sure that both Almond.js and the RequireJS text! plugin are not still being included, since they are not needed.  You can use the `removeModules` option to make sure certain modules are not included (e.g. text plugin).
 
   * You are using AMDClean `0.6.0` or earlier.  The latest versions of AMDClean do a better job of optimizing modules.  Check out these release notes about optimization improvements: https://github.com/gfranko/amdclean/releases/tag/0.7.0 https://github.com/gfranko/amdclean/releases/tag/1.1.0
