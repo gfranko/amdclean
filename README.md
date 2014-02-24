@@ -371,7 +371,7 @@ amdclean.clean({
   // Determines if all of your local modules are stored in a single global object (helps with scoping in certain cases)
   'globalObject': false,
   // Determines the name of your global object that stores all of your global modules
-  // Note: If using a global object, try to override this name with a smaller name since it will be referenced throughout the code
+  // Note: If using a global object, try to override this name with a smaller name since it will be referenced throughout the code (don't worry about it if you are using a minifier)
   'globalObjectName': 'amdclean',
   // All esprima API options are supported: http://esprima.org/doc/
   'esprima': {
@@ -506,8 +506,6 @@ __I am having a scope problem with all of the local module variables.  What can 
 __I replaced Almond.js with AMDClean and my file is bigger.  Why Is This?__
 
 - There could be a couple of reasons:
-
-  * The `globalObjectName` you are using is really long.  Remember that this object is being referenced EVERYWHERE, so try to pick a 1-3 character name.
 
   * Unneccessary files are still being included with your build. Make sure that both Almond.js and the RequireJS text! plugin are not still being included, since they are not needed.  You can use the `removeModules` option to make sure certain modules are not included (e.g. text plugin).
 
