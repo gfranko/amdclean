@@ -566,7 +566,7 @@
 
                 var normalizePath,
                     baseName,
-                    isRelavtive;
+                    isRelative;
 
                     normalizePath = function(path) {
                         var segments = path.split('/'),
@@ -593,7 +593,7 @@
                         segments.pop();
                         return segments.join('/');
                     };
-                    isRelavtive = function(path) {
+                    isRelative = function(path) {
                         var segments = path.split('/');
 
                         if(segments.length === 1) {
@@ -601,7 +601,7 @@
                         }
                         return (segments[0] === '.' || segments[0] === '..');
                     };
-                    if(!isRelavtive(dep)) {
+                    if(!isRelative(dep)) {
                         return dep;
                     }
                     return normalizePath([baseName(moduleId), dep].join('/'));
