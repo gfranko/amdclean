@@ -559,6 +559,53 @@
                     }());
                     return updatedNode;
             },
+            'normalizeDepId': function(moduleId, dep) {
+                if(!moduleId || !dep) {
+                    return dep;
+                }
+
+                var normalizePath,
+                    baseName,
+                    isRelative;
+
+                    normalizePath = function(path) {
+                        var segments = path.split('/'),
+                            normalizedSegments;
+
+                        normalizedSegments = _.reduce(segments, function(memo, segment) {
+                            switch(segment) {
+                                case '.':
+                                    break;
+                                case '..':
+                                    memo.pop();
+                                    break;
+                                default:
+                                    memo.push(segment);
+                            }
+
+                            return memo;
+                        }, []);
+                        return normalizedSegments.join('/');
+                    };
+                    baseName = function(path) {
+                        var segments = path.split('/');
+
+                        segments.pop();
+                        return segments.join('/');
+                    };
+                    isRelative = function(path) {
+                        var segments = path.split('/');
+
+                        if(segments.length === 1) {
+                            return false;
+                        }
+                        return (segments[0] === '.' || segments[0] === '..');
+                    };
+                    if(!isRelative(dep)) {
+                        return dep;
+                    }
+                    return normalizePath([baseName(moduleId), dep].join('/'));
+            },
             // convertToFunctionExpression
             // ---------------------------
             //  Returns either an IIFE or variable declaration.
@@ -569,6 +616,7 @@
                     isOptimized = false,
                     node = obj.node,
                     moduleName  = obj.moduleName,
+                    moduleId = obj.moduleId,
                     dependencies = obj.dependencies,
                     depLength = dependencies.length,
                     options = publicAPI.options,
@@ -577,7 +625,7 @@
                             iterator = -1,
                             currentName;
                         while(++iterator < depLength) {
-                            currentName = dependencies[iterator];
+                            currentName = publicAPI.normalizeDepId(moduleId, dependencies[iterator]);
                             if(options.globalObject === true && options.globalObjectName && currentName !== '{}') {
                                 deps.push({
                                     'type': 'MemberExpression',
@@ -717,6 +765,7 @@
                     args,
                     dependencies,
                     moduleReturnValue,
+                    moduleId,
                     params,
                     isDefine = publicAPI.isDefine(node),
                     isRequire = publicAPI.isRequire(node),
@@ -778,10 +827,12 @@
                         return depNames;
                     }());
                     moduleReturnValue = isRequire ? args[1] : args[args.length - 1];
-                    moduleName = publicAPI.normalizeModuleName(node.expression['arguments'][0].value);
+                    moduleId = node.expression['arguments'][0].value;
+                    moduleName = publicAPI.normalizeModuleName(moduleId);
                     params = {
                             node: node,
                             moduleName: moduleName,
+                            moduleId: moduleId,
                             dependencies: dependencies,
                             moduleReturnValue: moduleReturnValue,
                             isDefine: isDefine,

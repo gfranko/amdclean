@@ -37,6 +37,14 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
+			it('should correctly normalize relative file paths in deps', function() {
+				var AMDcode = "define('./modules/example', ['./example1', './example2', '../example3'], function(one, two, three) {var test = true;});",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var modules_example=function (one,two,three){var test=true;}(modules_example1,modules_example2,example3);";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
 			it('should correctly normalize multi-level relative file paths', function() {
 				var AMDcode = "define('./foo/prototype/commonMethodName.js', ['example1', 'example2'], function(one, two) { var test = true;});",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
