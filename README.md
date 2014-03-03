@@ -362,16 +362,21 @@ The amdclean `clean()` method accepts a string or an object.  Below is an exampl
 amdclean.clean({
   // The source code you would like to be 'cleaned'
   'code': '',
-  // The relative file path of the file to be cleaned.  Use this option if you are not using the code option.
+  // The relative file path of the file to be cleaned.  Use this option if you
+  // are not using the code option.
   // Hint: Use the __dirname trick
   'filePath': '',
   // The modules that you would like to set as window properties
   // An array of strings (module names)
   'globalModules': [],
-  // Determines if all of your local modules are stored in a single global object (helps with scoping in certain cases)
+  // Determines if all of your local modules are stored in a single global
+  // object (helps with scoping in certain cases)
   'globalObject': false,
-  // Determines the name of your global object that stores all of your global modules
-  // Note: If using a global object, try to override this name with a smaller name since it will be referenced throughout the code (don't worry about it if you are using a minifier)
+  // Determines the name of your global object that stores all of your global
+  // modules
+  // Note: If using a global object, try to override this name with a smaller
+  //       name since it will be referenced throughout the code (don't worry
+  //       about it if you are using a minifier)
   'globalObjectName': 'amdclean',
   // All esprima API options are supported: http://esprima.org/doc/
   'esprima': {
@@ -384,7 +389,8 @@ amdclean.clean({
   'escodegen': {
     'comment': true
   },
-  // If there is a comment (that contains the following text) on the same line or one line above a specific module, the module will not be removed
+  // If there is a comment (that contains the following text) on the same line
+  // or one line above a specific module, the module will not be removed
   'commentCleanName': 'amdclean',
   // The ids of all of the modules that you would not like to be 'cleaned'
   'ignoreModules': [],
@@ -394,23 +400,28 @@ amdclean.clean({
   'removeAllRequires': false,
   // Determines if all of the 'use strict' statements will be removed
   'removeUseStricts': true,
-  // Allows you to pass an expression that will override shimmed modules return values
-  // e.g. { 'backbone': 'window.Backbone' }
+  // Allows you to pass an expression that will override shimmed modules return
+  // values e.g. { 'backbone': 'window.Backbone' }
   'shimOverrides': {},
-  // Prevents multiple global objects from being instantiated when using the onBuildWrite Require.js hook
+  // Prevents multiple global objects from being instantiated when using the
+  // onBuildWrite Require.js hook
   // Set this to false if you are using AMDClean for more than one build AND
   // are using the onModuleBundleComplete Require.js hook
   'rememberGlobalObject': true,
-  // Determines how to prefix a module name with when a non-JavaScript compatible character is found 
+  // Determines how to prefix a module name with when a non-JavaScript
+  // compatible character is found 
   // 'standard' or 'camelCase'
   // 'standard' example: 'utils/example' -> 'utils_example'
   // 'camelCase' example: 'utils/example' -> 'utilsExample'
   'prefixMode': 'standard',
-  // A hook that allows you add your own custom logic to how each moduleName is prefixed/normalized
+  // A hook that allows you add your own custom logic to how each moduleName is
+  // prefixed/normalized
   'prefixTransform': function(moduleName) { return moduleName; },
   // Wrap any build bundle in a start and end text specified by wrap
-  // This should only be used when using the onModuleBundleComplete RequireJS Optimizer build hook
-  // If it is used with the onBuildWrite RequireJS Optimizer build hook, each module will get wrapped
+  // This should only be used when using the onModuleBundleComplete RequireJS
+  // Optimizer build hook
+  // If it is used with the onBuildWrite RequireJS Optimizer build hook, each
+  // module will get wrapped
   'wrap': {
     'start': '',
     'end': ''
