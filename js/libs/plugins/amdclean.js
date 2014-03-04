@@ -1,4 +1,4 @@
-/*! amdclean - v1.2.1 - 2014-02-17
+/*! amdclean - v1.3.0 - 2014-03-03
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko; Licensed MIT*/
 
@@ -74,7 +74,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            'VERSION': '1.2.1',
+            'VERSION': '1.3.0',
             // Default Options
             'defaultOptions': {
                 // The source code you would like to be 'cleaned'
@@ -559,16 +559,61 @@
                     }());
                     return updatedNode;
             },
+            // isRelativeFilePath
+            // ------------------
+            //  Returns a boolean that determines if the file path provided is a relative file path
+            //  e.g. ../exampleModule -> true
+            isRelativeFilePath: function(path) {
+                var segments = path.split('/');
+
+                return segments.length !== -1 && (segments[0] === '.' || segments[0] === '..');
+            },
+            // normalizeDependencyName
+            // -----------------------
+            //  Returns a normalized dependency name that handles relative file paths
+            'normalizeDependencyName': function(moduleId, dep) {
+                if(!moduleId || !dep || !publicAPI.isRelativeFilePath(dep)) {
+                    return dep;
+                }
+
+                var normalizePath = function(path) {
+                    var segments = path.split('/'),
+                        normalizedSegments;
+
+                    normalizedSegments = _.reduce(segments, function(memo, segment) {
+                        switch(segment) {
+                            case '.':
+                                break;
+                            case '..':
+                                memo.pop();
+                                break;
+                            default:
+                                memo.push(segment);
+                        }
+
+                        return memo;
+                    }, []);
+                    return normalizedSegments.join('/');
+                },
+                    baseName = function(path) {
+                        var segments = path.split('/');
+
+                        segments.pop();
+                        return segments.join('/');
+                    };
+                return normalizePath([baseName(moduleId), dep].join('/'));
+            },
             // convertToFunctionExpression
             // ---------------------------
             //  Returns either an IIFE or variable declaration.
-            //  Internally calls either convertToIIFE() or convertToIIFEDeclaration().
+            //  Internally calls either convertToIIFE() or convertToIIFEDeclaration()
             'convertToFunctionExpression': function(obj) {
                 var isDefine = obj.isDefine,
                     isRequire = obj.isRequire,
                     isOptimized = false,
                     node = obj.node,
                     moduleName  = obj.moduleName,
+                    moduleId = obj.moduleId,
                     dependencies = obj.dependencies,
                     depLength = dependencies.length,
                     options = publicAPI.options,
@@ -577,7 +622,7 @@
                             iterator = -1,
                             currentName;
                         while(++iterator < depLength) {
-                            currentName = dependencies[iterator];
+                            currentName = publicAPI.normalizeDependencyName(moduleId, dependencies[iterator]);
                             if(options.globalObject === true && options.globalObjectName && currentName !== '{}') {
                                 deps.push({
                                     'type': 'MemberExpression',
@@ -717,6 +762,7 @@
                     args,
                     dependencies,
                     moduleReturnValue,
+                    moduleId,
                     params,
                     isDefine = publicAPI.isDefine(node),
                     isRequire = publicAPI.isRequire(node),
@@ -778,10 +824,12 @@
                         return depNames;
                     }());
                     moduleReturnValue = isRequire ? args[1] : args[args.length - 1];
-                    moduleName = publicAPI.normalizeModuleName(node.expression['arguments'][0].value);
+                    moduleId = node.expression['arguments'][0].value;
+                    moduleName = publicAPI.normalizeModuleName(moduleId);
                     params = {
                             node: node,
                             moduleName: moduleName,
+                            moduleId: moduleId,
                             dependencies: dependencies,
                             moduleReturnValue: moduleReturnValue,
                             isDefine: isDefine,
@@ -968,6 +1016,7 @@
                 if(ast && _.isArray(ast.body)) {
                     estraverse.replace(ast, {
                         enter: function(node, parent) {
+                            var normalizedModuleName;
                             if(node === undefined || node.type === 'EmptyStatement') {
                                 _.each(parent.body, function(currentNode, iterator) {
                                     if(currentNode === undefined || currentNode.type === 'EmptyStatement') {
@@ -976,10 +1025,27 @@
                                 });
                             } else if(publicAPI.isRequireExpression(node)) {
                                 if(node['arguments'] && node['arguments'][0] && node['arguments'][0].value) {
-                                    return {
-                                        'type': 'Identifier',
-                                        'name': publicAPI.normalizeModuleName(node['arguments'][0].value)
-                                    };
+                                    normalizedModuleName = publicAPI.normalizeModuleName(node['arguments'][0].value);
+                                    if(options.globalObject === true && (options.globalObjectName && _.isString(options.globalObjectName) && options.globalObjectName.length)) {
+                                        return {
+                                            'type': 'MemberExpression',
+                                            'computed': true,
+                                            'object': {
+                                                'type': 'Identifier',
+                                                'name': options.globalObjectName
+                                            },
+                                            'property': {
+                                                'type': 'Literal',
+                                                'value': normalizedModuleName,
+                                                'raw': normalizedModuleName
+                                            }
+                                        };
+                                    } else {
+                                        return {
+                                            'type': 'Identifier',
+                                            'name': normalizedModuleName
+                                        };
+                                    }
                                 } else {
                                     return node;
                                 }
