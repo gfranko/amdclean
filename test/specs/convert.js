@@ -37,10 +37,26 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
-			it('should correctly normalize relative file paths in deps', function() {
+			it('should correctly normalize relative file paths dependencies', function() {
 				var AMDcode = "define('./modules/example', ['./example1', './example2', '../example3'], function(one, two, three) {var test = true;});",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
 					standardJavaScript = "var modules_example=function (one,two,three){var test=true;}(modules_example1,modules_example2,example3);";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should correctly normalize relative file paths dependencies with the globalObject option', function() {
+				var AMDcode = "define('./modules/example', ['./example1', './example2', '../example3'], function(one, two, three) {var test = true;});",
+					cleanedCode = amdclean.clean({ globalObject: true, rememberGlobalObject: false, code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var amdclean={};amdclean['modules_example']=function (one,two,three){var test=true;}(amdclean['modules_example1'],amdclean['modules_example2'],amdclean['example3']);";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should correctly normalize multi-level relative file paths dependencies', function() {
+				var AMDcode = "define('./foo/prototype/subModule/myModule', ['example1','example2', '/anotherModule/example3', '../../example4','../anotherModule/example5'], function(one, two, three, four, five) { var test = true;});",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var foo_prototype_subModule_myModule=function (one,two,three,four,five){var test=true;}(example1,example2,anotherModule_example3,foo_example4,foo_prototype_anotherModule_example5);";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
@@ -127,8 +143,8 @@ describe('amdclean specs', function() {
 
 			it('should support storing modules inside of a global object', function() {
 				var AMDcode = "define('foo', ['require', 'exports', './bar'], function(require, exports){exports.bar = require('./bar');});",
-					cleanedCode = amdclean.clean({ globalObject: true, globalObjectName: 'yeabuddy', code: AMDcode, escodegen: { format: { compact: true } } }),
-					standardJavaScript = "var yeabuddy={};yeabuddy['foo']=function (require,exports,bar){exports.bar=bar;return exports;}({},{},yeabuddy['bar']);";
+					cleanedCode = amdclean.clean({ globalObject: true, rememberGlobalObject: false, globalObjectName: 'yeabuddy', code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var yeabuddy={};yeabuddy['foo']=function (require,exports,bar){exports.bar=yeabuddy['bar'];return exports;}({},{},yeabuddy['bar']);";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
@@ -345,8 +361,8 @@ describe('amdclean specs', function() {
 
 			it('should convert object return values to a global object', function() {
 				var AMDcode = "define('third', { exampleProp: 'This is an example' });",
-					cleanedCode = amdclean.clean({ globalObject: true, code: AMDcode, escodegen: { format: { compact: true } } }),
-					standardJavaScript = "amdclean['third']={exampleProp:'This is an example'};";
+					cleanedCode = amdclean.clean({ globalObject: true, rememberGlobalObject: false, code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var amdclean={};amdclean['third']={exampleProp:'This is an example'};";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
@@ -359,6 +375,14 @@ describe('amdclean specs', function() {
 				var AMDcode = "var example = require('anotherModule');",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
 					standardJavaScript = "var example=anotherModule;";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should convert CommonJS require() calls correctly with the globalObject option', function() {
+				var AMDcode = "var example = require('anotherModule');",
+					cleanedCode = amdclean.clean({ code: AMDcode, globalObject: true, rememberGlobalObject: false, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var amdclean={};var example=amdclean['anotherModule'];";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
