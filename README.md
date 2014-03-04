@@ -7,6 +7,8 @@ A build tool that converts AMD code to standard JavaScript.
 
 `npm install amdclean --save-dev`
 
+[Getting Started Video](http://www.youtube.com/watch?v=wbEloOLU3wM)
+
 
 ## Use Case
 
