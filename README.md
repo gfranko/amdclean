@@ -50,7 +50,7 @@ It is best used for libraries or apps that use AMD and optimize all the modules 
 
 * [Shimmed modules](http://requirejs.org/docs/api.html#config-shim)
 
-* [Simplified CJS wrapper](https://github.com/jrburke/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#wiki-cjs)
+* [Simplified CJS wrapper](https://github.com/jrburke/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#wiki-cjs) (requires `globalObject` option set to `true`)
 
 * Exporting global modules to the global `window` object
 
