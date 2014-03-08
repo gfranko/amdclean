@@ -330,8 +330,12 @@
                     'type': 'ExpressionStatement',
                     'expression': {
                         'type': 'Identifier',
-                        'name': name
-                    }
+                        'name': name,
+                        'range': [0,0],
+                        'loc': [0,0]
+                    },
+                    'range': [0,0],
+                    'loc': [0,0]
                 };
             },
             // convertToObjectDeclaration
@@ -367,12 +371,18 @@
                                                             'computed': false,
                                                             'object': {
                                                                 'type': 'Identifier',
-                                                                'name': 'window'
+                                                                'name': 'window',
+                                                                'range': [0,0],
+                                                                'loc': [0,0]
                                                             },
                                                             'property': {
                                                                 'type': 'Identifier',
-                                                                'name': nestedReturnStatement.argument.right.property.name
-                                                            }
+                                                                'name': nestedReturnStatement.argument.right.property.name,
+                                                                'range': [0,0],
+                                                                'loc': [0,0]
+                                                            },
+                                                            'range': [0,0],
+                                                            'loc': [0,0]
                                                         };
                                                     }
                                                 }
@@ -398,15 +408,23 @@
                                         'computed': true,
                                         'object': {
                                             'type': 'Identifier',
-                                            'name': options.globalObjectName
+                                            'name': options.globalObjectName,
+                                            'range': [0,0],
+                                            'loc': [0,0]
                                         },
                                         'property': {
                                             'type': 'Literal',
                                             'value': moduleName,
-                                            'raw': "" + moduleName + ""
-                                        }
+                                            'raw': "" + moduleName + "",
+                                            'range': [0,0],
+                                            'loc': [0,0]
+                                        },
+                                        'range': [0,0],
+                                        'loc': [0,0]
                                     },
-                                    "right": moduleReturnValue
+                                    'right': moduleReturnValue,
+                                    'range': [0,0],
+                                    'loc': [0,0]
                                 }
                             };
                         } else {
@@ -417,12 +435,18 @@
                                         'type': 'VariableDeclarator',
                                         'id': {
                                             'type': 'Identifier',
-                                            'name': moduleName
+                                            'name': moduleName,
+                                            'range': [0,0],
+                                            'loc': [0,0]
                                         },
-                                        'init': moduleReturnValue
+                                        'init': moduleReturnValue,
+                                        'range': [0,0],
+                                        'loc': [0,0]
                                     }
                                 ],
-                                'kind': 'var'
+                                'kind': 'var',
+                                'range': [0,0],
+                                'loc': [0,0]
                             };
                         }
                     }());
@@ -449,10 +473,16 @@
                             'body': callbackFunc.body,
                             'rest': callbackFunc.rest,
                             'generator': callbackFunc.generator,
-                            'expression': callbackFunc.expression
+                            'expression': callbackFunc.expression,
+                            'range': (callbackFunc.range || [0,0]),
+                            'loc': (callbackFunc.loc || [0,0])
                         },
-                        'arguments': dependencyNames
-                    }
+                        'arguments': dependencyNames,
+                        'range': (callbackFunc.range || [0,0]),
+                        'loc': (callbackFunc.loc || [0,0])
+                    },
+                    'range': (callbackFunc.range || [0,0]),
+                    'loc': (callbackFunc.loc || [0,0])
                 };
             },
             // convertToIIFEDeclaration
@@ -460,6 +490,9 @@
             //  Returns a function expression that is executed immediately
             //  e.g. var example = function(){}()
             'convertToIIFEDeclaration': function(obj) {
+                // console.log('obj.callbackFunc', obj.callbackFunc);
+                // console.log('obj.callbackFunc.body.body', obj.callbackFunc.body.body);
+                // return;
                 var moduleName = obj.moduleName,
                     callbackFuncParams = obj.callbackFuncParams,
                     isOptimized = obj.isOptimized,
@@ -474,20 +507,30 @@
                                 'body': {
                                     'type': 'BlockStatement',
                                     'body': [{
-                                            'type': 'ReturnStatement',
-                                            'argument': {
-                                                'type': 'CallExpression',
-                                                'callee': {
-                                                    'type': 'Identifier',
-                                                    'name': cbFunc.name
-                                                },
-                                                'arguments': []
-                                            }
-                                    }]
+                                        'type': 'ReturnStatement',
+                                        'argument': {
+                                            'type': 'CallExpression',
+                                            'callee': {
+                                                'type': 'Identifier',
+                                                'name': cbFunc.name,
+                                                'range': (cbFunc.range || [0,0]),
+                                                'loc': (cbFunc.loc || [0,0])
+                                            },
+                                            'arguments': [],
+                                            'range': (cbFunc.range || [0,0]),
+                                            'loc': (cbFunc.loc || [0,0])
+                                        },
+                                        'range': (cbFunc.range || [0,0]),
+                                        'loc': (cbFunc.loc || [0,0])
+                                    }],
+                                    'range': (cbFunc.range || [0,0]),
+                                    'loc': (cbFunc.loc || [0,0])
                                 },
                                 'rest': null,
                                 'generator': false,
-                                'expression': false
+                                'expression': false,
+                                'range': (cbFunc.range || [0,0]),
+                                'loc': (cbFunc.loc || [0,0])
                             };
                         }
                         return cbFunc;
@@ -504,16 +547,22 @@
                                     'type': 'FunctionExpression',
                                     'id': {
                                         'type': 'Identifier',
-                                        'name': ''
+                                        'name': '',
+                                        'range': (callbackFunc.range || [0,0]),
+                                        'loc': (callbackFunc.loc || [0,0])
                                     },
                                     'params': callbackFuncParams,
                                     'defaults': [],
                                     'body': callbackFunc.body,
                                     'rest': callbackFunc.rest,
                                     'generator': callbackFunc.generator,
-                                    'expression': callbackFunc.expression
+                                    'expression': callbackFunc.expression,
+                                    'range': (callbackFunc.range || [0,0]),
+                                    'loc': (callbackFunc.loc || [0,0])
                                 },
-                                'arguments': dependencyNames
+                                'arguments': dependencyNames,
+                                'range': (callbackFunc.range || [0,0]),
+                                'loc': (callbackFunc.loc || [0,0])
                             };
                         }
                     }()),
@@ -529,16 +578,26 @@
                                         'computed': true,
                                         'object': {
                                             'type': 'Identifier',
-                                            'name': options.globalObjectName
+                                            'name': options.globalObjectName,
+                                            'range': (callbackFunc.range || [0,0]),
+                                            'loc': (callbackFunc.loc || [0,0])
                                         },
                                         'property': {
                                             'type': 'Literal',
                                             'value': moduleName,
-                                            'raw': "" + moduleName + ""
-                                        }
+                                            'raw': "" + moduleName + "",
+                                            'range': (callbackFunc.range || [0,0]),
+                                            'loc': (callbackFunc.loc || [0,0])
+                                        },
+                                        'range': (callbackFunc.range || [0,0]),
+                                        'loc': (callbackFunc.loc || [0,0])
                                     },
-                                    'right': cb
-                                }
+                                    'right': cb,
+                                    'range': (callbackFunc.range || [0,0]),
+                                    'loc': (callbackFunc.loc || [0,0])
+                                },
+                                'range': (callbackFunc.range || [0,0]),
+                                'loc': (callbackFunc.loc || [0,0])
                             };
                         } else {
                             return {
@@ -548,12 +607,18 @@
                                         'type': 'VariableDeclarator',
                                         'id': {
                                             'type': 'Identifier',
-                                            'name': moduleName
+                                            'name': moduleName,
+                                            'range': (callbackFunc.range || [0,0]),
+                                            'loc': (callbackFunc.loc || [0,0])
                                         },
-                                        'init': cb
+                                        'init': cb,
+                                        'range': (callbackFunc.range || [0,0]),
+                                        'loc': (callbackFunc.loc || [0,0])
                                     }
                                 ],
-                                'kind': 'var'
+                                'kind': 'var',
+                                'range': (callbackFunc.range || [0,0]),
+                                'loc': (callbackFunc.loc || [0,0])
                             };
                         }
                     }());
@@ -629,19 +694,27 @@
                                     'computed': true,
                                     'object': {
                                         'type': 'Identifier',
-                                        'name': options.globalObjectName
+                                        'name': options.globalObjectName,
+                                        'range': [0,0],
+                                        'loc': [0,0]
                                     },
                                     'property': {
                                         'type': 'Literal',
                                         'value': publicAPI.normalizeModuleName(currentName),
-                                        'raw': "" + publicAPI.normalizeModuleName(currentName) + ""
+                                        'raw': "" + publicAPI.normalizeModuleName(currentName) + "",
+                                        'range': [0,0],
+                                        'loc': [0,0]
                                     },
-                                    'name': publicAPI.normalizeModuleName(currentName)
+                                    'name': publicAPI.normalizeModuleName(currentName),
+                                    'range': [0,0],
+                                    'loc': [0,0]
                                 });
                             } else {
                                 deps.push({
                                     'type': 'Identifier',
-                                    'name': publicAPI.normalizeModuleName(currentName)
+                                    'name': publicAPI.normalizeModuleName(currentName),
+                                    'range': [0,0],
+                                    'loc': [0,0]
                                 });
                             }
                         }
@@ -683,7 +756,9 @@
                         } else if(callbackFunc && callbackFunc.type === 'FunctionExpression' && callbackFunc.body && _.isArray(callbackFunc.body.body) && callbackFunc.body.body.length === 0) {
                             callbackFunc = {
                                 'type': 'Identifier',
-                                'name': 'undefined'
+                                'name': 'undefined',
+                                'range': [0,0],
+                                'loc': [0,0]
                             };
                             depLength = 0;
                         }
@@ -721,7 +796,9 @@
                             }
                             deps.push({
                                 'type': 'Identifier',
-                                'name': currentName
+                                'name': currentName,
+                                'range': [0,0],
+                                'loc': [0,0]
                             });
                         }
                         return deps;
@@ -732,8 +809,12 @@
                         'type': 'ReturnStatement',
                         'argument': {
                             'type': 'Identifier',
-                            'name': 'exports'
-                        }
+                            'name': 'exports',
+                            'range': [0,0],
+                            'loc': [0,0]
+                        },
+                        'range': [0,0],
+                        'loc': [0,0]
                     });
                 }
 
@@ -798,7 +879,9 @@
                     node.test = {
                         'type': 'Literal',
                         'value': true,
-                        'raw': 'true'
+                        'raw': 'true',
+                        'range': [0,0],
+                        'loc': [0,0]
                     };
                     return node;
                 }
@@ -921,7 +1004,9 @@
                             'argument': {
                                 'type': 'Identifier',
                                 'name': 'exports'
-                            }
+                            },
+                            'range': [0,0],
+                            'loc': [0,0]
                         });
                     }
                     return node;
@@ -972,17 +1057,14 @@
             //  Returns standard JavaScript generated by Escodegen
             'generateCode': function(ast, options) {
                 var esprimaOptions = options.esprima || {},
-                    escodegenOptions = options.escodegen || {},
-                    code = escodegen.generate(ast, escodegenOptions);
+                    escodegenOptions = options.escodegen || {};
                 if(!_.isPlainObject(escodegen) || !_.isFunction(escodegen.generate)) {
                     throw new Error(publicAPI.errorMsgs.escodegen);
                 }
                 // Check if both the esprima and escodegen comment options are set to true
                 if(esprimaOptions.comment === true && escodegenOptions.comment === true) {
-                    try {
-                        // Needed to keep source code comments when generating the code with escodegen
-                        ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
-                    } catch(e) {}
+                    // Needed to keep source code comments when generating the code with escodegen
+                    ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
                 }
                 return escodegen.generate(ast, escodegenOptions);
             },
@@ -1032,18 +1114,26 @@
                                             'computed': true,
                                             'object': {
                                                 'type': 'Identifier',
-                                                'name': options.globalObjectName
+                                                'name': options.globalObjectName,
+                                                'range': [0,0],
+                                                'loc': [0,0]
                                             },
                                             'property': {
                                                 'type': 'Literal',
                                                 'value': normalizedModuleName,
-                                                'raw': normalizedModuleName
-                                            }
+                                                'raw': normalizedModuleName,
+                                                'range': [0,0],
+                                                'loc': [0,0]
+                                            },
+                                            'range': [0,0],
+                                            'loc': [0,0]
                                         };
                                     } else {
                                         return {
                                             'type': 'Identifier',
-                                            'name': normalizedModuleName
+                                            'name': normalizedModuleName,
+                                            'range': [0,0],
+                                            'loc': [0,0]
                                         };
                                     }
                                 } else {
@@ -1067,18 +1157,30 @@
                                         'computed': false,
                                         'object': {
                                             'type': 'Identifier',
-                                            'name': 'window'
+                                            'name': 'window',
+                                            'range': [0,0],
+                                            'loc': [0,0]
                                         },
                                         'property': {
                                             'type': 'Identifier',
-                                            'name': currentModule
-                                        }
+                                            'name': currentModule,
+                                            'range': [0,0],
+                                            'loc': [0,0]
+                                        },
+                                        'range': [0,0],
+                                        'loc': [0,0]
                                     },
                                     'right': {
                                         'type': 'Identifier',
-                                        'name': currentModule
-                                    }
-                                }
+                                        'name': currentModule,
+                                        'range': [0,0],
+                                        'loc': [0,0]
+                                    },
+                                    'range': [0,0],
+                                    'loc': [0,0]
+                                },
+                                'range': [0,0],
+                                'loc': [0,0]
                             });
                         }
                     });
@@ -1095,15 +1197,23 @@
                                 'type': 'VariableDeclarator',
                                 'id': {
                                     'type': 'Identifier',
-                                    'name': options.globalObjectName
+                                    'name': options.globalObjectName,
+                                    'range': [0,0],
+                                    'loc': [0,0]
                                 },
                                 'init': {
                                     'type': 'ObjectExpression',
-                                    'properties': []
-                                }
+                                    'properties': [],
+                                    'range': [0,0],
+                                    'loc': [0,0]
+                                },
+                                'range': [0,0],
+                                'loc': [0,0]
                             }
                         ],
-                        'kind': 'var'
+                        'kind': 'var',
+                        'range': [0,0],
+                        'loc': [0,0]
                     });
                 }
                 generatedCode = publicAPI.generateCode(ast, options);

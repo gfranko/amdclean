@@ -14,6 +14,38 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
+			it('should preserve single line comments when converting function return values to immediately invoked function declarations', function() {
+				var AMDcode = "define('example', [], function() {  // Answer\n var test = true; return test; });",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var example=function (){// Answer\nvar test=true;return test;}();";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should preserve multi-line comments when converting function return values to immediately invoked function declarations', function() {
+				var AMDcode = "define('example', [], function() {  /* Answer */\nvar test = true; return test; });",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var example=function (){/* Answer */\nvar test=true;return test;}();";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should preserve single line comments when converting function return values to immediately invoked function declarations using the globalObject option', function() {
+				var AMDcode = "define('example', [], function() {  // Answer\n var test = true; return test; });",
+					cleanedCode = amdclean.clean({ code: AMDcode, 'globalObject': true, 'rememberGlobalObject': false, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var amdclean={};amdclean['example']=function (){// Answer\nvar test=true;return test;}();";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should preserve multi-line line comments when converting function return values to immediately invoked function declarations using the globalObject option', function() {
+				var AMDcode = "define('example', [], function() {  /* Answer */\nvar test = true; return test; });",
+					cleanedCode = amdclean.clean({ code: AMDcode, 'globalObject': true, 'rememberGlobalObject': false, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "var amdclean={};amdclean['example']=function (){/* Answer */\nvar test=true;return test;}();";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
 			it('should passing a file path instead of the code directly', function() {
 				var cleanedCode = amdclean.clean({ filePath: __dirname + '/../filePathTest.js', escodegen: { format: { compact: true } } }),
 					standardJavaScript = "var example=undefined;";
@@ -435,6 +467,14 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
+			it('should preserve single line comments when converting require methods', function() {
+				var AMDcode = "require([], function() { // test comment\n var example = true; });",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
+					standardJavaScript = "(function(){// test comment\nvar example=true;}());";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
 			it('should pass the correct parameters to the locally scoped IIFEs', function() {
 				var AMDcode = "require(['anotherModule'], function(anotherModule) { var example = true; });",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
@@ -499,26 +539,7 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
-			it('correctly convert libraries with conditional AMD checks', function() {
-				var AMDcode = "(function (root, factory) {" +
-					"'use strict';" +
-					"if (typeof define === 'function' && define.amd) {" +
-					"define(['exports'], factory);" +
-					"} else if (typeof exports !== 'undefined') {" +
-					"factory(exports);" +
-					"} else {" +
-					"factory((root.esprima = {}));" +
-					"}" +
-					"}(this, function (exports) {" +
-					"var test = true;" +
-					"}));",
-					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } } }),
-					standardJavaScript = "(function(root,factory){'use strict';if(true){var =function (module){return factory();}({});}else if(typeof exports!=='undefined'){factory(exports);}else{factory(root.esprima={});}}(this,function(exports){exports=exports||{};var test=true;return exports;}));";
-
-				expect(cleanedCode).toBe(standardJavaScript);
-			});
-
-			it('correctly convert libraries with simple conditional AMD checks', function() {
+			it('should correctly convert libraries with simple conditional AMD checks', function() {
 				var AMDcode = "(function (root, factory) {" +
 					"'use strict';" +
 					"if (typeof define === 'function') {" +
