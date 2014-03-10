@@ -7,10 +7,12 @@ A build tool that converts AMD code to standard JavaScript.
 
 `npm install amdclean --save-dev`
 
+[Getting Started Video](http://www.youtube.com/watch?v=wbEloOLU3wM)
+
 
 ## Use Case
 
-**Single file** client-side JavaScript libraries or applications that want to use AMD to structure and build their code, but don't want an AMD footprint.
+**Single file** client-side JavaScript libraries or web apps that want to use AMD to structure and build their code, but don't want an AMD footprint.
 
 
 ## Used By
@@ -31,7 +33,7 @@ Many developers like to use the AMD API to write modular JavaScript, but do not 
 By incorporating amdclean.js into the build process, there is no need for Require or Almond.
 
 Since AMDclean rewrites your source code into standard JavaScript, it is a great
-fit for JavaScript library authors who want a tiny download in one file after using the
+fit for JavaScript library/web app authors who want a tiny download in one file after using the
 [RequireJS Optimizer](http://requirejs.org/docs/optimization.html).
 
 
@@ -48,7 +50,7 @@ It is best used for libraries or apps that use AMD and optimize all the modules 
 
 * [Shimmed modules](http://requirejs.org/docs/api.html#config-shim)
 
-* [Simplified CJS wrapper](https://github.com/jrburke/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#wiki-cjs)
+* [Simplified CJS wrapper](https://github.com/jrburke/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#wiki-cjs) (requires the `globalObject` option to be set to `true`)
 
 * Exporting global modules to the global `window` object
 
@@ -78,7 +80,7 @@ There are a few different ways that amdclean can be used including:
 
 * `npm install amdclean --save-dev`
 
-* Make sure that each of your AMD modules have a module ID `path` alias name
+* Make sure that each of your AMD modules have a module ID `path` alias name (this is not required, but a good idea)
 
 ```javascript
 paths: {
@@ -92,24 +94,15 @@ paths: {
 }
 ```
 
-* If you are **not** shimming any libraries, add an `onBuildWrite` config property to your RequireJS build configuration file.  Like this:
-
-```javascript
-onBuildWrite: function (moduleName, path, contents) {
-    return module.require('amdclean').clean(contents);
-}
-```
-
-* If you **are** shimming any libraries, add an `onModuleBundleComplete` config property to your RequireJS build configuration file instead.  Like this:
+* Add an `onModuleBundleComplete` config property to your RequireJS build configuration file instead.  Like this:
 
 ```javascript
 onModuleBundleComplete: function (data) {
-  var fs = require('fs'),
-    amdclean = require('amdclean'),
+  var fs = module.require('fs'),
+    amdclean = module.require('amdclean'),
     outputFile = data.path;
   fs.writeFileSync(outputFile, amdclean.clean({
-    'code': fs.readFileSync(outputFile),
-    'globalObject': true
+    'filePath': outputFile
   }));
 }
 ```
@@ -133,8 +126,13 @@ module.exports = function(grunt) {
           mainConfigFile: 'src/js/app/config/config.js',
           include: ['first'],
           out: 'src/js/app/exampleLib.js',
-          onBuildWrite: function( name, path, contents ) {
-            return require('amdclean').clean(contents);
+          onModuleBundleComplete: function (data) {
+            var fs = require('fs'),
+              amdclean = require('amdclean'),
+              outputFile = data.path;
+            fs.writeFileSync(outputFile, amdclean.clean({
+              'filePath': outputFile
+            }));
           }
         }
       }
@@ -153,14 +151,14 @@ module.exports = function(grunt) {
 * Require the module
 
 ```javascript
-var cleanAMD = require('amdclean');
+var amdclean = require('amdclean');
 ```
 
 * Call the clean method
 
 ```javascript
 var code = 'define("exampleModule", function() {});'
-var cleanedCode = cleanAMD.clean(code);
+var cleanedCode = amdclean.clean(code);
 ```
 
 
@@ -457,6 +455,15 @@ __Why would I use AMDClean instead of Almond.js?__
 
  - Although Almond is very small (~1k gzipped and minified), most JavaScript library authors do not want to have to include it in their library's source code.  AMDClean allows you to use AMD without increasing your library's file size.
 
+__Do I have to use the onModuleBundleComplete Require.js hook?__
+
+ - Nope, you may use the `onBuildWrite` Require.js hook instead.  Like this:
+```javascript
+onBuildWrite: function (moduleName, path, contents) {
+    return module.require('amdclean').clean(contents);
+}
+```
+
 __AMDClean does not seem to be cleaning shimmed modules.  What am I doing wrong?__
 
  - Since Require.js does not expose the [shim](http://requirejs.org/docs/api.html#config-shim) functionality within the `onBuildWrite` config property, you must use the `onModuleBundleComplete` config property instead.  Like this:
@@ -467,7 +474,7 @@ onModuleBundleComplete: function (data) {
     amdclean = require('amdclean'),
     outputFile = data.path;
   fs.writeFileSync(outputFile, amdclean.clean({
-    'code': fs.readFileSync(outputFile),
+    'filePath': outputFile,
     'globalObject': true
   }));
 }
