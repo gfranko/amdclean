@@ -1063,8 +1063,13 @@
                 }
                 // Check if both the esprima and escodegen comment options are set to true
                 if(esprimaOptions.comment === true && escodegenOptions.comment === true) {
-                    // Needed to keep source code comments when generating the code with escodegen
-                    ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
+                    try {
+                        // Needed to keep source code comments when generating the code with escodegen
+                        ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
+                    } catch(e) {
+                        // There was an error when attaching comments
+                        console.log('There was an error attaching comments: ', e);
+                    }
                 }
                 return escodegen.generate(ast, escodegenOptions);
             },
