@@ -1,4 +1,4 @@
-/*! amdclean - v1.3.0 - 2014-03-03
+/*! amdclean - v1.4.1 - 2014-03-17
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko; Licensed MIT*/
 
@@ -74,7 +74,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            'VERSION': '1.3.0',
+            'VERSION': '1.4.1',
             // Default Options
             'defaultOptions': {
                 // The source code you would like to be 'cleaned'
@@ -161,6 +161,19 @@
                 'exports': true,
                 'module': true
             },
+            // defaultLOC
+            // ----------
+            //  Default line of code property
+            'defaultLOC': {
+                'start': {
+                    'line': 0,
+                    'column': 0
+                }
+            },
+            // defaultRange
+            // ------------
+            //  Default line of code property
+            'defaultRange': [0, 0],
             // readFile
             // --------
             //  Synchronous file reading for node
@@ -330,8 +343,12 @@
                     'type': 'ExpressionStatement',
                     'expression': {
                         'type': 'Identifier',
-                        'name': name
-                    }
+                        'name': name,
+                        'range': publicAPI.defaultRange,
+                        'loc': publicAPI.defaultLOC
+                    },
+                    'range': publicAPI.defaultRange,
+                    'loc': publicAPI.defaultLOC
                 };
             },
             // convertToObjectDeclaration
@@ -367,12 +384,18 @@
                                                             'computed': false,
                                                             'object': {
                                                                 'type': 'Identifier',
-                                                                'name': 'window'
+                                                                'name': 'window',
+                                                                'range': publicAPI.defaultRange,
+                                                                'loc': publicAPI.defaultLOC
                                                             },
                                                             'property': {
                                                                 'type': 'Identifier',
-                                                                'name': nestedReturnStatement.argument.right.property.name
-                                                            }
+                                                                'name': nestedReturnStatement.argument.right.property.name,
+                                                                'range': publicAPI.defaultRange,
+                                                                'loc': publicAPI.defaultLOC
+                                                            },
+                                                            'range': publicAPI.defaultRange,
+                                                            'loc': publicAPI.defaultLOC
                                                         };
                                                     }
                                                 }
@@ -398,16 +421,26 @@
                                         'computed': true,
                                         'object': {
                                             'type': 'Identifier',
-                                            'name': options.globalObjectName
+                                            'name': options.globalObjectName,
+                                            'range': publicAPI.defaultRange,
+                                            'loc': publicAPI.defaultLOC
                                         },
                                         'property': {
                                             'type': 'Literal',
                                             'value': moduleName,
-                                            'raw': "" + moduleName + ""
-                                        }
+                                            'raw': "" + moduleName + "",
+                                            'range': publicAPI.defaultRange,
+                                            'loc': publicAPI.defaultLOC
+                                        },
+                                        'range': publicAPI.defaultRange,
+                                        'loc': publicAPI.defaultLOC
                                     },
-                                    "right": moduleReturnValue
-                                }
+                                    'right': moduleReturnValue,
+                                    'range': publicAPI.defaultRange,
+                                    'loc': publicAPI.defaultLOC
+                                },
+                                'range': publicAPI.defaultRange,
+                                'loc': publicAPI.defaultLOC
                             };
                         } else {
                             return {
@@ -417,12 +450,18 @@
                                         'type': 'VariableDeclarator',
                                         'id': {
                                             'type': 'Identifier',
-                                            'name': moduleName
+                                            'name': moduleName,
+                                            'range': publicAPI.defaultRange,
+                                            'loc': publicAPI.defaultLOC
                                         },
-                                        'init': moduleReturnValue
+                                        'init': moduleReturnValue,
+                                        'range': publicAPI.defaultRange,
+                                        'loc': publicAPI.defaultLOC
                                     }
                                 ],
-                                'kind': 'var'
+                                'kind': 'var',
+                                'range': publicAPI.defaultRange,
+                                'loc': publicAPI.defaultLOC
                             };
                         }
                     }());
@@ -449,10 +488,16 @@
                             'body': callbackFunc.body,
                             'rest': callbackFunc.rest,
                             'generator': callbackFunc.generator,
-                            'expression': callbackFunc.expression
+                            'expression': callbackFunc.expression,
+                            'range': (callbackFunc.range || publicAPI.defaultRange),
+                            'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                         },
-                        'arguments': dependencyNames
-                    }
+                        'arguments': dependencyNames,
+                        'range': (callbackFunc.range || publicAPI.defaultRange),
+                        'loc': (callbackFunc.loc || publicAPI.defaultLOC)
+                    },
+                    'range': (callbackFunc.range || publicAPI.defaultRange),
+                    'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                 };
             },
             // convertToIIFEDeclaration
@@ -460,6 +505,9 @@
             //  Returns a function expression that is executed immediately
             //  e.g. var example = function(){}()
             'convertToIIFEDeclaration': function(obj) {
+                // console.log('obj.callbackFunc', obj.callbackFunc);
+                // console.log('obj.callbackFunc.body.body', obj.callbackFunc.body.body);
+                // return;
                 var moduleName = obj.moduleName,
                     callbackFuncParams = obj.callbackFuncParams,
                     isOptimized = obj.isOptimized,
@@ -474,20 +522,30 @@
                                 'body': {
                                     'type': 'BlockStatement',
                                     'body': [{
-                                            'type': 'ReturnStatement',
-                                            'argument': {
-                                                'type': 'CallExpression',
-                                                'callee': {
-                                                    'type': 'Identifier',
-                                                    'name': cbFunc.name
-                                                },
-                                                'arguments': []
-                                            }
-                                    }]
+                                        'type': 'ReturnStatement',
+                                        'argument': {
+                                            'type': 'CallExpression',
+                                            'callee': {
+                                                'type': 'Identifier',
+                                                'name': cbFunc.name,
+                                                'range': (cbFunc.range || publicAPI.defaultRange),
+                                                'loc': (cbFunc.loc || publicAPI.defaultLOC)
+                                            },
+                                            'arguments': [],
+                                            'range': (cbFunc.range || publicAPI.defaultRange),
+                                            'loc': (cbFunc.loc || publicAPI.defaultLOC)
+                                        },
+                                        'range': (cbFunc.range || publicAPI.defaultRange),
+                                        'loc': (cbFunc.loc || publicAPI.defaultLOC)
+                                    }],
+                                    'range': (cbFunc.range || publicAPI.defaultRange),
+                                    'loc': (cbFunc.loc || publicAPI.defaultLOC)
                                 },
                                 'rest': null,
                                 'generator': false,
-                                'expression': false
+                                'expression': false,
+                                'range': (cbFunc.range || publicAPI.defaultRange),
+                                'loc': (cbFunc.loc || publicAPI.defaultLOC)
                             };
                         }
                         return cbFunc;
@@ -504,16 +562,22 @@
                                     'type': 'FunctionExpression',
                                     'id': {
                                         'type': 'Identifier',
-                                        'name': ''
+                                        'name': '',
+                                        'range': (callbackFunc.range || publicAPI.defaultRange),
+                                        'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                                     },
                                     'params': callbackFuncParams,
                                     'defaults': [],
                                     'body': callbackFunc.body,
                                     'rest': callbackFunc.rest,
                                     'generator': callbackFunc.generator,
-                                    'expression': callbackFunc.expression
+                                    'expression': callbackFunc.expression,
+                                    'range': (callbackFunc.range || publicAPI.defaultRange),
+                                    'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                                 },
-                                'arguments': dependencyNames
+                                'arguments': dependencyNames,
+                                'range': (callbackFunc.range || publicAPI.defaultRange),
+                                'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                             };
                         }
                     }()),
@@ -529,16 +593,26 @@
                                         'computed': true,
                                         'object': {
                                             'type': 'Identifier',
-                                            'name': options.globalObjectName
+                                            'name': options.globalObjectName,
+                                            'range': (callbackFunc.range || publicAPI.defaultRange),
+                                            'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                                         },
                                         'property': {
                                             'type': 'Literal',
                                             'value': moduleName,
-                                            'raw': "" + moduleName + ""
-                                        }
+                                            'raw': "" + moduleName + "",
+                                            'range': (callbackFunc.range || publicAPI.defaultRange),
+                                            'loc': (callbackFunc.loc || publicAPI.defaultLOC)
+                                        },
+                                        'range': (callbackFunc.range || publicAPI.defaultRange),
+                                        'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                                     },
-                                    'right': cb
-                                }
+                                    'right': cb,
+                                    'range': (callbackFunc.range || publicAPI.defaultRange),
+                                    'loc': (callbackFunc.loc || publicAPI.defaultLOC)
+                                },
+                                'range': (callbackFunc.range || publicAPI.defaultRange),
+                                'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                             };
                         } else {
                             return {
@@ -548,12 +622,18 @@
                                         'type': 'VariableDeclarator',
                                         'id': {
                                             'type': 'Identifier',
-                                            'name': moduleName
+                                            'name': moduleName,
+                                            'range': (callbackFunc.range || publicAPI.defaultRange),
+                                            'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                                         },
-                                        'init': cb
+                                        'init': cb,
+                                        'range': (callbackFunc.range || publicAPI.defaultRange),
+                                        'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                                     }
                                 ],
-                                'kind': 'var'
+                                'kind': 'var',
+                                'range': (callbackFunc.range || publicAPI.defaultRange),
+                                'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                             };
                         }
                     }());
@@ -629,19 +709,27 @@
                                     'computed': true,
                                     'object': {
                                         'type': 'Identifier',
-                                        'name': options.globalObjectName
+                                        'name': options.globalObjectName,
+                                        'range': publicAPI.defaultRange,
+                                        'loc': publicAPI.defaultLOC
                                     },
                                     'property': {
                                         'type': 'Literal',
                                         'value': publicAPI.normalizeModuleName(currentName),
-                                        'raw': "" + publicAPI.normalizeModuleName(currentName) + ""
+                                        'raw': "" + publicAPI.normalizeModuleName(currentName) + "",
+                                        'range': publicAPI.defaultRange,
+                                        'loc': publicAPI.defaultLOC
                                     },
-                                    'name': publicAPI.normalizeModuleName(currentName)
+                                    'name': publicAPI.normalizeModuleName(currentName),
+                                    'range': publicAPI.defaultRange,
+                                    'loc': publicAPI.defaultLOC
                                 });
                             } else {
                                 deps.push({
                                     'type': 'Identifier',
-                                    'name': publicAPI.normalizeModuleName(currentName)
+                                    'name': publicAPI.normalizeModuleName(currentName),
+                                    'range': publicAPI.defaultRange,
+                                    'loc': publicAPI.defaultLOC
                                 });
                             }
                         }
@@ -683,7 +771,9 @@
                         } else if(callbackFunc && callbackFunc.type === 'FunctionExpression' && callbackFunc.body && _.isArray(callbackFunc.body.body) && callbackFunc.body.body.length === 0) {
                             callbackFunc = {
                                 'type': 'Identifier',
-                                'name': 'undefined'
+                                'name': 'undefined',
+                                'range': publicAPI.defaultRange,
+                                'loc': publicAPI.defaultLOC
                             };
                             depLength = 0;
                         }
@@ -721,7 +811,9 @@
                             }
                             deps.push({
                                 'type': 'Identifier',
-                                'name': currentName
+                                'name': currentName,
+                                'range': publicAPI.defaultRange,
+                                'loc': publicAPI.defaultLOC
                             });
                         }
                         return deps;
@@ -732,8 +824,12 @@
                         'type': 'ReturnStatement',
                         'argument': {
                             'type': 'Identifier',
-                            'name': 'exports'
-                        }
+                            'name': 'exports',
+                            'range': publicAPI.defaultRange,
+                            'loc': publicAPI.defaultLOC
+                        },
+                        'range': publicAPI.defaultRange,
+                        'loc': publicAPI.defaultLOC
                     });
                 }
 
@@ -798,7 +894,9 @@
                     node.test = {
                         'type': 'Literal',
                         'value': true,
-                        'raw': 'true'
+                        'raw': 'true',
+                        'range': publicAPI.defaultRange,
+                        'loc': publicAPI.defaultLOC
                     };
                     return node;
                 }
@@ -899,29 +997,45 @@
                                 'operator': '=',
                                 'left': {
                                     'type': 'Identifier',
-                                    'name': 'exports'
+                                    'name': 'exports',
+                                    'range': publicAPI.defaultRange,
+                                    'loc': publicAPI.defaultLOC
                                 },
                                 'right': {
                                     'type': 'LogicalExpression',
                                     'operator': '||',
                                     'left': {
                                         'type': 'Identifier',
-                                        'name': 'exports'
+                                        'name': 'exports',
+                                        'range': publicAPI.defaultRange,
+                                        'loc': publicAPI.defaultLOC
                                     },
                                     'right': {
                                         'type': 'ObjectExpression',
-                                        'properties': []
-                                    }
-                                }
-                            }
+                                        'properties': [],
+                                        'range': publicAPI.defaultRange,
+                                        'loc': publicAPI.defaultLOC
+                                    },
+                                    'range': publicAPI.defaultRange,
+                                    'loc': publicAPI.defaultLOC
+                                },
+                                'range': publicAPI.defaultRange,
+                                'loc': publicAPI.defaultLOC
+                            },
+                            'range': publicAPI.defaultRange,
+                            'loc': publicAPI.defaultLOC
                         });
                         // Adds the return statement, 'return exports', to the end of the function expression 
                         node.body.body.push({
                             'type': 'ReturnStatement',
                             'argument': {
                                 'type': 'Identifier',
-                                'name': 'exports'
-                            }
+                                'name': 'exports',
+                                'range': publicAPI.defaultRange,
+                                'loc': publicAPI.defaultLOC
+                            },
+                            'range': publicAPI.defaultRange,
+                            'loc': publicAPI.defaultLOC
                         });
                     }
                     return node;
@@ -972,8 +1086,7 @@
             //  Returns standard JavaScript generated by Escodegen
             'generateCode': function(ast, options) {
                 var esprimaOptions = options.esprima || {},
-                    escodegenOptions = options.escodegen || {},
-                    code = escodegen.generate(ast, escodegenOptions);
+                    escodegenOptions = options.escodegen || {};
                 if(!_.isPlainObject(escodegen) || !_.isFunction(escodegen.generate)) {
                     throw new Error(publicAPI.errorMsgs.escodegen);
                 }
@@ -982,7 +1095,12 @@
                     try {
                         // Needed to keep source code comments when generating the code with escodegen
                         ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
-                    } catch(e) {}
+                    } catch(e) {
+                        if(console && console.log) {
+                            // There was an error when attaching comments
+                            console.log('There was an error attaching comments: ', e);
+                        }
+                    }
                 }
                 return escodegen.generate(ast, escodegenOptions);
             },
@@ -1032,18 +1150,26 @@
                                             'computed': true,
                                             'object': {
                                                 'type': 'Identifier',
-                                                'name': options.globalObjectName
+                                                'name': options.globalObjectName,
+                                                'range': publicAPI.defaultRange,
+                                                'loc': publicAPI.defaultLOC
                                             },
                                             'property': {
                                                 'type': 'Literal',
                                                 'value': normalizedModuleName,
-                                                'raw': normalizedModuleName
-                                            }
+                                                'raw': normalizedModuleName,
+                                                'range': publicAPI.defaultRange,
+                                                'loc': publicAPI.defaultLOC
+                                            },
+                                            'range': publicAPI.defaultRange,
+                                            'loc': publicAPI.defaultLOC
                                         };
                                     } else {
                                         return {
                                             'type': 'Identifier',
-                                            'name': normalizedModuleName
+                                            'name': normalizedModuleName,
+                                            'range': publicAPI.defaultRange,
+                                            'loc': publicAPI.defaultLOC
                                         };
                                     }
                                 } else {
@@ -1067,18 +1193,30 @@
                                         'computed': false,
                                         'object': {
                                             'type': 'Identifier',
-                                            'name': 'window'
+                                            'name': 'window',
+                                            'range': publicAPI.defaultRange,
+                                            'loc': publicAPI.defaultLOC
                                         },
                                         'property': {
                                             'type': 'Identifier',
-                                            'name': currentModule
-                                        }
+                                            'name': currentModule,
+                                            'range': publicAPI.defaultRange,
+                                            'loc': publicAPI.defaultLOC
+                                        },
+                                        'range': publicAPI.defaultRange,
+                                        'loc': publicAPI.defaultLOC
                                     },
                                     'right': {
                                         'type': 'Identifier',
-                                        'name': currentModule
-                                    }
-                                }
+                                        'name': currentModule,
+                                        'range': publicAPI.defaultRange,
+                                        'loc': publicAPI.defaultLOC
+                                    },
+                                    'range': publicAPI.defaultRange,
+                                    'loc': publicAPI.defaultLOC
+                                },
+                                'range': publicAPI.defaultRange,
+                                'loc': publicAPI.defaultLOC
                             });
                         }
                     });
@@ -1095,15 +1233,23 @@
                                 'type': 'VariableDeclarator',
                                 'id': {
                                     'type': 'Identifier',
-                                    'name': options.globalObjectName
+                                    'name': options.globalObjectName,
+                                    'range': publicAPI.defaultRange,
+                                    'loc': publicAPI.defaultLOC
                                 },
                                 'init': {
                                     'type': 'ObjectExpression',
-                                    'properties': []
-                                }
+                                    'properties': [],
+                                    'range': publicAPI.defaultRange,
+                                    'loc': publicAPI.defaultLOC
+                                },
+                                'range': publicAPI.defaultRange,
+                                'loc': publicAPI.defaultLOC
                             }
                         ],
-                        'kind': 'var'
+                        'kind': 'var',
+                        'range': publicAPI.defaultRange,
+                        'loc': publicAPI.defaultLOC
                     });
                 }
                 generatedCode = publicAPI.generateCode(ast, options);
