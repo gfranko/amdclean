@@ -1,6 +1,6 @@
-/*! amdclean - v1.4.1 - 2014-03-17
+/*! amdclean - v2.0.0 - 2014-03-17
 * http://gregfranko.com/amdclean
-* Copyright (c) 2014 Greg Franko; Licensed MIT*/
+* Copyright (c) 2014 Greg Franko; Licensed MIT */
 
 (function (root, factory, undefined) {
     'use strict';
@@ -74,7 +74,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            'VERSION': '1.4.1',
+	    'VERSION': '2.0.0',
             // Default Options
             'defaultOptions': {
                 // The source code you would like to be 'cleaned'
@@ -85,11 +85,6 @@
                 // The modules that you would like to set as window properties
                 // An array of strings (module names)
                 'globalModules': [],
-                // Determines if all of your local modules are stored in a single global object (helps with scoping in certain cases)
-                'globalObject': false,
-                // Determines the name of your global object that stores all of your global modules
-                // Note: If using a global object, try to override this name with a smaller name since it will be referenced throughout the code
-                'globalObjectName': 'amdclean',
                 // All esprima API options are supported: http://esprima.org/doc/
                 'esprima': {
                     'comment': true,
@@ -114,10 +109,6 @@
                 // Allows you to pass an expression that will override shimmed modules return values
                 // e.g. { 'backbone': 'window.Backbone' }
                 'shimOverrides': {},
-                // Prevents multiple global objects from being instantiated when using the onBuildWrite Require.js hook
-                // Set this to false if you are using AMDClean for more than one build AND
-                // are using the onModuleBundleComplete Require.js hook
-                'rememberGlobalObject': true,
                 // Determines how to prefix a module name with when a non-JavaScript compatible character is found 
                 // 'standard' or 'camelCase'
                 // 'standard' example: 'utils/example' -> 'utils_example'
@@ -129,8 +120,8 @@
                 // This should only be used when using the onModuleBundleComplete RequireJS Optimizer build hook
                 // If it is used with the onBuildWrite RequireJS Optimizer build hook, each module will get wrapped
                 'wrap': {
-                    'start': '',
-                    'end': ''
+                    'start': '(function() {\n',
+                    'end': '\n}());'
                 }
             },
             // Environment - either node or web
@@ -153,6 +144,8 @@
                 'estraverse': 'There is not an estraverse.replace() method.  Make sure you have included estraverse (https://github.com/Constellation/estraverse).',
                 'escodegen': 'There is not an escodegen.generate() method.  Make sure you have included escodegen (https://github.com/Constellation/escodegen).'
             },
+            // User module names
+            'storedModules': {},
             // Dependency blacklist
             // --------------------
             //  Variable names that are not allowed as dependencies to functions
@@ -283,17 +276,20 @@
                     _.where(node.test.left, matchObject).length ||
                     _.where([node.test.left], matchObject).length);
             },
-            arrayContains: function(arr, name) {
-                if(!_.isArray(arr)) return false;
-                return arr.indexOf(name) !== -1;
-            },
+            // convertToCamelCase
+            // ------------------
+            //  Converts a delimited string to camel case
+            //  e.g. some_str -> someStr
             convertToCamelCase: function(input, delimiter) {
                 delimiter = delimiter || '_';
                 return input.replace(new RegExp(delimiter + '(.)', 'g'), function(match, group1) {
                     return group1.toUpperCase();
                 });
             },
-            // getJavaScriptIdentifier
+    	    // prefixReservedWords
+    	    // -------------------
+    	    //  Converts a reserved word in JavaScript with an underscore
+    	    //  e.g. class -> _class
             'prefixReservedWords': function(name) {
                 var reservedWord = false;
                 try {
@@ -409,63 +405,25 @@
                         return modReturnValue;
                     }()),
                     options = publicAPI.options,
-                    updatedNode = (function() {
-                        if(options.globalObject === true && options.globalObjectName) {
-                            return {
-                                'type': 'ExpressionStatement',
-                                'expression': {
-                                    'type': 'AssignmentExpression',
-                                    'operator': '=',
-                                    'left': {
-                                        'type': 'MemberExpression',
-                                        'computed': true,
-                                        'object': {
-                                            'type': 'Identifier',
-                                            'name': options.globalObjectName,
-                                            'range': publicAPI.defaultRange,
-                                            'loc': publicAPI.defaultLOC
-                                        },
-                                        'property': {
-                                            'type': 'Literal',
-                                            'value': moduleName,
-                                            'raw': "" + moduleName + "",
-                                            'range': publicAPI.defaultRange,
-                                            'loc': publicAPI.defaultLOC
-                                        },
-                                        'range': publicAPI.defaultRange,
-                                        'loc': publicAPI.defaultLOC
-                                    },
-                                    'right': moduleReturnValue,
-                                    'range': publicAPI.defaultRange,
-                                    'loc': publicAPI.defaultLOC
-                                },
-                                'range': publicAPI.defaultRange,
-                                'loc': publicAPI.defaultLOC
-                            };
-                        } else {
-                            return {
-                                'type': 'VariableDeclaration',
-                                'declarations': [
-                                    {
-                                        'type': 'VariableDeclarator',
-                                        'id': {
-                                            'type': 'Identifier',
-                                            'name': moduleName,
-                                            'range': publicAPI.defaultRange,
-                                            'loc': publicAPI.defaultLOC
-                                        },
-                                        'init': moduleReturnValue,
-                                        'range': publicAPI.defaultRange,
-                                        'loc': publicAPI.defaultLOC
-                                    }
-                                ],
-                                'kind': 'var',
-                                'range': publicAPI.defaultRange,
-                                'loc': publicAPI.defaultLOC
-                            };
-                        }
-                    }());
-                    return updatedNode;
+        		    updatedNode = {
+            			'type': 'ExpressionStatement',
+            			'expression': {
+            			    'type': 'AssignmentExpression',
+            			    'operator': '=',
+            			    'left': {
+            				'type': 'Identifier',
+            				'name': moduleName,
+                                            'range': [0,0],
+                                            'loc': [0,0]
+            			    },
+            			    'right': moduleReturnValue,
+            			    'range': [0,0],
+            			    'loc': [0,0]
+            			},
+            			'range': [0,0],
+            			'loc': [0,0]
+        		    };
+                return updatedNode;
             },
             // convertToIIFE
             // -------------
@@ -505,9 +463,6 @@
             //  Returns a function expression that is executed immediately
             //  e.g. var example = function(){}()
             'convertToIIFEDeclaration': function(obj) {
-                // console.log('obj.callbackFunc', obj.callbackFunc);
-                // console.log('obj.callbackFunc.body.body', obj.callbackFunc.body.body);
-                // return;
                 var moduleName = obj.moduleName,
                     callbackFuncParams = obj.callbackFuncParams,
                     isOptimized = obj.isOptimized,
@@ -581,63 +536,25 @@
                             };
                         }
                     }()),
-                    updatedNode = (function() {
-                        if(options.globalObject === true && options.globalObjectName) {
-                            return {
-                                'type': 'ExpressionStatement',
-                                'expression': {
-                                    'type': 'AssignmentExpression',
-                                    'operator': '=',
-                                    'left': {
-                                        'type': 'MemberExpression',
-                                        'computed': true,
-                                        'object': {
-                                            'type': 'Identifier',
-                                            'name': options.globalObjectName,
-                                            'range': (callbackFunc.range || publicAPI.defaultRange),
-                                            'loc': (callbackFunc.loc || publicAPI.defaultLOC)
-                                        },
-                                        'property': {
-                                            'type': 'Literal',
-                                            'value': moduleName,
-                                            'raw': "" + moduleName + "",
-                                            'range': (callbackFunc.range || publicAPI.defaultRange),
-                                            'loc': (callbackFunc.loc || publicAPI.defaultLOC)
-                                        },
-                                        'range': (callbackFunc.range || publicAPI.defaultRange),
-                                        'loc': (callbackFunc.loc || publicAPI.defaultLOC)
-                                    },
-                                    'right': cb,
-                                    'range': (callbackFunc.range || publicAPI.defaultRange),
-                                    'loc': (callbackFunc.loc || publicAPI.defaultLOC)
-                                },
-                                'range': (callbackFunc.range || publicAPI.defaultRange),
-                                'loc': (callbackFunc.loc || publicAPI.defaultLOC)
-                            };
-                        } else {
-                            return {
-                                'type': 'VariableDeclaration',
-                                'declarations': [
-                                    {
-                                        'type': 'VariableDeclarator',
-                                        'id': {
-                                            'type': 'Identifier',
-                                            'name': moduleName,
-                                            'range': (callbackFunc.range || publicAPI.defaultRange),
-                                            'loc': (callbackFunc.loc || publicAPI.defaultLOC)
-                                        },
-                                        'init': cb,
-                                        'range': (callbackFunc.range || publicAPI.defaultRange),
-                                        'loc': (callbackFunc.loc || publicAPI.defaultLOC)
-                                    }
-                                ],
-                                'kind': 'var',
-                                'range': (callbackFunc.range || publicAPI.defaultRange),
-                                'loc': (callbackFunc.loc || publicAPI.defaultLOC)
-                            };
-                        }
-                    }());
-                    return updatedNode;
+        		    updatedNode = {
+            			'type': 'ExpressionStatement',
+            			'expression': {
+            			    'type': 'AssignmentExpression',
+            			    'operator': '=',
+            			    'left': {
+            				'type': 'Identifier',
+            				'name': moduleName,
+                                            'range': (callbackFunc.range || [0,0]),
+                                            'loc': (callbackFunc.loc || [0,0])
+            			    },
+            			    'right': cb,
+            			    'range': (callbackFunc.range || [0,0]),
+            			    'loc': (callbackFunc.loc || [0,0])
+            			},
+            			'range': (callbackFunc.range || [0,0]),
+            			'loc': (callbackFunc.loc || [0,0])
+        		    };
+                return updatedNode;
             },
             // isRelativeFilePath
             // ------------------
@@ -645,7 +562,6 @@
             //  e.g. ../exampleModule -> true
             isRelativeFilePath: function(path) {
                 var segments = path.split('/');
-
                 return segments.length !== -1 && (segments[0] === '.' || segments[0] === '..');
             },
             // normalizeDependencyName
@@ -703,35 +619,12 @@
                             currentName;
                         while(++iterator < depLength) {
                             currentName = publicAPI.normalizeDependencyName(moduleId, dependencies[iterator]);
-                            if(options.globalObject === true && options.globalObjectName && currentName !== '{}') {
-                                deps.push({
-                                    'type': 'MemberExpression',
-                                    'computed': true,
-                                    'object': {
-                                        'type': 'Identifier',
-                                        'name': options.globalObjectName,
-                                        'range': publicAPI.defaultRange,
-                                        'loc': publicAPI.defaultLOC
-                                    },
-                                    'property': {
-                                        'type': 'Literal',
-                                        'value': publicAPI.normalizeModuleName(currentName),
-                                        'raw': "" + publicAPI.normalizeModuleName(currentName) + "",
-                                        'range': publicAPI.defaultRange,
-                                        'loc': publicAPI.defaultLOC
-                                    },
-                                    'name': publicAPI.normalizeModuleName(currentName),
-                                    'range': publicAPI.defaultRange,
-                                    'loc': publicAPI.defaultLOC
-                                });
-                            } else {
-                                deps.push({
-                                    'type': 'Identifier',
-                                    'name': publicAPI.normalizeModuleName(currentName),
-                                    'range': publicAPI.defaultRange,
-                                    'loc': publicAPI.defaultLOC
-                                });
-                            }
+            			    deps.push({
+                				'type': 'Identifier',
+                				'name': publicAPI.normalizeModuleName(currentName),
+                				'range': [0,0],
+                				'loc': [0,0]
+            			    });
                         }
                         return deps;
                     }()),
@@ -850,6 +743,17 @@
                     });
                 }
             },
+            // getNormalizedModuleName
+            // -----------------------
+            // Retrieves the module id if the current node is a define() method
+            'getNormalizedModuleName': function(node, parent) {
+                if(!publicAPI.isDefine(node)) {
+                    return;
+                }
+                var moduleId = node.expression['arguments'][0].value,
+                    moduleName = publicAPI.normalizeModuleName(moduleId);
+                return moduleName;
+            },
             // convertDefinesAndRequires
             // -------------------------
             //  Replaces define() and require() methods to standard JavaScript
@@ -868,7 +772,8 @@
                     lineNumberObj = {},
                     callbackFuncArg = false,
                     type = '',
-                    options = publicAPI.options;
+        		    options = publicAPI.options,
+        		    shouldBeIgnored;
                 if(node.type === 'Program') {
                     comments = (function() {
                         var arr = [];
@@ -887,10 +792,8 @@
                     publicAPI.commentLineNumbers = lineNumberObj;
                 }
                 startLineNumber = isDefine || isRequire ? node.expression.loc.start.line : node && node.loc && node.loc.start ? node.loc.start.line : null;
-                if((publicAPI.commentLineNumbers[startLineNumber] || publicAPI.commentLineNumbers['' + (parseInt(startLineNumber, 10) - 1)])) {
-                    return node;
-                }
-                if(publicAPI.isAMDConditional(node)) {
+                shouldBeIgnored = (publicAPI.commentLineNumbers[startLineNumber] || publicAPI.commentLineNumbers['' + (parseInt(startLineNumber, 10) - 1)]);
+                if(!shouldBeIgnored && publicAPI.isAMDConditional(node)) {
                     node.test = {
                         'type': 'Literal',
                         'value': true,
@@ -934,7 +837,11 @@
                             isRequire: isRequire
                     };
                     if(isDefine) {
-                        if(publicAPI.arrayContains(options.removeModules, moduleName)) {
+            			if(shouldBeIgnored) {
+            			    publicAPI.options.ignoreModules.push(moduleName);
+            			    return node;
+            			}
+                        if(_.contains(options.removeModules, moduleName)) {
                             // Remove the current module from the source
                             return {
                                 type: 'EmptyStatement'
@@ -956,7 +863,7 @@
                         if(params.moduleReturnValue && params.moduleReturnValue.type === 'Identifier') {
                             type = 'functionExpression';
                         }
-                        if(publicAPI.arrayContains(options.ignoreModules, moduleName)) {
+                        if(_.contains(options.ignoreModules, moduleName)) {
                             return node;
                         } else if(publicAPI.isFunctionExpression(moduleReturnValue) || type === 'functionExpression') {
                             return publicAPI.convertToFunctionExpression(params);
@@ -966,6 +873,9 @@
                             return publicAPI.convertToObjectDeclaration(params, 'functionCallExpression');
                         }
                     } else if(isRequire) {
+                        if(shouldBeIgnored) {
+                            return node;
+                        }
                         callbackFuncArg = _.isArray(node.expression['arguments']) && node.expression['arguments'].length ? node.expression['arguments'][1] && node.expression['arguments'][1].body && node.expression['arguments'][1].body.body && node.expression['arguments'][1].body.body.length : false;
                         if(options.removeAllRequires !== true && callbackFuncArg) {
                             return publicAPI.convertToFunctionExpression(params);
@@ -1057,18 +967,34 @@
                     return esprima.parse(code, esprimaOptions);
                 }
             },
-           // traverseAndUpdateAst
+    	    // findAndStoreAllModuleIds
+    	    // ------------------------
+    	    //  Uses Estraverse to traverse the AST so that all of the module ids can be found and stored in an object
+    	    'findAndStoreAllModuleIds': function(ast) {
+        		if(!ast) {
+        		    throw new Error(publicAPI.errorMsgs.emptyAst('findAndStoreAllModuleIds'));
+        		}
+        		if(!_.isPlainObject(estraverse) || !_.isFunction(estraverse.traverse)) {
+        		    throw new Error(publicAPI.errorMsgs.estraverse);
+        		}
+        		estraverse.traverse(ast, {
+        		    'enter': function(node, parent) {
+        			var moduleName = publicAPI.getNormalizedModuleName(node, parent);
+        			// If the current module has not been stored, store it
+        			if(moduleName && !publicAPI.storedModules[moduleName]) {
+        			    publicAPI.storedModules[moduleName] = true;
+        			}
+        		    }
+        		});
+    	    },
+            // traverseAndUpdateAst
             // --------------------
             //  Uses Estraverse to traverse the AST and convert all define() and require() methods to standard JavaScript
             'traverseAndUpdateAst': function(obj) {
                 if(!_.isPlainObject(obj)) {
                     throw new Error(publicAPI.errorMsgs.invalidObject('traverseAndUpdateAst'));
                 }
-                var ast = obj.ast,
-                    enterDefault = function(node, parent) { return publicAPI.convertDefinesAndRequires(node, parent); },
-                    leaveDefault = function(node, parent) { return node; },
-                    enterFunc = _.isFunction(obj.enterFunc) ? obj.enterFunc : enterDefault,
-                    leaveFunc = _.isFunction(obj.leaveFunc) ? obj.leaveFunc : leaveDefault;
+                var ast = obj.ast;
                 if(!ast) {
                     throw new Error(publicAPI.errorMsgs.emptyAst('traverseAndUpdateAst'));
                 }
@@ -1076,8 +1002,12 @@
                     throw new Error(publicAPI.errorMsgs.estraverse);
                 }
                 estraverse.replace(ast, {
-                    'enter': enterFunc,
-                    'leave': leaveFunc
+                    'enter': function(node, parent) {
+                        return publicAPI.convertDefinesAndRequires(node, parent);
+                    },
+                    'leave': function(node, parent) {
+                        return node;
+                    }
                 });
                 return ast;
             },
@@ -1092,8 +1022,15 @@
                 }
                 // Check if both the esprima and escodegen comment options are set to true
                 if(esprimaOptions.comment === true && escodegenOptions.comment === true) {
+                    try {
                         // Needed to keep source code comments when generating the code with escodegen
                         ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
+                    } catch(e) {
+                        if(console && console.log) {
+                            // There was an error when attaching comments
+                            console.log('There was an error attaching comments: ', e);
+                        }
+                    }
                 }
                 return escodegen.generate(ast, escodegenOptions);
             },
@@ -1107,7 +1044,9 @@
                     defaultOptions = _.cloneDeep(publicAPI.defaultOptions || {}),
                     userOptions = obj || {},
                     mergedOptions = _.merge(defaultOptions, userOptions),
-                    generatedCode;
+                    generatedCode,
+                    originalAst,
+                    declarations = [];
                 publicAPI.options = options = mergedOptions;
                 if(!_ || !_.isPlainObject) {
                     throw new Error(publicAPI.errorMsgs.lodash);
@@ -1119,9 +1058,15 @@
                 } else {
                     throw new Error(publicAPI.errorMsgs.invalidObject('clean'));
                 }
+                // Creates and stores an AST representation of the code
+                originalAst = publicAPI.createAst(code);
+                // Loops through the AST, finds all module ids, and stores them inside of publicAPI.storedModules
+                publicAPI.findAndStoreAllModuleIds(originalAst);
+                // Traverse the AST and removes any AMD trace
                 ast = publicAPI.traverseAndUpdateAst({
-                    ast: publicAPI.createAst(code)
+                    ast: originalAst
                 });
+                // Post Clean Up
                 // Removes all empty statements from the source so that there are no single semicolons and
                 // Make sure that all require() CommonJS calls are converted
                 if(ast && _.isArray(ast.body)) {
@@ -1137,34 +1082,12 @@
                             } else if(publicAPI.isRequireExpression(node)) {
                                 if(node['arguments'] && node['arguments'][0] && node['arguments'][0].value) {
                                     normalizedModuleName = publicAPI.normalizeModuleName(node['arguments'][0].value);
-                                    if(options.globalObject === true && (options.globalObjectName && _.isString(options.globalObjectName) && options.globalObjectName.length)) {
-                                        return {
-                                            'type': 'MemberExpression',
-                                            'computed': true,
-                                            'object': {
-                                                'type': 'Identifier',
-                                                'name': options.globalObjectName,
-                                                'range': publicAPI.defaultRange,
-                                                'loc': publicAPI.defaultLOC
-                                            },
-                                            'property': {
-                                                'type': 'Literal',
-                                                'value': normalizedModuleName,
-                                                'raw': normalizedModuleName,
-                                                'range': publicAPI.defaultRange,
-                                                'loc': publicAPI.defaultLOC
-                                            },
-                                            'range': publicAPI.defaultRange,
-                                            'loc': publicAPI.defaultLOC
-                                        };
-                                    } else {
-                                        return {
-                                            'type': 'Identifier',
-                                            'name': normalizedModuleName,
-                                            'range': publicAPI.defaultRange,
-                                            'loc': publicAPI.defaultLOC
-                                        };
-                                    }
+                                    return {
+                                        'type': 'Identifier',
+                                        'name': normalizedModuleName,
+                                        'range': [0,0],
+                                        'loc': [0,0]
+                                    };
                                 } else {
                                     return node;
                                 }
@@ -1173,6 +1096,8 @@
                         }
                     });
                 }
+                // Makes any necessary modules global by appending a global instantiation to the code
+                // eg: window.exampleModule = exampleModule;
                 if(_.isArray(options.globalModules)) {
                     _.each(options.globalModules, function(currentModule) {
                         if(_.isString(currentModule) && currentModule.length) {
@@ -1215,37 +1140,42 @@
                     });
                 }
 
-                if(options.globalObject === true && options.globalObjectName && !publicAPI.createdGlobalObject) {
-                    if(options.rememberGlobalObject === true) {
-                        publicAPI.createdGlobalObject = true;
+                // Creates variable declarations for each AMD module
+                _.each(publicAPI.storedModules, function(moduleValue, moduleName) {
+                    if(!_.contains(publicAPI.options.ignoreModules, moduleName)) {
+                        declarations.push({
+                            'type': 'VariableDeclarator',
+                            'id': {
+                            	'type': 'Identifier',
+                            	'name': moduleName,
+                            	'range': [0,0],
+                            	'loc': [0,0]
+                            },
+                            'init': null,
+                            'range': [0,0],
+                            'loc': [0,0]
+                        });
                     }
+                });
+
+                // If there are declarations, the declarations are preprended to the beginning of the code block
+                if(declarations.length) {
                     ast.body.unshift({
                         'type': 'VariableDeclaration',
-                        'declarations': [
-                            {
-                                'type': 'VariableDeclarator',
-                                'id': {
-                                    'type': 'Identifier',
-                                    'name': options.globalObjectName,
-                                    'range': publicAPI.defaultRange,
-                                    'loc': publicAPI.defaultLOC
-                                },
-                                'init': {
-                                    'type': 'ObjectExpression',
-                                    'properties': [],
-                                    'range': publicAPI.defaultRange,
-                                    'loc': publicAPI.defaultLOC
-                                },
-                                'range': publicAPI.defaultRange,
-                                'loc': publicAPI.defaultLOC
-                            }
-                        ],
+                        'declarations': declarations,
                         'kind': 'var',
                         'range': publicAPI.defaultRange,
                         'loc': publicAPI.defaultLOC
                     });
                 }
+
+                // Resets all of the stored modules (in case there is more than one build task)
+                publicAPI.storedModules = {};
+
+                // Converts the updated AST to a string of code
                 generatedCode = publicAPI.generateCode(ast, options);
+
+                // If there is a wrap option specified
                 if(_.isObject(publicAPI.options.wrap)) {
                     if(_.isString(publicAPI.options.wrap.start) && publicAPI.options.wrap.start.length) {
                         generatedCode = publicAPI.options.wrap.start + generatedCode;
