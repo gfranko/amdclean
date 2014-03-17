@@ -1,6 +1,6 @@
-/*! amdclean - v2.0.0 - 2014-03-16
+/*! amdclean - v2.0.0 - 2014-03-17
 * http://gregfranko.com/amdclean
-* Copyright (c) 2014 Greg Franko; Licensed MIT*/
+* Copyright (c) 2014 Greg Franko; Licensed MIT */
 
 (function (root, factory, undefined) {
     'use strict';
@@ -154,6 +154,19 @@
                 'exports': true,
                 'module': true
             },
+            // defaultLOC
+            // ----------
+            //  Default line of code property
+            'defaultLOC': {
+                'start': {
+                    'line': 0,
+                    'column': 0
+                }
+            },
+            // defaultRange
+            // ------------
+            //  Default line of code property
+            'defaultRange': [0, 0],
             // readFile
             // --------
             //  Synchronous file reading for node
@@ -327,11 +340,11 @@
                     'expression': {
                         'type': 'Identifier',
                         'name': name,
-                        'range': [0,0],
-                        'loc': [0,0]
+                        'range': publicAPI.defaultRange,
+                        'loc': publicAPI.defaultLOC
                     },
-                    'range': [0,0],
-                    'loc': [0,0]
+                    'range': publicAPI.defaultRange,
+                    'loc': publicAPI.defaultLOC
                 };
             },
             // convertToObjectDeclaration
@@ -368,17 +381,17 @@
                                                             'object': {
                                                                 'type': 'Identifier',
                                                                 'name': 'window',
-                                                                'range': [0,0],
-                                                                'loc': [0,0]
+                                                                'range': publicAPI.defaultRange,
+                                                                'loc': publicAPI.defaultLOC
                                                             },
                                                             'property': {
                                                                 'type': 'Identifier',
                                                                 'name': nestedReturnStatement.argument.right.property.name,
-                                                                'range': [0,0],
-                                                                'loc': [0,0]
+                                                                'range': publicAPI.defaultRange,
+                                                                'loc': publicAPI.defaultLOC
                                                             },
-                                                            'range': [0,0],
-                                                            'loc': [0,0]
+                                                            'range': publicAPI.defaultRange,
+                                                            'loc': publicAPI.defaultLOC
                                                         };
                                                     }
                                                 }
@@ -434,15 +447,15 @@
                             'rest': callbackFunc.rest,
                             'generator': callbackFunc.generator,
                             'expression': callbackFunc.expression,
-                            'range': (callbackFunc.range || [0,0]),
-                            'loc': (callbackFunc.loc || [0,0])
+                            'range': (callbackFunc.range || publicAPI.defaultRange),
+                            'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                         },
                         'arguments': dependencyNames,
-                        'range': (callbackFunc.range || [0,0]),
-                        'loc': (callbackFunc.loc || [0,0])
+                        'range': (callbackFunc.range || publicAPI.defaultRange),
+                        'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                     },
-                    'range': (callbackFunc.range || [0,0]),
-                    'loc': (callbackFunc.loc || [0,0])
+                    'range': (callbackFunc.range || publicAPI.defaultRange),
+                    'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                 };
             },
             // convertToIIFEDeclaration
@@ -471,24 +484,24 @@
                                             'callee': {
                                                 'type': 'Identifier',
                                                 'name': cbFunc.name,
-                                                'range': (cbFunc.range || [0,0]),
-                                                'loc': (cbFunc.loc || [0,0])
+                                                'range': (cbFunc.range || publicAPI.defaultRange),
+                                                'loc': (cbFunc.loc || publicAPI.defaultLOC)
                                             },
                                             'arguments': [],
-                                            'range': (cbFunc.range || [0,0]),
-                                            'loc': (cbFunc.loc || [0,0])
+                                            'range': (cbFunc.range || publicAPI.defaultRange),
+                                            'loc': (cbFunc.loc || publicAPI.defaultLOC)
                                         },
-                                        'range': (cbFunc.range || [0,0]),
-                                        'loc': (cbFunc.loc || [0,0])
+                                        'range': (cbFunc.range || publicAPI.defaultRange),
+                                        'loc': (cbFunc.loc || publicAPI.defaultLOC)
                                     }],
-                                    'range': (cbFunc.range || [0,0]),
-                                    'loc': (cbFunc.loc || [0,0])
+                                    'range': (cbFunc.range || publicAPI.defaultRange),
+                                    'loc': (cbFunc.loc || publicAPI.defaultLOC)
                                 },
                                 'rest': null,
                                 'generator': false,
                                 'expression': false,
-                                'range': (cbFunc.range || [0,0]),
-                                'loc': (cbFunc.loc || [0,0])
+                                'range': (cbFunc.range || publicAPI.defaultRange),
+                                'loc': (cbFunc.loc || publicAPI.defaultLOC)
                             };
                         }
                         return cbFunc;
@@ -506,8 +519,8 @@
                                     'id': {
                                         'type': 'Identifier',
                                         'name': '',
-                                        'range': (callbackFunc.range || [0,0]),
-                                        'loc': (callbackFunc.loc || [0,0])
+                                        'range': (callbackFunc.range || publicAPI.defaultRange),
+                                        'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                                     },
                                     'params': callbackFuncParams,
                                     'defaults': [],
@@ -515,12 +528,12 @@
                                     'rest': callbackFunc.rest,
                                     'generator': callbackFunc.generator,
                                     'expression': callbackFunc.expression,
-                                    'range': (callbackFunc.range || [0,0]),
-                                    'loc': (callbackFunc.loc || [0,0])
+                                    'range': (callbackFunc.range || publicAPI.defaultRange),
+                                    'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                                 },
                                 'arguments': dependencyNames,
-                                'range': (callbackFunc.range || [0,0]),
-                                'loc': (callbackFunc.loc || [0,0])
+                                'range': (callbackFunc.range || publicAPI.defaultRange),
+                                'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                             };
                         }
                     }()),
@@ -653,8 +666,8 @@
                             callbackFunc = {
                                 'type': 'Identifier',
                                 'name': 'undefined',
-                                'range': [0,0],
-                                'loc': [0,0]
+                                'range': publicAPI.defaultRange,
+                                'loc': publicAPI.defaultLOC
                             };
                             depLength = 0;
                         }
@@ -693,8 +706,8 @@
                             deps.push({
                                 'type': 'Identifier',
                                 'name': currentName,
-                                'range': [0,0],
-                                'loc': [0,0]
+                                'range': publicAPI.defaultRange,
+                                'loc': publicAPI.defaultLOC
                             });
                         }
                         return deps;
@@ -706,11 +719,11 @@
                         'argument': {
                             'type': 'Identifier',
                             'name': 'exports',
-                            'range': [0,0],
-                            'loc': [0,0]
+                            'range': publicAPI.defaultRange,
+                            'loc': publicAPI.defaultLOC
                         },
-                        'range': [0,0],
-                        'loc': [0,0]
+                        'range': publicAPI.defaultRange,
+                        'loc': publicAPI.defaultLOC
                     });
                 }
 
@@ -786,8 +799,8 @@
                         'type': 'Literal',
                         'value': true,
                         'raw': 'true',
-                        'range': [0,0],
-                        'loc': [0,0]
+                        'range': publicAPI.defaultRange,
+                        'loc': publicAPI.defaultLOC
                     };
                     return node;
                 }
@@ -895,31 +908,45 @@
                                 'operator': '=',
                                 'left': {
                                     'type': 'Identifier',
-                                    'name': 'exports'
+                                    'name': 'exports',
+                                    'range': publicAPI.defaultRange,
+                                    'loc': publicAPI.defaultLOC
                                 },
                                 'right': {
                                     'type': 'LogicalExpression',
                                     'operator': '||',
                                     'left': {
                                         'type': 'Identifier',
-                                        'name': 'exports'
+                                        'name': 'exports',
+                                        'range': publicAPI.defaultRange,
+                                        'loc': publicAPI.defaultLOC
                                     },
                                     'right': {
                                         'type': 'ObjectExpression',
-                                        'properties': []
-                                    }
-                                }
-                            }
+                                        'properties': [],
+                                        'range': publicAPI.defaultRange,
+                                        'loc': publicAPI.defaultLOC
+                                    },
+                                    'range': publicAPI.defaultRange,
+                                    'loc': publicAPI.defaultLOC
+                                },
+                                'range': publicAPI.defaultRange,
+                                'loc': publicAPI.defaultLOC
+                            },
+                            'range': publicAPI.defaultRange,
+                            'loc': publicAPI.defaultLOC
                         });
                         // Adds the return statement, 'return exports', to the end of the function expression 
                         node.body.body.push({
                             'type': 'ReturnStatement',
                             'argument': {
                                 'type': 'Identifier',
-                                'name': 'exports'
+                                'name': 'exports',
+                                'range': publicAPI.defaultRange,
+                                'loc': publicAPI.defaultLOC
                             },
-                            'range': [0,0],
-                            'loc': [0,0]
+                            'range': publicAPI.defaultRange,
+                            'loc': publicAPI.defaultLOC
                         });
                     }
                     return node;
@@ -1086,29 +1113,29 @@
                                         'object': {
                                             'type': 'Identifier',
                                             'name': 'window',
-                                            'range': [0,0],
-                                            'loc': [0,0]
+                                            'range': publicAPI.defaultRange,
+                                            'loc': publicAPI.defaultLOC
                                         },
                                         'property': {
                                             'type': 'Identifier',
                                             'name': currentModule,
-                                            'range': [0,0],
-                                            'loc': [0,0]
+                                            'range': publicAPI.defaultRange,
+                                            'loc': publicAPI.defaultLOC
                                         },
-                                        'range': [0,0],
-                                        'loc': [0,0]
+                                        'range': publicAPI.defaultRange,
+                                        'loc': publicAPI.defaultLOC
                                     },
                                     'right': {
                                         'type': 'Identifier',
                                         'name': currentModule,
-                                        'range': [0,0],
-                                        'loc': [0,0]
+                                        'range': publicAPI.defaultRange,
+                                        'loc': publicAPI.defaultLOC
                                     },
-                                    'range': [0,0],
-                                    'loc': [0,0]
+                                    'range': publicAPI.defaultRange,
+                                    'loc': publicAPI.defaultLOC
                                 },
-                                'range': [0,0],
-                                'loc': [0,0]
+                                'range': publicAPI.defaultRange,
+                                'loc': publicAPI.defaultLOC
                             });
                         }
                     });
@@ -1138,8 +1165,8 @@
                         'type': 'VariableDeclaration',
                         'declarations': declarations,
                         'kind': 'var',
-                        'range': [0,0],
-                        'loc': [0,0]
+                        'range': publicAPI.defaultRange,
+                        'loc': publicAPI.defaultLOC
                     });
                 }
 
