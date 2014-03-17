@@ -125,7 +125,7 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
-			it('should support the simplified CJS wrapper', function() {
+			it.only('should support the simplified CJS wrapper', function() {
 				var AMDcode = "define('example', ['require', 'exports', './bar'], function(require, exports){exports.bar = require('./bar');});",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
 					standardJavaScript = "var example;example=function (require,exports,bar){exports.bar=bar;return exports;}({},{},bar);";

@@ -450,6 +450,7 @@
             //  Returns a function expression that is executed immediately
             //  e.g. var example = function(){}()
             'convertToIIFEDeclaration': function(obj) {
+                console.log('obj', obj);
                 var moduleName = obj.moduleName,
                     callbackFuncParams = obj.callbackFuncParams,
                     isOptimized = obj.isOptimized,
