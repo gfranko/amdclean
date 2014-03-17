@@ -74,7 +74,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-	    'VERSION': '2.0.0',
+            'VERSION': '2.0.0',
             // Default Options
             'defaultOptions': {
                 // The source code you would like to be 'cleaned'
@@ -165,7 +165,7 @@
             },
             // defaultRange
             // ------------
-            //  Default line of code property
+            //  Default range property
             'defaultRange': [0, 0],
             // readFile
             // --------
@@ -286,10 +286,10 @@
                     return group1.toUpperCase();
                 });
             },
-    	    // prefixReservedWords
-    	    // -------------------
-    	    //  Converts a reserved word in JavaScript with an underscore
-    	    //  e.g. class -> _class
+            // prefixReservedWords
+            // -------------------
+            //  Converts a reserved word in JavaScript with an underscore
+            //  e.g. class -> _class
             'prefixReservedWords': function(name) {
                 var reservedWord = false;
                 try {
@@ -405,24 +405,24 @@
                         return modReturnValue;
                     }()),
                     options = publicAPI.options,
-        		    updatedNode = {
-            			'type': 'ExpressionStatement',
-            			'expression': {
-            			    'type': 'AssignmentExpression',
-            			    'operator': '=',
-            			    'left': {
-            				'type': 'Identifier',
-            				'name': moduleName,
-                                            'range': [0,0],
-                                            'loc': [0,0]
-            			    },
-            			    'right': moduleReturnValue,
-            			    'range': [0,0],
-            			    'loc': [0,0]
-            			},
-            			'range': [0,0],
-            			'loc': [0,0]
-        		    };
+                    updatedNode = {
+                        'type': 'ExpressionStatement',
+                        'expression': {
+                            'type': 'AssignmentExpression',
+                            'operator': '=',
+                            'left': {
+                                'type': 'Identifier',
+                                'name': moduleName,
+                                'range': [0,0],
+                                'loc': [0,0]
+                            },
+                            'right': moduleReturnValue,
+                            'range': [0,0],
+                            'loc': [0,0]
+                        },
+                        'range': [0,0],
+                        'loc': [0,0]
+                    };
                 return updatedNode;
             },
             // convertToIIFE
@@ -463,7 +463,6 @@
             //  Returns a function expression that is executed immediately
             //  e.g. var example = function(){}()
             'convertToIIFEDeclaration': function(obj) {
-                console.log('obj', obj);
                 var moduleName = obj.moduleName,
                     callbackFuncParams = obj.callbackFuncParams,
                     isOptimized = obj.isOptimized,
@@ -537,24 +536,24 @@
                             };
                         }
                     }()),
-        		    updatedNode = {
-            			'type': 'ExpressionStatement',
-            			'expression': {
-            			    'type': 'AssignmentExpression',
-            			    'operator': '=',
-            			    'left': {
-            				'type': 'Identifier',
-            				'name': moduleName,
-                                            'range': (callbackFunc.range || [0,0]),
-                                            'loc': (callbackFunc.loc || [0,0])
-            			    },
-            			    'right': cb,
-            			    'range': (callbackFunc.range || [0,0]),
-            			    'loc': (callbackFunc.loc || [0,0])
-            			},
-            			'range': (callbackFunc.range || [0,0]),
-            			'loc': (callbackFunc.loc || [0,0])
-        		    };
+                    updatedNode = {
+                        'type': 'ExpressionStatement',
+                        'expression': {
+                            'type': 'AssignmentExpression',
+                            'operator': '=',
+                            'left': {
+                                'type': 'Identifier',
+                                'name': moduleName,
+                                'range': (callbackFunc.range || [0,0]),
+                                'loc': (callbackFunc.loc || [0,0])
+                            },
+                            'right': cb,
+                            'range': (callbackFunc.range || [0,0]),
+                            'loc': (callbackFunc.loc || [0,0])
+                        },
+                        'range': (callbackFunc.range || [0,0]),
+                        'loc': (callbackFunc.loc || [0,0])
+                    };
                 return updatedNode;
             },
             // isRelativeFilePath
@@ -620,12 +619,12 @@
                             currentName;
                         while(++iterator < depLength) {
                             currentName = publicAPI.normalizeDependencyName(moduleId, dependencies[iterator]);
-            			    deps.push({
-                				'type': 'Identifier',
-                				'name': publicAPI.normalizeModuleName(currentName),
-                				'range': [0,0],
-                				'loc': [0,0]
-            			    });
+                            deps.push({
+                                'type': 'Identifier',
+                                'name': publicAPI.normalizeModuleName(currentName),
+                                'range': [0,0],
+                                'loc': [0,0]
+                            });
                         }
                         return deps;
                     }()),
@@ -773,8 +772,8 @@
                     lineNumberObj = {},
                     callbackFuncArg = false,
                     type = '',
-        		    options = publicAPI.options,
-        		    shouldBeIgnored;
+                    options = publicAPI.options,
+                    shouldBeIgnored;
                 if(node.type === 'Program') {
                     comments = (function() {
                         var arr = [];
@@ -838,10 +837,10 @@
                             isRequire: isRequire
                     };
                     if(isDefine) {
-            			if(shouldBeIgnored) {
-            			    publicAPI.options.ignoreModules.push(moduleName);
-            			    return node;
-            			}
+                        if(shouldBeIgnored) {
+                            publicAPI.options.ignoreModules.push(moduleName);
+                            return node;
+                        }
                         if(_.contains(options.removeModules, moduleName)) {
                             // Remove the current module from the source
                             return {
@@ -968,26 +967,26 @@
                     return esprima.parse(code, esprimaOptions);
                 }
             },
-    	    // findAndStoreAllModuleIds
-    	    // ------------------------
-    	    //  Uses Estraverse to traverse the AST so that all of the module ids can be found and stored in an object
-    	    'findAndStoreAllModuleIds': function(ast) {
-        		if(!ast) {
-        		    throw new Error(publicAPI.errorMsgs.emptyAst('findAndStoreAllModuleIds'));
-        		}
-        		if(!_.isPlainObject(estraverse) || !_.isFunction(estraverse.traverse)) {
-        		    throw new Error(publicAPI.errorMsgs.estraverse);
-        		}
-        		estraverse.traverse(ast, {
-        		    'enter': function(node, parent) {
-        			var moduleName = publicAPI.getNormalizedModuleName(node, parent);
-        			// If the current module has not been stored, store it
-        			if(moduleName && !publicAPI.storedModules[moduleName]) {
-        			    publicAPI.storedModules[moduleName] = true;
-        			}
-        		    }
-        		});
-    	    },
+            // findAndStoreAllModuleIds
+            // ------------------------
+            //  Uses Estraverse to traverse the AST so that all of the module ids can be found and stored in an object
+            'findAndStoreAllModuleIds': function(ast) {
+                if(!ast) {
+                    throw new Error(publicAPI.errorMsgs.emptyAst('findAndStoreAllModuleIds'));
+                }
+                if(!_.isPlainObject(estraverse) || !_.isFunction(estraverse.traverse)) {
+                    throw new Error(publicAPI.errorMsgs.estraverse);
+                }
+                estraverse.traverse(ast, {
+                    'enter': function(node, parent) {
+                        var moduleName = publicAPI.getNormalizedModuleName(node, parent);
+                        // If the current module has not been stored, store it
+                        if(moduleName && !publicAPI.storedModules[moduleName]) {
+                            publicAPI.storedModules[moduleName] = true;
+                        }
+                    }
+                });
+            },
             // traverseAndUpdateAst
             // --------------------
             //  Uses Estraverse to traverse the AST and convert all define() and require() methods to standard JavaScript
@@ -1147,10 +1146,10 @@
                         declarations.push({
                             'type': 'VariableDeclarator',
                             'id': {
-                            	'type': 'Identifier',
-                            	'name': moduleName,
-                            	'range': [0,0],
-                            	'loc': [0,0]
+                                'type': 'Identifier',
+                                'name': moduleName,
+                                'range': [0,0],
+                                'loc': [0,0]
                             },
                             'init': null,
                             'range': [0,0],
