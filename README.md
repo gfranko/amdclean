@@ -398,6 +398,9 @@ amdclean.clean({
   'removeAllRequires': false,
   // Determines if all of the 'use strict' statements will be removed
   'removeUseStricts': true,
+  // Determines if conditional AMD checks are transformed
+  // e.g. if(typeof define == 'function') {} -> if(true) {}
+  'transformAMDChecks': true,
   // Allows you to pass an expression that will override shimmed modules return
   // values e.g. { 'backbone': 'window.Backbone' }
   'shimOverrides': {},
@@ -486,7 +489,7 @@ __Is AMDClean only for libraries, or can I use it for my web app?__
 
 __My comments seem to be getting removed when I use AMDClean.  What am I doing wrong?__
 
- - Before the `1.0.0` release, this was the default behavior.  If you update to `1.0.0` or later, you should see your comments still there after the cleaning process.  Also, if you would like your comments to be removed, then you can set the `comment` **escodegen** option to `false`.
+ - Before the `1.4.0` release, this was the default behavior.  If you update to `1.4.0` or later, you should see your comments still there after the cleaning process.  Also, if you would like your comments to be removed, then you can set the `comment` **escodegen** option to `false`.
 
 __What if I don't want all define() and require() method calls to be removed?__
 
@@ -527,13 +530,17 @@ __I replaced Almond.js with AMDClean and my file is bigger.  Why Is This?__
 
   * Unneccessary files are still being included with your build. Make sure that both Almond.js and the RequireJS text! plugin are not still being included, since they are not needed.  You can use the `removeModules` option to make sure certain modules are not included (e.g. text plugin).
 
-  * You are using AMDClean `0.6.0` or earlier.  The latest versions of AMDClean do a better job of optimizing modules.  Check out these release notes about optimization improvements: https://github.com/gfranko/amdclean/releases/tag/0.7.0 https://github.com/gfranko/amdclean/releases/tag/1.1.0
+  * You are using an old version of AMDClean (`0.6.0` or earlier).  The latest versions of AMDClean do a better job of optimizing modules.
 
   *  Many of your individual module names are pretty long since they include the full path to a file.  An example is `text_templates_headinghtml`.  This module name could be changed to just `headinghtml` to save space. You can override the AMDClean module naming logic with the `prefixTransform` option to save some space.
 
 __I am building a JavaScript library and want to provide conditional AMD support, but AMDClean seems to be wiping away my if statement.  How do I fix this?__
 
-- Make sure that you have a comment (that matches your AMDClean `commentCleanName` option) one line above your conditional AMD if statement
+- You have two options:
+
+  1.  Set the `transformAMDChecks` to `false`
+
+  2.  Make sure that you have a comment (that matches your AMDClean `commentCleanName` option) one line above your conditional AMD if statement
 
 __I don't like the way AMDClean normalizes the names of my modules with underscores.  Can I change this?__
 

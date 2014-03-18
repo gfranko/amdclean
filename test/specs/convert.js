@@ -125,26 +125,26 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
-			it.only('should support the simplified CJS wrapper', function() {
-				var AMDcode = "define('example', ['require', 'exports', './bar'], function(require, exports){exports.bar = require('./bar');});",
+			it('should support the simplified CJS wrapper', function() {
+				var AMDcode = "define('foo', ['require', 'exports', './bar'], function(require, exports, bar){exports.bar = require('./bar');});",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-					standardJavaScript = "var example;example=function (require,exports,bar){exports.bar=bar;return exports;}({},{},bar);";
+					standardJavaScript = "var foo;foo=function (exports,bar){exports.bar=bar;return exports;}({},bar);";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
 			it('should support the plain simplified CJS wrapper', function() {
-				var AMDcode = "define('example',['require','exports','module','bar'],function(require, exports){exports.bar = require('bar');});",
+				var AMDcode = "define('foo',['require','exports','module','bar'],function(require, exports){exports.bar = require('bar');});",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-					standardJavaScript = "var example;example=function (require,exports,module,bar){exports.bar=bar;return exports;}({},{},{},bar);";
+					standardJavaScript = "var foo;foo=function (exports){exports.bar=bar;return exports;}({},bar);";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
 			it('should support global modules', function() {
-				var AMDcode = "define('example', ['require', 'exports', './bar'], function(require, exports){exports.bar = require('./bar');});",
-					cleanedCode = amdclean.clean({ globalModules: ['example'],  code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-					standardJavaScript = "var example;example=function (require,exports,bar){exports.bar=bar;return exports;}({},{},bar);window.example=example;";
+				var AMDcode = "define('foo', ['require', 'exports', './bar'], function(require, exports){exports.bar = require('./bar');});",
+					cleanedCode = amdclean.clean({ globalModules: ['foo'], code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
+					standardJavaScript = "var foo;foo=function (exports){exports.bar=bar;return exports;}({},bar);window.foo=foo;";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
@@ -168,7 +168,7 @@ describe('amdclean specs', function() {
 			it('should support converting define() methods with identifiers', function() {
 				var AMDcode = "define('esprima', ['exports'], factory);",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-					standardJavaScript = "var esprima;esprima=function (module){return factory();}({});";
+					standardJavaScript = "var esprima;esprima=function (){return factory();}({});";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
@@ -193,6 +193,14 @@ describe('amdclean specs', function() {
 				var AMDcode = "//amdclean\n if(typeof define === 'function') {}",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
 					standardJavaScript = "//amdclean\nif(typeof define==='function'){}";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should not automatically convert conditional AMD checks if the transformAMDChecks option is set to false', function() {
+				var AMDcode = "if(typeof define === 'function') {}",
+					cleanedCode = amdclean.clean({ code: AMDcode, transformAMDChecks: false, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
+					standardJavaScript = "if(typeof define==='function'){}";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
@@ -256,9 +264,9 @@ describe('amdclean specs', function() {
 				});
 
 				it('should not optimize define() methods that have one or more dependencies', function() {
-					var AMDcode = "define('optimized8', ['exampleDependency'], function () { return function ( thing ) { var anotherThing = true; return !isNaN( parseFloat( thing ) ) && isFinite( thing );};});",
+					var AMDcode = "define('optimized', ['exampleDependency'], function () { return function ( thing ) { var anotherThing = true; return !isNaN( parseFloat( thing ) ) && isFinite( thing );};});",
 						cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-						standardJavaScript = "var optimized8;optimized8=function (exampleDependency){return function(thing){var anotherThing=true;return!isNaN(parseFloat(thing))&&isFinite(thing);};}(exampleDependency);";
+						standardJavaScript = "var optimized;optimized=function (){return function(thing){var anotherThing=true;return!isNaN(parseFloat(thing))&&isFinite(thing);};}(exampleDependency);";
 
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
@@ -280,9 +288,9 @@ describe('amdclean specs', function() {
 				});
 
 				it('should not optimize basic define() methods that return a literal value that have one or more dependencies', function() {
-					var AMDcode = "define('optimized11', ['someDependency'], function() { return 'Convert AMD code to standard JavaScript';});",
+					var AMDcode = "define('optimized', ['someDependency'], function() { return 'Convert AMD code to standard JavaScript';});",
 						cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-						standardJavaScript = "var optimized11;optimized11=function (someDependency){return'Convert AMD code to standard JavaScript';}(someDependency);";
+						standardJavaScript = "var optimized;optimized=function (){return'Convert AMD code to standard JavaScript';}(someDependency);";
 
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
@@ -336,7 +344,7 @@ describe('amdclean specs', function() {
 									compact: true
 								}
 							},
-							prefixTransform: function(moduleName) {
+							prefixTransform: function(moduleName, moduleId) {
 								return moduleName.substring(moduleName.lastIndexOf('_') + 1, moduleName.length);
 							},
 							wrap: {
@@ -474,7 +482,7 @@ describe('amdclean specs', function() {
 			it('should not remove require() calls with a non-empty callback function', function() {
 				var AMDcode = "require(['testModule'], function() {var test=true;});",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-					standardJavaScript = "(function(testModule){var test=true;}(testModule));";
+					standardJavaScript = "(function(){var test=true;}(testModule));";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
@@ -509,7 +517,24 @@ describe('amdclean specs', function() {
 					"var test = true;" +
 					"}));",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-					standardJavaScript = "var esprima;(function(root,factory){'use strict';if(true){esprima=function (module){return factory();}({});}else if(typeof exports!=='undefined'){factory(exports);}else{factory(root.esprima={});}}(this,function(exports){exports=exports||{};var test=true;return exports;}));";
+					standardJavaScript = "var esprima;(function(root,factory){'use strict';if(true){esprima=function (){return factory();}({});}else if(typeof exports!=='undefined'){factory(exports);}else{factory(root.esprima={});}}(this,function(exports){exports=exports||{};var test=true;return exports;}));";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should correctly convert libraries that use factory function parameters', function() {
+				var AMDcode = "(function (factory) {" +
+					"if (typeof exports === 'object') {" +
+					"module.exports = factory(require('backbone'), require('underscore'));" +
+					"} else if (typeof define === 'function' && define.amd) {" +
+					"define('backbonevalidation', ['backbone', 'underscore'], factory);" +
+					"}" +
+					"}(function (Backbone, _) {" +
+					"//= backbone-validation.js\n" +
+					"return Backbone.Validation;" +
+					"}));",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
+					standardJavaScript = "var backbonevalidation;(function(factory){if(typeof exports==='object'){module.exports=factory(backbone,underscore);}else if(true){backbonevalidation=function (backbone,underscore){return factory(backbone,underscore);}(backbone,underscore);}}(function(Backbone,_){//= backbone-validation.js\nreturn Backbone.Validation;}));";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
