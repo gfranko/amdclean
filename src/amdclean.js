@@ -1,4 +1,4 @@
-/*! amdclean - v1.4.1 - 2014-03-17
+/*! amdclean - v1.5.0 - 2014-03-17
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko; Licensed MIT*/
 
@@ -74,7 +74,7 @@
         // The Public API object
         publicAPI = {
             // Current project version number
-            'VERSION': '1.4.1',
+            'VERSION': '1.5.0',
             // Default Options
             'defaultOptions': {
                 // The source code you would like to be 'cleaned'
@@ -99,7 +99,12 @@
                 },
                 // All escodegen API options are supported: https://github.com/Constellation/escodegen/wiki/API
                 'escodegen': {
-                    'comment': true
+                    'comment': true,
+                    'format': {
+                      'indent': {
+                        'adjustMultilineComment': true
+                      }
+                    }
                 },
                 // If there is a comment (that contains the following text) on the same line or one line above a specific module, the module will not be removed
                 'commentCleanName': 'amdclean',
@@ -111,6 +116,9 @@
                 'removeAllRequires': false,
                 // Determines if all of the 'use strict' statements will be removed
                 'removeUseStricts': true,
+                // Determines if conditional AMD checks are transformed
+                // e.g. if(typeof define == 'function') {} -> if(true) {}
+                'transformAMDChecks': true,
                 // Allows you to pass an expression that will override shimmed modules return values
                 // e.g. { 'backbone': 'window.Backbone' }
                 'shimOverrides': {},
@@ -157,9 +165,9 @@
             // --------------------
             //  Variable names that are not allowed as dependencies to functions
             'dependencyBlacklist': {
-                'require': true,
+                'require': 'remove',
                 'exports': true,
-                'module': true
+                'module': 'remove'
             },
             // defaultLOC
             // ----------
@@ -259,10 +267,10 @@
             //  Returns if the current AST node is an if statement AMD check
             //  e.g. if(typeof define === 'function') {}
             'isAMDConditional': function(node) {
-                if(node && node.type !== 'IfStatement' ||
+                if(publicAPI.options.transformAMDChecks !== true || (node && node.type !== 'IfStatement' ||
                     !_.isObject(node.test) ||
                     !_.isObject(node.test.left) ||
-                    _.isNull(node.test.left.value)) {
+                    _.isNull(node.test.left.value))) {
                     return false;
                 }
                 var matchObject = {
@@ -312,7 +320,7 @@
             // normalizeModuleName
             // -------------------
             //  Returns a normalized module name (removes relative file path urls)
-            'normalizeModuleName': function(name) {
+            'normalizeModuleName': function(name, moduleId) {
                 var pre_normalized,
                     post_normalized,
                     prefixMode = publicAPI.options.prefixMode,
@@ -320,14 +328,18 @@
                     prefixTransformValue;
                 name = name || '';
                 if(name === '{}') {
-                    return name;
+                    if(publicAPI.dependencyBlacklist[name] === 'remove') {
+                        return '';
+                    } else {
+                        return name;
+                    }
                 }
                 pre_normalized = publicAPI.prefixReservedWords(name.replace(/\./g,'').
                     replace(/[^A-Za-z0-9_$]/g,'_').
                     replace(/^_+/,''));
                 post_normalized = prefixMode === 'camelCase' ? publicAPI.convertToCamelCase(pre_normalized) : pre_normalized;
                 if(_.isFunction(prefixTransform)) {
-                    prefixTransformValue = prefixTransform(post_normalized);
+                    prefixTransformValue = prefixTransform(post_normalized, moduleId);
                     if(_.isString(prefixTransformValue) && prefixTransformValue.length) {
                         return prefixTransformValue;
                     }
@@ -505,9 +517,6 @@
             //  Returns a function expression that is executed immediately
             //  e.g. var example = function(){}()
             'convertToIIFEDeclaration': function(obj) {
-                // console.log('obj.callbackFunc', obj.callbackFunc);
-                // console.log('obj.callbackFunc.body.body', obj.callbackFunc.body.body);
-                // return;
                 var moduleName = obj.moduleName,
                     callbackFuncParams = obj.callbackFuncParams,
                     isOptimized = obj.isOptimized,
@@ -531,7 +540,7 @@
                                                 'range': (cbFunc.range || publicAPI.defaultRange),
                                                 'loc': (cbFunc.loc || publicAPI.defaultLOC)
                                             },
-                                            'arguments': [],
+                                            'arguments': callbackFuncParams,
                                             'range': (cbFunc.range || publicAPI.defaultRange),
                                             'loc': (cbFunc.loc || publicAPI.defaultLOC)
                                         },
@@ -699,10 +708,9 @@
                     options = publicAPI.options,
                     dependencyNames = (function() {
                         var deps = [],
-                            iterator = -1,
                             currentName;
-                        while(++iterator < depLength) {
-                            currentName = publicAPI.normalizeDependencyName(moduleId, dependencies[iterator]);
+                        _.each(dependencies, function(currentDependency, iterator) {
+                            currentName = publicAPI.normalizeModuleName(publicAPI.normalizeDependencyName(moduleId, currentDependency), moduleId);
                             if(options.globalObject === true && options.globalObjectName && currentName !== '{}') {
                                 deps.push({
                                     'type': 'MemberExpression',
@@ -715,24 +723,24 @@
                                     },
                                     'property': {
                                         'type': 'Literal',
-                                        'value': publicAPI.normalizeModuleName(currentName),
-                                        'raw': "" + publicAPI.normalizeModuleName(currentName) + "",
+                                        'value': currentName,
+                                        'raw': "" + currentName + "",
                                         'range': publicAPI.defaultRange,
                                         'loc': publicAPI.defaultLOC
                                     },
-                                    'name': publicAPI.normalizeModuleName(currentName),
+                                    'name': currentName,
                                     'range': publicAPI.defaultRange,
                                     'loc': publicAPI.defaultLOC
                                 });
                             } else {
                                 deps.push({
                                     'type': 'Identifier',
-                                    'name': publicAPI.normalizeModuleName(currentName),
+                                    'name': currentName,
                                     'range': publicAPI.defaultRange,
                                     'loc': publicAPI.defaultLOC
                                 });
                             }
-                        }
+                        });
                         return deps;
                     }()),
                     callbackFunc = (function() {
@@ -792,30 +800,27 @@
                     hasExportsParam = false,
                     callbackFuncParams = (function() {
                         var deps = [],
-                            iterator = -1,
-                            currentParam,
                             currentName,
-                            cbParams = callbackFunc.params || [];
-                        while(++iterator < depLength) {
-                            currentParam = cbParams[iterator];
+                            cbParams = callbackFunc.params || dependencyNames || [];
+                        _.each(cbParams, function(currentParam, iterator) {
                             if(currentParam) {
                                 currentName = currentParam.name;
                             } else {
+                                console.log('iterator', iterator);
                                 currentName = dependencyNames[iterator].name;
                             }
                             if(currentName === 'exports') {
                                 hasExportsParam = true;
                             }
-                            if(currentName === '{}') {
-                                currentName = 'module';
+                            if(currentName !== '{}' && publicAPI.dependencyBlacklist[currentName] !== 'remove') {
+                                deps.push({
+                                    'type': 'Identifier',
+                                    'name': currentName,
+                                    'range': publicAPI.defaultRange,
+                                    'loc': publicAPI.defaultLOC
+                                });
                             }
-                            deps.push({
-                                'type': 'Identifier',
-                                'name': currentName,
-                                'range': publicAPI.defaultRange,
-                                'loc': publicAPI.defaultLOC
-                            });
-                        }
+                        });
                         return deps;
                     }());
 
@@ -912,10 +917,14 @@
                         }
                         if(Array.isArray(deps) && deps.length) {
                             _.each(deps, function(currentDependency) {
-                                if(publicAPI.dependencyBlacklist[currentDependency.value]) {
-                                    depNames.push('{}');
-                                } else {
-                                    depNames.push(currentDependency.value);
+                                if(publicAPI.dependencyBlacklist[currentDependency.value] !== 'remove') {
+                                    if(publicAPI.dependencyBlacklist[currentDependency.value]) {
+                                        if(publicAPI.dependencyBlacklist[currentDependency.value] !== 'remove') {
+                                            depNames.push('{}');
+                                        }
+                                    } else {
+                                        depNames.push(currentDependency.value);
+                                    }
                                 }
                             });
                         }
