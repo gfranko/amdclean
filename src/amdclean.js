@@ -718,7 +718,14 @@
                             }
                         });
                         return deps;
-                    }());
+                    }()),
+                    dependencyNameLength = dependencyNames.length,
+                    callbackFuncParamsLength = callbackFuncParams.length;
+
+                // If the module dependencies passed into the current module are greater than the used callback function parameters, do not pass the dependencies
+                if(dependencyNameLength && dependencyNameLength > callbackFuncParamsLength) {
+                    dependencyNames.splice((dependencyNameLength - callbackFuncParamsLength), callbackFuncParamsLength);
+                }
 
                 if(!hasReturnStatement && hasExportsParam) {
                     callbackFunc.body.body.push({
