@@ -31,14 +31,7 @@ define(['jquery',
                 this.standardTextarea.val(amdclean.clean({
                     'code': this.amdTextarea.val(),
                     'globalObject': this.globalObject.is(':checked') ? true : false,
-                    'rememberGlobalObject': false,
-                    'escodegen': {
-                        'format': {
-                            'indent': {
-                                'adjustMultilineComment': true
-                            }
-                        }
-                    }
+                    'rememberGlobalObject': false
                 }));
 
                 this.amdEditor = CodeMirror.fromTextArea(document.getElementById('amd-textarea'), {
@@ -92,14 +85,7 @@ define(['jquery',
                     var cleanedCode = amdclean.clean({
                         'code': $.trim(this.amdEditor.getValue()),
                         'globalObject': this.globalObject.is(':checked') ? true : false,
-                        'rememberGlobalObject': false,
-                        'escodegen': {
-                            'format': {
-                                'indent': {
-                                    'adjustMultilineComment': true
-                                }
-                            }
-                        }
+                        'rememberGlobalObject': false
                     });
                     this.standardEditor.setValue(cleanedCode);
                     this.codeError.empty().hide();
