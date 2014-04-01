@@ -45,6 +45,15 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
+			it.only('should correctly remove callback and IIFE paramters that directly match stored module names', function() {
+				var AMDcode = "define('example1', function() {});define('example2', function() {});define('example', ['example1', 'example2'], function(example1, example2) {var test = true;});",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
+					standardJavaScript = "var example;example=function (example1,example2){var test=true;}(example1,example2);";
+
+				console.log('cleanedCode', cleanedCode);
+				// expect(cleanedCode).toBe(standardJavaScript);
+			});
+
 			it('should correctly normalize relative file paths', function() {
 				var AMDcode = "define('./modules/example', ['example1', 'example2'], function(one, two) {var test = true;});",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
@@ -208,105 +217,105 @@ describe('amdclean specs', function() {
 			describe('optimized defines', function() {
 
 				it('should optimize basic define() methods that return a function expression', function() {
-					var AMDcode = "define('optimized', function () { return function ( thing ) {return !isNaN( parseFloat( thing ) ) && isFinite( thing );};});",
+					var AMDcode = "define('example', function () { return function ( thing ) {return !isNaN( parseFloat( thing ) ) && isFinite( thing );};});",
 						cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-						standardJavaScript = "var optimized;optimized=function(thing){return!isNaN(parseFloat(thing))&&isFinite(thing);};";
+						standardJavaScript = "var example;example=function(thing){return!isNaN(parseFloat(thing))&&isFinite(thing);};";
 
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
 
 				it('should optimize basic define() methods that have an empty factory function', function() {
-					var AMDcode = "define('optimized2', function () {});",
+					var AMDcode = "define('example', function () {});",
 						cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-						standardJavaScript = "var optimized2;optimized2=undefined;";
+						standardJavaScript = "var example;example=undefined;";
 
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
 
 				it('should support the start and end wrap options', function() {
-					var AMDcode = "define('optimized3', function () {});",
+					var AMDcode = "define('example', function () {});",
 						cleanedCode = amdclean.clean({ code: AMDcode, wrap: { 'start': '(function() {', 'end': '}());' }, escodegen: { format: { compact: true } } }),
-						standardJavaScript = "(function() {var optimized3;optimized3=undefined;}());";
+						standardJavaScript = "(function() {var example;example=undefined;}());";
 
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
 
 				it('should optimize more complex define() methods that return a function expression', function() {
-					var AMDcode = "define('optimized4', function () { return function ( thing ) { var anotherThing = true; return !isNaN( parseFloat( thing ) ) && isFinite( thing );};});",
+					var AMDcode = "define('example', function () { return function ( thing ) { var anotherThing = true; return !isNaN( parseFloat( thing ) ) && isFinite( thing );};});",
 						cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-						standardJavaScript = "var optimized4;optimized4=function(thing){var anotherThing=true;return!isNaN(parseFloat(thing))&&isFinite(thing);};";
+						standardJavaScript = "var example;example=function(thing){var anotherThing=true;return!isNaN(parseFloat(thing))&&isFinite(thing);};";
 
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
 
 				it('should optimize more complex define() methods that have a "use strict" statement and return a function expression', function() {
-					var AMDcode = "define('optimized5', function () { 'use strict'; return function ( thing ) { return !isNaN( parseFloat( thing ) ) && isFinite( thing );};});",
+					var AMDcode = "define('example', function () { 'use strict'; return function ( thing ) { return !isNaN( parseFloat( thing ) ) && isFinite( thing );};});",
 						cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-						standardJavaScript = "var optimized5;optimized5=function(thing){return!isNaN(parseFloat(thing))&&isFinite(thing);};";
+						standardJavaScript = "var example;example=function(thing){return!isNaN(parseFloat(thing))&&isFinite(thing);};";
 
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
 
 				it('should not optimize more complex define() methods that have a "use strict" statement and return a function expression, but have also set the removeUseStricts option to false', function() {
-					var AMDcode = "define('optimized6', function () { 'use strict'; return function ( thing ) { return !isNaN( parseFloat( thing ) ) && isFinite( thing );};});",
+					var AMDcode = "define('example', function () { 'use strict'; return function ( thing ) { return !isNaN( parseFloat( thing ) ) && isFinite( thing );};});",
 						cleanedCode = amdclean.clean({ removeUseStricts: false, code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-						standardJavaScript = "var optimized6;optimized6=function (){'use strict';return function(thing){return!isNaN(parseFloat(thing))&&isFinite(thing);};}();";
+						standardJavaScript = "var example;example=function (){'use strict';return function(thing){return!isNaN(parseFloat(thing))&&isFinite(thing);};}();";
 
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
 
 				it('should not optimize define() methods that have logic outside of the return statement', function() {
-					var AMDcode = "define('optimized7', [], function () { var test = true; return function ( thing ) { var anotherThing = true; return !isNaN( parseFloat( thing ) ) && isFinite( thing );};});",
+					var AMDcode = "define('example', [], function () { var test = true; return function ( thing ) { var anotherThing = true; return !isNaN( parseFloat( thing ) ) && isFinite( thing );};});",
 						cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-						standardJavaScript = "var optimized7;optimized7=function (){var test=true;return function(thing){var anotherThing=true;return!isNaN(parseFloat(thing))&&isFinite(thing);};}();";
+						standardJavaScript = "var example;example=function (){var test=true;return function(thing){var anotherThing=true;return!isNaN(parseFloat(thing))&&isFinite(thing);};}();";
 
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
 
 				it('should not optimize define() methods that have one or more dependencies', function() {
-					var AMDcode = "define('optimized', ['exampleDependency'], function () { return function ( thing ) { var anotherThing = true; return !isNaN( parseFloat( thing ) ) && isFinite( thing );};});",
+					var AMDcode = "define('example', ['exampleDependency'], function () { return function ( thing ) { var anotherThing = true; return !isNaN( parseFloat( thing ) ) && isFinite( thing );};});",
 						cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-						standardJavaScript = "var optimized;optimized=function (){return function(thing){var anotherThing=true;return!isNaN(parseFloat(thing))&&isFinite(thing);};}(exampleDependency);";
+						standardJavaScript = "var example;example=function (){return function(thing){var anotherThing=true;return!isNaN(parseFloat(thing))&&isFinite(thing);};}(exampleDependency);";
 
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
 
 				it('should optimize basic define() methods that return a literal value', function() {
-					var AMDcode = "define('optimized9', [], function() { return 'Convert AMD code to standard JavaScript';});",
+					var AMDcode = "define('example', [], function() { return 'Convert AMD code to standard JavaScript';});",
 						cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-						standardJavaScript = "var optimized9;optimized9='Convert AMD code to standard JavaScript';";
+						standardJavaScript = "var example;example='Convert AMD code to standard JavaScript';";
 
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
 
 				it('should not optimize basic define() methods that return a literal value and contain more than one code block', function() {
-					var AMDcode = "define('optimized10', [], function() { var example = true; return 'Convert AMD code to standard JavaScript';});",
+					var AMDcode = "define('example', [], function() { var example = true; return 'Convert AMD code to standard JavaScript';});",
 						cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-						standardJavaScript = "var optimized10;optimized10=function (){var example=true;return'Convert AMD code to standard JavaScript';}();";
+						standardJavaScript = "var example;example=function (){var example=true;return'Convert AMD code to standard JavaScript';}();";
 
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
 
 				it('should not optimize basic define() methods that return a literal value that have one or more dependencies', function() {
-					var AMDcode = "define('optimized', ['someDependency'], function() { return 'Convert AMD code to standard JavaScript';});",
+					var AMDcode = "define('example', ['someDependency'], function() { return 'Convert AMD code to standard JavaScript';});",
 						cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-						standardJavaScript = "var optimized;optimized=function (){return'Convert AMD code to standard JavaScript';}(someDependency);";
+						standardJavaScript = "var example;example=function (){return'Convert AMD code to standard JavaScript';}(someDependency);";
 
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
 
 				it('should optimize basic define() methods that return a nested object expression', function() {
-					var AMDcode = "define('optimized12', [], function() {return { 'example': 'Convert AMD code to standard JavaScript' };});",
+					var AMDcode = "define('example', [], function() {return { 'example': 'Convert AMD code to standard JavaScript' };});",
 						cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-						standardJavaScript = "var optimized12;optimized12={'example':'Convert AMD code to standard JavaScript'};";
+						standardJavaScript = "var example;example={'example':'Convert AMD code to standard JavaScript'};";
 
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
 
 				it('should optimize basic define() methods that return a new expression', function() {
-					var AMDcode = "define('optimized13', [], function() { return new String('test');});",
+					var AMDcode = "define('example', [], function() { return new String('test');});",
 						cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-						standardJavaScript = "var optimized13;optimized13=new String('test');";
+						standardJavaScript = "var example;example=new String('test');";
 
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
@@ -364,9 +373,9 @@ describe('amdclean specs', function() {
 		describe('objects', function() {
 
 			it('should convert object return values to variable declarations', function() {
-				var AMDcode = "define('third', { exampleProp: 'This is an example' });",
+				var AMDcode = "define('example', { exampleProp: 'This is an example' });",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }, wrap: { start: '', end: '' } }),
-					standardJavaScript = "var third;third={exampleProp:'This is an example'};";
+					standardJavaScript = "var example;example={exampleProp:'This is an example'};";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});

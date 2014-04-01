@@ -34,7 +34,7 @@
     var codeEnv = cleanamd.env,
         that = scope,
         // Third-Party Dependencies
-        esprima = (function() {
+        esprima = function() {
             if(cleanamd.amd && amdDependencies.esprima && amdDependencies.esprima.parse) {
                 return amdDependencies.esprima;
             } else if(that && that.esprima && that.esprima.parse) {
@@ -42,8 +42,8 @@
             } else if(codeEnv === 'node') {
                 return require('esprima');
             }
-        }()),
-        estraverse = (function() {
+        }(),
+        estraverse = function() {
             if(cleanamd.amd && amdDependencies.estraverse && amdDependencies.estraverse.traverse) {
                 return amdDependencies.estraverse;
             } else if(that && that.estraverse && that.estraverse.traverse) {
@@ -51,8 +51,8 @@
             } else if(codeEnv === 'node') {
                 return require('estraverse');
             }
-        }()),
-        escodegen = (function() {
+        }(),
+        escodegen = function() {
             if(cleanamd.amd && amdDependencies.escodegen && amdDependencies.escodegen.generate) {
                 return amdDependencies.escodegen;
             } else if(that && that.escodegen && that.escodegen.generate) {
@@ -60,8 +60,8 @@
             } else if(codeEnv === 'node') {
                 return require('escodegen');
             }
-        }()),
-        _ = (function() {
+        }(),
+        _ = function() {
             if(cleanamd.amd && amdDependencies.underscore) {
                 return amdDependencies.underscore;
             } else if(that && that._) {
@@ -69,7 +69,7 @@
             } else if(codeEnv === 'node') {
                 return require('lodash');
             }
-        }()),
+        }(),
         fs = codeEnv === 'node' ? require('fs'): {}, // End Third-Party Dependencies
         // The Public API object
         publicAPI = {
@@ -637,7 +637,10 @@
                                 'loc': publicAPI.defaultLOC
                             });
                         });
-                        return deps;
+                        // Only return dependency names that do not directly match the name of existing stored modules
+                        return _.filter(deps || [], function(currentDep) {
+                            return !publicAPI.storedModules[currentDep.name];
+                        });
                     }()),
                     callbackFunc = (function() {
                         var callbackFunc = obj.moduleReturnValue,
@@ -702,7 +705,6 @@
                             if(currentParam) {
                                 currentName = currentParam.name;
                             } else {
-                                console.log('iterator', iterator);
                                 currentName = dependencyNames[iterator].name;
                             }
                             if(currentName === 'exports') {
@@ -717,7 +719,10 @@
                                 });
                             }
                         });
-                        return deps;
+                        // Only return dependencies that do not directly match the name of existing stored modules
+                        return _.filter(deps || [], function(currentDep) {
+                            return !publicAPI.storedModules[currentDep.name];
+                        });
                     }()),
                     dependencyNameLength = dependencyNames.length,
                     callbackFuncParamsLength = callbackFuncParams.length;
