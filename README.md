@@ -23,7 +23,9 @@ A build tool that converts AMD code to standard JavaScript.
 
 * [AddThis Smart Layers](https://www.addthis.com/get/smart-layers) - Third-party social widgets suite
 
-* [Mod.js](http://madscript.com/modjs/) - JavaScript Workflow Tooling 
+* [Mod.js](http://madscript.com/modjs/) - JavaScript Workflow Tooling
+
+* [Formatter.js](http://firstopinion.github.io/formatter.js/) - Format user input to match a specified pattern
 
 
 ## Why
