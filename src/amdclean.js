@@ -1,4 +1,4 @@
-/*! amdclean - v2.0.0 - 2014-03-17
+/*! amdclean - v2.0.0 - 2014-05-11
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko; Licensed MIT */
 
@@ -122,15 +122,19 @@
                 // 'standard' example: 'utils/example' -> 'utils_example'
                 // 'camelCase' example: 'utils/example' -> 'utilsExample'
                 'prefixMode': 'standard',
-                // A hook that allows you add your own custom logic to how each moduleName is prefixed/normalized
-                'prefixTransform': function(moduleName) { return moduleName; },
+                // A function hook that allows you add your own custom logic to how each module name is prefixed/normalized
+                'prefixTransform': function(moduleName) {
+                    return moduleName;
+                },
                 // Wrap any build bundle in a start and end text specified by wrap
                 // This should only be used when using the onModuleBundleComplete RequireJS Optimizer build hook
                 // If it is used with the onBuildWrite RequireJS Optimizer build hook, each module will get wrapped
                 'wrap': {
-                    'start': '(function() {\n',
-                    'end': '\n}());'
-                }
+                    'start': '',
+                    'end': ''
+                },
+                // Determines if certain aggressive file size optimization techniques will be used to transform the soure code
+                'aggressiveOptimizations': false
             },
             // Environment - either node or web
             'env': codeEnv,
@@ -152,10 +156,16 @@
                 'estraverse': 'There is not an estraverse.replace() method.  Make sure you have included estraverse (https://github.com/Constellation/estraverse).',
                 'escodegen': 'There is not an escodegen.generate() method.  Make sure you have included escodegen (https://github.com/Constellation/escodegen).'
             },
-            // User module names
+            // storedModules
+            // -------------
+            // An object that will store all of the user module names
             'storedModules': {},
-            // Dependency blacklist
+            // callbackParameterMap
             // --------------------
+            // An object that will store all of the user module callback parameters (that are used and also do not match the exact name of the dependencies they are representing) and the dependencies that they map to
+            'callbackParameterMap': {},
+            // dependencyBlacklist
+            // -------------------
             //  Variable names that are not allowed as dependencies to functions
             'dependencyBlacklist': {
                 'require': 'remove',
@@ -425,15 +435,15 @@
                             'left': {
                                 'type': 'Identifier',
                                 'name': moduleName,
-                                'range': [0,0],
-                                'loc': [0,0]
+                                'range': publicAPI.defaultRange,
+                                'loc': publicAPI.defaultLOC
                             },
                             'right': moduleReturnValue,
-                            'range': [0,0],
-                            'loc': [0,0]
+                            'range': publicAPI.defaultRange,
+                            'loc': publicAPI.defaultLOC
                         },
-                        'range': [0,0],
-                        'loc': [0,0]
+                        'range': publicAPI.defaultRange,
+                        'loc': publicAPI.defaultLOC
                     };
                 return updatedNode;
             },
@@ -556,15 +566,15 @@
                             'left': {
                                 'type': 'Identifier',
                                 'name': moduleName,
-                                'range': (callbackFunc.range || [0,0]),
-                                'loc': (callbackFunc.loc || [0,0])
+                                'range': (callbackFunc.range || publicAPI.defaultRange),
+                                'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                             },
                             'right': cb,
-                            'range': (callbackFunc.range || [0,0]),
-                            'loc': (callbackFunc.loc || [0,0])
+                            'range': (callbackFunc.range || publicAPI.defaultRange),
+                            'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                         },
-                        'range': (callbackFunc.range || [0,0]),
-                        'loc': (callbackFunc.loc || [0,0])
+                        'range': (callbackFunc.range || publicAPI.defaultRange),
+                        'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                     };
                 return updatedNode;
             },
@@ -625,7 +635,9 @@
                     dependencies = obj.dependencies,
                     depLength = dependencies.length,
                     options = publicAPI.options,
-                    dependencyNames = (function() {
+                    aggressiveOptimizations = options.aggressiveOptimizations,
+                    dependenciesToRemove = {},
+                    dependencyNames = function() {
                         var deps = [],
                             currentName;
                         _.each(dependencies, function(currentDependency, iterator) {
@@ -637,12 +649,9 @@
                                 'loc': publicAPI.defaultLOC
                             });
                         });
-                        // Only return dependency names that do not directly match the name of existing stored modules
-                        return _.filter(deps || [], function(currentDep) {
-                            return !publicAPI.storedModules[currentDep.name];
-                        });
-                    }()),
-                    callbackFunc = (function() {
+                        return deps;
+                    }(),
+                    callbackFunc = function() {
                         var callbackFunc = obj.moduleReturnValue,
                             body,
                             returnStatements,
@@ -685,8 +694,8 @@
                             depLength = 0;
                         }
                         return callbackFunc;
-                    }()),
-                    hasReturnStatement = (function() {
+                    }(),
+                    hasReturnStatement = function() {
                         var returns = [];
                         if(callbackFunc && callbackFunc.body && _.isArray(callbackFunc.body.body)) {
                             returns = _.where(callbackFunc.body.body, { 'type': 'ReturnStatement' });
@@ -695,9 +704,10 @@
                             }
                         }
                         return false;
-                    }()),
+                    }(),
                     hasExportsParam = false,
-                    callbackFuncParams = (function() {
+                    originalCallbackFuncParams,
+                    callbackFuncParams = function() {
                         var deps = [],
                             currentName,
                             cbParams = callbackFunc.params || dependencyNames || [];
@@ -717,15 +727,47 @@
                                     'range': publicAPI.defaultRange,
                                     'loc': publicAPI.defaultLOC
                                 });
+
+                                // If a callback parameter is not the exact name of a stored module and there is a dependency that matches the current callback parameter
+                                if(options.aggressiveOptimizations === true && !publicAPI.storedModules[currentName] && dependencyNames[iterator]) {
+                                    // If the current dependency has not been stored
+                                    if(!publicAPI.callbackParameterMap[dependencyNames[iterator].name]) {
+                                        publicAPI.callbackParameterMap[dependencyNames[iterator].name] = [currentName];
+                                    } else {
+                                        publicAPI.callbackParameterMap[dependencyNames[iterator].name].push(currentName);
+                                    }
+                                    dependenciesToRemove[currentName] = true;
+                                }
                             }
                         });
-                        // Only return dependencies that do not directly match the name of existing stored modules
-                        return _.filter(deps || [], function(currentDep) {
-                            return !publicAPI.storedModules[currentDep.name];
+                        originalCallbackFuncParams = deps;
+                        // Only return callback function parameters that do not directly match the name of existing stored modules
+                        return _.filter(deps || [], function(currentParam) {
+                            return !publicAPI.storedModules[currentParam.name];
                         });
-                    }()),
-                    dependencyNameLength = dependencyNames.length,
-                    callbackFuncParamsLength = callbackFuncParams.length;
+                    }(),
+                    dependencyNameLength,
+                    callbackFuncParamsLength;
+
+                // Only return dependency names that do not directly match the name of existing stored modules
+                dependencyNames = _.filter(dependencyNames || [], function(currentDep, iterator) {
+                    var mappedCallbackParameter = originalCallbackFuncParams[iterator],
+                        currentDepName = currentDep.name;
+                    // If the matching callback parameter matches the name of a stored module, then do not return it
+                    // Else if the matching callback parameter does not match the name of a stored module, return the dependency
+                    return !mappedCallbackParameter ||  publicAPI.storedModules[mappedCallbackParameter.name] && mappedCallbackParameter.name === currentDepName ? !publicAPI.storedModules[currentDepName] : !publicAPI.storedModules[mappedCallbackParameter.name];
+                });
+
+                if(aggressiveOptimizations === true) {
+                    dependencyNames = _.filter(dependencyNames, function(currentDep) {
+                        return dependenciesToRemove[currentDep.name] === true;
+                    });
+                    callbackFuncParams = _.filter(callbackFuncParams, function(currentParam) {
+                        return dependenciesToRemove[currentParam.name] !== true;
+                    });
+                }
+                dependencyNameLength = dependencyNames.length;
+                callbackFuncParamsLength = callbackFuncParams.length;
 
                 // If the module dependencies passed into the current module are greater than the used callback function parameters, do not pass the dependencies
                 if(dependencyNameLength && dependencyNameLength > callbackFuncParamsLength) {
@@ -1070,7 +1112,9 @@
                     mergedOptions = _.merge(defaultOptions, userOptions),
                     generatedCode,
                     originalAst,
-                    declarations = [];
+                    declarations = [],
+                    hoistedVariables = {},
+                    hoistedCallbackParameters = {};
                 publicAPI.options = options = mergedOptions;
                 if(!_ || !_.isPlainObject) {
                     throw new Error(publicAPI.errorMsgs.lodash);
@@ -1090,13 +1134,16 @@
                 ast = publicAPI.traverseAndUpdateAst({
                     ast: originalAst
                 });
+
                 // Post Clean Up
                 // Removes all empty statements from the source so that there are no single semicolons and
-                // Make sure that all require() CommonJS calls are converted
+                // Makes sure that all require() CommonJS calls are converted
+                // And all aggressive optimizations (if the option is turned on) are handled
                 if(ast && _.isArray(ast.body)) {
                     estraverse.replace(ast, {
                         enter: function(node, parent) {
-                            var normalizedModuleName;
+                            var normalizedModuleName,
+                                assignmentName = node && node.left && node.left.name ? node.left.name : '';
                             if(node === undefined || node.type === 'EmptyStatement') {
                                 _.each(parent.body, function(currentNode, iterator) {
                                     if(currentNode === undefined || currentNode.type === 'EmptyStatement') {
@@ -1109,14 +1156,56 @@
                                     return {
                                         'type': 'Identifier',
                                         'name': normalizedModuleName,
-                                        'range': [0,0],
-                                        'loc': [0,0]
+                                        'range': publicAPI.defaultRange,
+                                        'loc': publicAPI.defaultLOC
                                     };
                                 } else {
                                     return node;
                                 }
-                            }
+                            } else if(node.type === 'AssignmentExpression' && assignmentName) {
+                                // If the current Assignment Expression is a mapped callback parameter
+                                if(publicAPI.callbackParameterMap[assignmentName]) {
+                                    node.right = function() {
+                                        var cb = node.right,
+                                            assignmentNodes = [],
+                                            assignments = {},
+                                            mappedDependencies = publicAPI.callbackParameterMap[assignmentName];
 
+                                        // If aggressive optimizations are turned on and there are dependencies to be removed
+                                        if(options.aggressiveOptimizations === true && mappedDependencies.length) {
+                                            // All of the necessary assignment nodes
+                                            assignmentNodes = _.map(mappedDependencies, function(currentDependency, iterator) {
+                                                return {
+                                                    'type': 'AssignmentExpression',
+                                                    'operator': '=',
+                                                    'left': {
+                                                        'type': 'Identifier',
+                                                        'name': currentDependency,
+                                                        'range': publicAPI.defaultRange,
+                                                        'loc': publicAPI.defaultLOC
+                                                    },
+                                                    'right': (iterator < mappedDependencies.length - 1) ? {
+                                                        'range': publicAPI.defaultRange,
+                                                        'loc': publicAPI.defaultLOC
+                                                    } : cb,
+                                                    'range': publicAPI.defaultRange,
+                                                    'loc': publicAPI.defaultLOC
+                                                };
+                                            });
+                                            // Creates an object containing all of the assignment expressions
+                                            assignments = _.reduce(assignmentNodes, function(result, assignment, key) {
+                                                result.right =  assignment;
+                                                return result;
+                                            });
+                                            // The constructed assignment object node
+                                            return assignmentNodes.length ? assignments : cb;
+                                        } else {
+                                            return cb;
+                                        }
+                                    }();
+                                    return node;
+                                }
+                            }
                         }
                     });
                 }
@@ -1164,20 +1253,32 @@
                     });
                 }
 
-                // Creates variable declarations for each AMD module
-                _.each(publicAPI.storedModules, function(moduleValue, moduleName) {
+                hoistedCallbackParameters = function() {
+                    var obj = {},
+                        callbackParameterMap = publicAPI.callbackParameterMap;
+                    _.each(callbackParameterMap, function(name, val) {
+                        obj[name] = true;
+                    });
+                    return obj;
+                }();
+
+                // Hoists all modules and necessary callback parameters
+                hoistedVariables = _.merge(_.cloneDeep(publicAPI.storedModules), hoistedCallbackParameters);
+
+                // Creates variable declarations for each AMD module/callback parameter that needs to be hoisted
+                _.each(hoistedVariables, function(moduleValue, moduleName) {
                     if(!_.contains(publicAPI.options.ignoreModules, moduleName)) {
                         declarations.push({
                             'type': 'VariableDeclarator',
                             'id': {
                                 'type': 'Identifier',
                                 'name': moduleName,
-                                'range': [0,0],
-                                'loc': [0,0]
+                                'range': publicAPI.defaultRange,
+                                'loc': publicAPI.defaultLOC
                             },
                             'init': null,
-                            'range': [0,0],
-                            'loc': [0,0]
+                            'range': publicAPI.defaultRange,
+                            'loc': publicAPI.defaultLOC
                         });
                     }
                 });
@@ -1193,8 +1294,11 @@
                     });
                 }
 
-                // Resets all of the stored modules (in case there is more than one build task)
+                // Resets all of the stored modules
                 publicAPI.storedModules = {};
+
+                // Resets all of the stored callback parameter/dependency mappings
+                publicAPI.callbackParameterMap = {};
 
                 // Converts the updated AST to a string of code
                 generatedCode = publicAPI.generateCode(ast, options);
