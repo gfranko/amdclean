@@ -12,7 +12,7 @@ A build tool that converts AMD code to standard JavaScript.
 
 ## Use Case
 
-**Single file** client-side JavaScript libraries or web apps that want to use AMD to structure and build their code, but don't want an AMD footprint.
+**Single file** client-side JavaScript libraries or web apps that want to use AMD or CommonJS modules to structure and build their code, but don't want any additional footprint.
 
 
 ## Used By
