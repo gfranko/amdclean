@@ -159,7 +159,7 @@ module.exports = function(grunt) {
 };
 ```
 
-###Node Module
+###AMDclean as a Node Module
 
 * `npm install amdclean --save-dev`
 
@@ -177,7 +177,7 @@ var cleanedCode = amdclean.clean(code);
 ```
 
 
-###Client-side Library
+###AMDclean as a Client-side Library
 
 * Include all dependencies
 
@@ -380,7 +380,7 @@ _Standard_
 _AMD_
 
 ```javascript
-require(['anotherModule'], function(anotherModule) {
+require(['anotherModule'], function(someModule) {
   var example = true;
 });
 ```
@@ -388,7 +388,7 @@ require(['anotherModule'], function(anotherModule) {
 _Standard_
 
 ```javascript
-(function (anotherModule) {
+(function (someModule) {
     var example = true;
 }(anotherModule));
 ```
@@ -411,7 +411,7 @@ define('example', ['example1', 'example2'], function() {
 _Standard_
 
 ```javascript
-// Since no callback parameter was provided in the AMD code,
+// Since no callback parameters were provided in the AMD code,
 // the 'example1' and 'example2' parameters were removed
 var example;
 example = function() {
@@ -424,7 +424,7 @@ example = function() {
 _AMD_
 
 ```javascript
-define('example', ['example1', 'example2'], function(example2, anotherExample) {
+define('example', ['example1', 'example2'], function(example1, anotherExample) {
   var test = true;
 });
 ```
@@ -573,7 +573,7 @@ __Why would I use AMDclean instead of Almond.js?__
 
 __Do I have to use the onModuleBundleComplete Require.js hook?__
 
- - Yes, you should be.  In `< 2.0` versions of AMDclean, the `onBuildWrite` Require.js hook was used instead, but the `onBuildWrite` hook has been deprecated.  Use the `onModuleBundleComplete` Require.js hook like this:
+ - Yes, you should be using it.  In `< 2.0` versions of AMDclean, the `onBuildWrite` Require.js hook was used instead, but the `onBuildWrite` hook has been deprecated.  Use the `onModuleBundleComplete` Require.js hook like this:
 
   ```javascript
 onModuleBundleComplete: function (data) {
@@ -646,7 +646,7 @@ __I don't like the way AMDclean normalizes the names of my modules with undersco
 
 __I can't seem to get AMDclean 2.0 to work.  What gives?__
 
-- Please make sure you are using the `onModuleBundleComplete` Require.js hook and **NOT** the `onBuildWrite` Require.js hook.  The `onBuildWrite` hook has been deprecated for AMDclean versions `> 2.0`.
+- Please make sure you are using the `onModuleBundleComplete` Require.js hook and **NOT** the `onBuildWrite` Require.js hook.  The `onBuildWrite` hook has been deprecated for AMDclean versions `>= 2.0`.
 
 
 ## License
