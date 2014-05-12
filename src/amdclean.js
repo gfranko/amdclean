@@ -636,7 +636,6 @@
                     depLength = dependencies.length,
                     options = publicAPI.options,
                     aggressiveOptimizations = options.aggressiveOptimizations,
-                    dependenciesToRemove = {},
                     dependencyNames = function() {
                         var deps = [],
                             currentName;
@@ -710,7 +709,8 @@
                     callbackFuncParams = function() {
                         var deps = [],
                             currentName,
-                            cbParams = callbackFunc.params || dependencyNames || [];
+                            cbParams = callbackFunc.params || dependencyNames || [],
+                            mappedParameter = {};
                         _.each(cbParams, function(currentParam, iterator) {
                             if(currentParam) {
                                 currentName = currentParam.name;
@@ -732,11 +732,26 @@
                                 if(options.aggressiveOptimizations === true && !publicAPI.storedModules[currentName] && dependencyNames[iterator]) {
                                     // If the current dependency has not been stored
                                     if(!publicAPI.callbackParameterMap[dependencyNames[iterator].name]) {
-                                        publicAPI.callbackParameterMap[dependencyNames[iterator].name] = [currentName];
+                                        publicAPI.callbackParameterMap[dependencyNames[iterator].name] = [
+                                            {
+                                                'name': currentName,
+                                                'count': 1
+                                            }
+                                        ];
                                     } else {
-                                        publicAPI.callbackParameterMap[dependencyNames[iterator].name].push(currentName);
+                                        mappedParameter = _.where(publicAPI.callbackParameterMap[dependencyNames[iterator].name], {
+                                            'name': currentName
+                                        });
+                                        if(mappedParameter.length) {
+                                            mappedParameter = mappedParameter[0];
+                                            mappedParameter.count += 1;
+                                        } else {
+                                            publicAPI.callbackParameterMap[dependencyNames[iterator].name].push({
+                                                'name': currentName,
+                                                'count': 1
+                                            });
+                                        }
                                     }
-                                    dependenciesToRemove[currentName] = true;
                                 }
                             }
                         });
@@ -758,14 +773,6 @@
                     return !mappedCallbackParameter ||  publicAPI.storedModules[mappedCallbackParameter.name] && mappedCallbackParameter.name === currentDepName ? !publicAPI.storedModules[currentDepName] : !publicAPI.storedModules[mappedCallbackParameter.name];
                 });
 
-                if(aggressiveOptimizations === true) {
-                    dependencyNames = _.filter(dependencyNames, function(currentDep) {
-                        return dependenciesToRemove[currentDep.name] === true;
-                    });
-                    callbackFuncParams = _.filter(callbackFuncParams, function(currentParam) {
-                        return dependenciesToRemove[currentParam.name] !== true;
-                    });
-                }
                 dependencyNameLength = dependencyNames.length;
                 callbackFuncParamsLength = callbackFuncParams.length;
 
@@ -1143,7 +1150,16 @@
                     estraverse.replace(ast, {
                         enter: function(node, parent) {
                             var normalizedModuleName,
-                                assignmentName = node && node.left && node.left.name ? node.left.name : '';
+                                assignmentName = node && node.left && node.left.name ? node.left.name : '',
+                                cb = node.right,
+                                assignmentNodes = [],
+                                assignments = {},
+                                mappedParameters = _.filter(publicAPI.callbackParameterMap[assignmentName], function(currentParameter) {
+                                    return currentParameter.count > 1;
+                                }),
+                                mappedCbDependencyNames,
+                                mappedCbParameterNames,
+                                paramsToRemove = [];
                             if(node === undefined || node.type === 'EmptyStatement') {
                                 _.each(parent.body, function(currentNode, iterator) {
                                     if(currentNode === undefined || currentNode.type === 'EmptyStatement') {
@@ -1162,29 +1178,50 @@
                                 } else {
                                     return node;
                                 }
-                            } else if(node.type === 'AssignmentExpression' && assignmentName) {
+                            } else if(options.aggressiveOptimizations === true && node.type === 'AssignmentExpression' && assignmentName) {
+                                // The names of all of the current callback function parameters
+                                mappedCbParameterNames = _.map((cb && cb.callee && cb.callee.params ? cb.callee.params : []), function(currentParam) {
+                                    return currentParam.name;
+                                });
+                                // The names of all of the current callback function dependencies
+                                mappedCbDependencyNames = _.map(cb.arguments, function(currentArg) {
+                                    return currentArg.name;
+                                });
+                                // Loop through the dependency names
+                                _.each(mappedCbDependencyNames, function(currentDependencyName) {
+                                    // Nested loop to see if any of the dependency names map to a callback parameter
+                                    _.each(publicAPI.callbackParameterMap[currentDependencyName], function(currentMapping) {
+                                        var mappedName  = currentMapping.name,
+                                            mappedCount = currentMapping.count;
+                                        // Loops through all of the callback function parameter names to see if any of the parameters should be removed
+                                        _.each(mappedCbParameterNames, function(currentParameterName, iterator) {
+                                            if(mappedCount > 1 && mappedName === currentParameterName) {
+                                                paramsToRemove.push(iterator);
+                                            }
+                                        });
+                                    });
+                                });
+                                _.each(paramsToRemove, function(currentParam) {
+                                    cb.arguments.splice(currentParam, currentParam + 1);
+                                    cb.callee.params.splice(currentParam, currentParam + 1);
+                                });
                                 // If the current Assignment Expression is a mapped callback parameter
                                 if(publicAPI.callbackParameterMap[assignmentName]) {
                                     node.right = function() {
-                                        var cb = node.right,
-                                            assignmentNodes = [],
-                                            assignments = {},
-                                            mappedDependencies = publicAPI.callbackParameterMap[assignmentName];
-
-                                        // If aggressive optimizations are turned on and there are dependencies to be removed
-                                        if(options.aggressiveOptimizations === true && mappedDependencies.length) {
+                                        // If aggressive optimizations are turned on, the mapped parameter is used more than once, and there are mapped dependencies to be removed
+                                        if(options.aggressiveOptimizations === true && mappedParameters.length) {
                                             // All of the necessary assignment nodes
-                                            assignmentNodes = _.map(mappedDependencies, function(currentDependency, iterator) {
+                                            assignmentNodes = _.map(mappedParameters, function(currentDependency, iterator) {
                                                 return {
                                                     'type': 'AssignmentExpression',
                                                     'operator': '=',
                                                     'left': {
                                                         'type': 'Identifier',
-                                                        'name': currentDependency,
+                                                        'name': currentDependency.name,
                                                         'range': publicAPI.defaultRange,
                                                         'loc': publicAPI.defaultLOC
                                                     },
-                                                    'right': (iterator < mappedDependencies.length - 1) ? {
+                                                    'right': (iterator < mappedParameters.length - 1) ? {
                                                         'range': publicAPI.defaultRange,
                                                         'loc': publicAPI.defaultLOC
                                                     } : cb,
@@ -1255,9 +1292,16 @@
 
                 hoistedCallbackParameters = function() {
                     var obj = {},
-                        callbackParameterMap = publicAPI.callbackParameterMap;
-                    _.each(callbackParameterMap, function(name, val) {
-                        obj[name] = true;
+                        callbackParameterMap = publicAPI.callbackParameterMap,
+                        count,
+                        currentParameterName;
+                    _.each(callbackParameterMap, function(mappedParameters) {
+                        _.each(mappedParameters, function(currentParameter) {
+                            if(currentParameter.count > 1) {
+                                currentParameterName = currentParameter.name;
+                                obj[currentParameterName] = true;
+                            }
+                        });
                     });
                     return obj;
                 }();
