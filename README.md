@@ -1,4 +1,4 @@
-#amdclean
+#AMDclean
 
 A build tool that converts AMD code to standard JavaScript.
 
