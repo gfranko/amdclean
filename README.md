@@ -51,7 +51,8 @@ It is best used for libraries or apps that use AMD or CommonJS (using the [cjsTr
 * Can be used for both full-fledged web apps and/or individual JavaScript libraries.
 
   - If you are using AMDclean to build a JavaScript library, make sure these options are set appropriately (these are just suggestions):
-    ```javascript
+    
+```javascript
     {
       // Will not transform conditional AMD checks - Libraries use this to provide optional AMD support
       'transformAMDChecks': false,
@@ -61,7 +62,7 @@ It is best used for libraries or apps that use AMD or CommonJS (using the [cjsTr
         'end': '}());'
       }
     }
-    ```
+```
 
 * `define()` and `require()` calls.
 
