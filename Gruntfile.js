@@ -5,9 +5,6 @@ module.exports = function(grunt) {
       var outputFile = data.path;
       fs.writeFileSync(outputFile, amdclean.clean({
         'code': fs.readFileSync(outputFile),
-        'globalObject': true,
-        'globalObjectName': 'amdclean_website',
-        'rememberGlobalObject': false,
         'wrap': {
           'start': '(function() {',
           'end': '}());'
@@ -24,7 +21,7 @@ module.exports = function(grunt) {
             'mobile': 'init/MobileInit'
           },
           wrap: true,
-          optimize: 'uglify',
+          optimize: 'none',
           mainConfigFile: './js/app/config/config.js',
           useStrict: true,
           include: ['mobile'],
@@ -46,7 +43,7 @@ module.exports = function(grunt) {
             'desktop': 'init/DesktopInit'
           },
           wrap: true,
-          optimize: 'uglify',
+          optimize: 'none',
           mainConfigFile: './js/app/config/config.js',
           useStrict: true,
           include: ['desktop'],
