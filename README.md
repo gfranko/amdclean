@@ -1,4 +1,4 @@
-#AMDclean
+#amdclean
 
 A build tool that converts AMD code to standard JavaScript.
 
@@ -22,6 +22,8 @@ A build tool that converts AMD code to standard JavaScript.
 * [Ractive.js](http://www.ractivejs.org/) - Next-generation DOM manipulation
 
 * [Mod.js](http://madscript.com/modjs/) - JavaScript Workflow Tooling 
+
+* [Formatter.js](http://firstopinion.github.io/formatter.js/) - Format user input to match a specified pattern
 
 * [AddThis Smart Layers](https://www.addthis.com/get/smart-layers) - Third-party social widgets suite
 
