@@ -1,4 +1,4 @@
-#amdclean
+#AMDclean
 
 A build tool that converts AMD code to standard JavaScript.
 
@@ -21,40 +21,53 @@ A build tool that converts AMD code to standard JavaScript.
 
 * [Ractive.js](http://www.ractivejs.org/) - Next-generation DOM manipulation
 
-* [AddThis Smart Layers](https://www.addthis.com/get/smart-layers) - Third-party social widgets suite
-
 * [Mod.js](http://madscript.com/modjs/) - JavaScript Workflow Tooling 
+
+* [AddThis Smart Layers](https://www.addthis.com/get/smart-layers) - Third-party social widgets suite
 
 
 ## Why
 
 Many developers like to use the AMD API to write modular JavaScript, but do not want to include a full AMD loader (e.g. [require.js](https://github.com/jrburke/requirejs)), or AMD shim (e.g. [almond.js](https://github.com/jrburke/almond)) because of file size/source code readability concerns.
 
-By incorporating amdclean.js into the build process, there is no need for Require or Almond.
+By incorporating AMDclean.js into the build process, there is no need for Require or Almond.
 
 Since AMDclean rewrites your source code into standard JavaScript, it is a great
 fit for JavaScript library/web app authors who want a tiny download in one file after using the
-[RequireJS Optimizer](http://requirejs.org/docs/optimization.html).
+[RequireJS Optimizer](http://requirejs.org/docs/optimization.html).  AMDclean uses multiple different optimization algorithms to create the smallest file possible, while still making your code readable.
 
 
 ## Restrictions
 
 **Note:** Same restrictions as almond.js.
 
-It is best used for libraries or apps that use AMD and optimize all the modules into one file -- no dynamic code loading.
+It is best used for libraries or apps that use AMD or CommonJS (using the [cjsTranslate](https://github.com/jrburke/r.js/blob/master/build/example.build.js#L574) Require.js optimizer option) and optimize all modules into one file or multiple bundles.  If you do not include Require.js or a similar loader, you cannot dynamically load code.
 
 
 ##What is Supported
+
+* Can be used for both full-fledged web apps and/or individual JavaScript libraries.
+
+  - If you are using AMDclean to build a JavaScript library, make sure these options are set appropriately (these are just suggestions):
+    ```javascript
+    {
+      // Will not transform conditional AMD checks - Libraries use this to provide optional AMD support
+      'transformAMDChecks': false,
+      // Wraps the library in an IIFE (Immediately Invoked Function Expression)
+      'wrap': {
+        'start': ';(function() {',
+        'end': '}());'
+      }
+    }
+    ```
 
 * `define()` and `require()` calls.
 
 * [Shimmed modules](http://requirejs.org/docs/api.html#config-shim)
 
-* [Simplified CJS wrapper](https://github.com/jrburke/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#wiki-cjs) (requires the `globalObject` option to be set to `true`)
+* [Simplified CJS wrapper](https://github.com/jrburke/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#wiki-cjs) (The [cjsTranslate](https://github.com/jrburke/r.js/blob/master/build/example.build.js#L574) option can be used to support CommonJS modules)
 
 * Exporting global modules to the global `window` object
-
-* Storing all local modules inside of a single global object (Helps scoping issues for certain use cases)
 
 ## Download
 
@@ -65,7 +78,7 @@ Web - [Latest release](https://github.com/gfranko/amdclean/blob/master/src/amdcl
 
 ## Usage
 
-There are a few different ways that amdclean can be used including:
+There are a few different ways that AMDclean can be used including:
 
 * With the RequireJS Optimizer (plain node, Grunt, Gulp, etc)
 
@@ -73,8 +86,10 @@ There are a few different ways that amdclean can be used including:
 
 * As a client-side library
 
+**Note:** AMDclean does not have any module ordering logic, so if you do not use the RequireJS optimizer you need to find another solution for resolving module dependencies before your files can be "cleaned".
 
-###RequireJS Optimizer
+
+###AMDclean with the RequireJS Optimizer
 
 * [Download the RequireJS optimizer](http://requirejs.org/docs/download.html#rjs).
 
@@ -109,7 +124,7 @@ onModuleBundleComplete: function (data) {
 
 * Run the optimizer using [Node](http://nodejs.org) (also [works in Java](https://github.com/jrburke/r.js/blob/master/README.md)).  More details can be found in the the [r.js](https://github.com/jrburke/r.js/) repo.
 
-* If you are using the RequireJS optimizer [Grunt task](https://github.com/gruntjs/grunt-contrib-requirejs), then it is very easy to integrate amdclean using either the `onBuildWrite` or the `onModuleBundleComplete` config options. Here is an example Grunt file that includes the RequireJS optimizer plugin with amdclean support:
+* If you are using the RequireJS optimizer [Grunt task](https://github.com/gruntjs/grunt-contrib-requirejs), then it is very easy to integrate amdclean using the `onModuleBundleComplete` config option. Here is an example Grunt file that includes the RequireJS optimizer plugin with AMDclean support:
 
 ```javascript
 module.exports = function(grunt) {
@@ -197,7 +212,11 @@ var cleanedCode = amdclean.clean('define("example", [], function() { var a = tru
 
 ## How it works
 
-amdclean uses Esprima to generate an AST (Abstract Syntax Tree) from the provided source code, estraverse to traverse and update the AST, and escodegen to generate the new standard JavaScript code.  There are a few different techniques that amdclean uses to convert AMD to standard JavaScript code:
+AMDclean uses Esprima to generate an AST (Abstract Syntax Tree) from the provided source code, estraverse to traverse and update the AST, and escodegen to generate the new standard JavaScript code.
+
+**Note:** If you are interested in how this works, watch this [presentation](https://www.youtube.com/watch?v=XA8_hZfVecI) about building Static Code Analysis Tools.
+
+Here are a few different techniques that AMDclean uses to convert AMD to standard JavaScript code:
 
 
 ###Define Calls
@@ -213,8 +232,26 @@ define('example', [], function() {
 _Standard_
 
 ```javascript
-var example = function () {
+var example;
+example = undefined;
+```
 
+---
+
+_AMD_
+
+```javascript
+define('example', [], function() {
+  var test = true;
+});
+```
+
+_Standard_
+
+```javascript
+var example;
+example = function () {
+    var test = true;
 }();
 ```
 
@@ -233,7 +270,8 @@ define('example', [], function() {
 _Standard_
 
 ```javascript
-var example = function (name) {
+var example;
+example = function (name) {
   return 'Hello ' + name;
 };
 ```
@@ -244,14 +282,15 @@ _AMD_
 
 ```javascript
 define('example', [], function() {
-  return 'I love AMDClean';
+  return 'I love AMDclean';
 });
 ```
 
 _Standard_
 
 ```javascript
-var example = 'I love AMDClean';
+var example;
+example = 'I love AMDclean';
 ```
 
 ---
@@ -260,7 +299,7 @@ _AMD_
 
 ```javascript
 define('example', ['example1', 'example2'], function(one, two) {
-
+  var test = true;
 });
 ```
 
@@ -268,8 +307,9 @@ define('example', ['example1', 'example2'], function(one, two) {
 _Standard_
 
 ```javascript
-var example = function (one, two) {
-
+var example;
+example = function (one, two) {
+  var test = true; 
 }(example1, example2);
 ```
 
@@ -290,7 +330,8 @@ define("backbone", ["underscore","jquery"], (function (global) {
 _Standard_
 
 ```javascript
-var backbone = window.Backbone;
+var backbone;
+backbone = window.Backbone;
 ```
 
 ---
@@ -306,7 +347,8 @@ define('third',{
 _Standard_
 
 ```javascript
-var third = {
+var third;
+third = {
   exampleProp: 'This is an example'
 };
 ```
@@ -352,6 +394,83 @@ _Standard_
 ```
 
 
+##Optimization Algorithms
+
+AMDclean uses a few different strategies to decrease file size:
+
+**Remove Unused Dependencies**
+
+_AMD_
+
+```javascript
+define('example', ['example1', 'example2'], function() {
+  var test = true;
+});
+```
+
+_Standard_
+
+```javascript
+// Since no callback parameter was provided in the AMD code,
+// the 'example1' and 'example2' parameters were removed
+var example;
+example = function() {
+  var test = true;
+}();
+```
+
+**Remove Exact Matching Dependencies**
+
+_AMD_
+
+```javascript
+define('example', ['example1', 'example2'], function(example2, anotherExample) {
+  var test = true;
+});
+```
+
+_Standard_
+
+```javascript
+// Since the `example1` callback function parameter exactly matched,
+// the name of the `example1 dependency, it's parameters were removed
+var example;
+example = function(anotherExample) {
+  var test = true;
+}(example2);
+```
+
+**Hoist Common Non-Matching Dependencies**
+
+ - **Note** - For this behavior, you must set the `aggressiveOptimizations` option to `true`
+
+_AMD_
+
+```javascript
+define('example', ['example1'], function(firstExample) {
+  var test = true;
+});
+define('anotherExample', ['example1'], function(firstExample) {
+  var test = true;
+});
+```
+
+_Standard_
+
+```javascript
+// Since the `firstExample` callback function parameter was used more
+// than once between modules, it was hoisted up and reused
+var example, firstExample;
+firstExample = example1;
+example = function() {
+  var test = true;
+};
+anotherExample = function() {
+  var test = true;
+};
+```
+
+
 ##Options
 
 The amdclean `clean()` method accepts a string or an object.  Below is an example object with all of the available configuration options:
@@ -360,6 +479,9 @@ The amdclean `clean()` method accepts a string or an object.  Below is an exampl
 amdclean.clean({
   // The source code you would like to be 'cleaned'
   'code': '',
+  // Determines if certain aggressive file size optimization techniques
+  // will be used to transform the soure code
+  'aggressiveOptimizations': false,
   // The relative file path of the file to be cleaned.  Use this option if you
   // are not using the code option.
   // Hint: Use the __dirname trick
@@ -367,15 +489,6 @@ amdclean.clean({
   // The modules that you would like to set as window properties
   // An array of strings (module names)
   'globalModules': [],
-  // Determines if all of your local modules are stored in a single global
-  // object (helps with scoping in certain cases)
-  'globalObject': false,
-  // Determines the name of your global object that stores all of your global
-  // modules
-  // Note: If using a global object, try to override this name with a smaller
-  //       name since it will be referenced throughout the code (don't worry
-  //       about it if you are using a minifier)
-  'globalObjectName': 'amdclean',
   // All esprima API options are supported: http://esprima.org/doc/
   'esprima': {
     'comment': true,
@@ -385,7 +498,12 @@ amdclean.clean({
   },
   // All escodegen API options are supported: https://github.com/Constellation/escodegen/wiki/API
   'escodegen': {
-    'comment': true
+    'comment': true,
+    'format': {
+      'indent': {
+        'adjustMultilineComment': true
+      }
+    }
   },
   // If there is a comment (that contains the following text) on the same line
   // or one line above a specific module, the module will not be removed
@@ -404,11 +522,6 @@ amdclean.clean({
   // Allows you to pass an expression that will override shimmed modules return
   // values e.g. { 'backbone': 'window.Backbone' }
   'shimOverrides': {},
-  // Prevents multiple global objects from being instantiated when using the
-  // onBuildWrite Require.js hook
-  // Set this to false if you are using AMDClean for more than one build AND
-  // are using the onModuleBundleComplete Require.js hook
-  'rememberGlobalObject': true,
   // Determines how to prefix a module name with when a non-JavaScript
   // compatible character is found 
   // 'standard' or 'camelCase'
@@ -449,29 +562,20 @@ If your PR is a code change:
 6.  Verify that the minified output file has been updated in `build/amdclean.min.js`
 7.  Send the PR!
 
-**Note:** There is a gulp `watch` set up called, `amdclean-watch`, that will automatically lint, minify, and run all the AMDClean unit tests when `src/amdclean.js` is changed.  Feel free to use it.
+**Note:** There is a gulp `watch` set up called, `amdclean-watch`, that will automatically lint, minify, and run all the AMDclean unit tests when `src/amdclean.js` is changed.  Feel free to use it.
 
 
 ## FAQ
 
-__Why would I use AMDClean instead of Almond.js?__
+__Why would I use AMDclean instead of Almond.js?__
 
- - Although Almond is very small (~1k gzipped and minified), most JavaScript library authors do not want to have to include it in their library's source code.  AMDClean allows you to use AMD without increasing your library's file size.
+ - Although Almond is very small (~1k gzipped and minified), most JavaScript library authors do not want to have to include it in their library's source code.  AMDclean allows you to use AMD without increasing your library's file size. AMDclean also implements multiple different optimization algorithms to make your source code even smaller.
 
 __Do I have to use the onModuleBundleComplete Require.js hook?__
 
- - Nope, you may use the `onBuildWrite` Require.js hook instead.  Like this:
-```javascript
-onBuildWrite: function (moduleName, path, contents) {
-    return module.require('amdclean').clean(contents);
-}
-```
+ - Yes, you should be.  In `< 2.0` versions of AMDclean, the `onBuildWrite` Require.js hook was used instead, but the `onBuildWrite` hook has been deprecated.  Use the `onModuleBundleComplete` Require.js hook like this:
 
-__AMDClean does not seem to be cleaning shimmed modules.  What am I doing wrong?__
-
- - Since Require.js does not expose the [shim](http://requirejs.org/docs/api.html#config-shim) functionality within the `onBuildWrite` config property, you must use the `onModuleBundleComplete` config property instead.  Like this:
-
- ```javascript
+  ```javascript
 onModuleBundleComplete: function (data) {
   var fs = require('fs'),
     amdclean = require('amdclean'),
@@ -483,11 +587,11 @@ onModuleBundleComplete: function (data) {
 }
  ```
  
-__Is AMDClean only for libraries, or can I use it for my web app?__
+__Is AMDclean only for libraries, or can I use it for my web app?__
 
  - You can use it for both!  The [0.6.0](https://github.com/gfranko/amdclean/releases/tag/0.6.0) release provided support for web apps.
 
-__My comments seem to be getting removed when I use AMDClean.  What am I doing wrong?__
+__My comments seem to be getting removed when I use AMDclean.  What am I doing wrong?__
 
  - Before the `1.4.0` release, this was the default behavior.  If you update to `1.4.0` or later, you should see your comments still there after the cleaning process.  Also, if you would like your comments to be removed, then you can set the `comment` **escodegen** option to `false`.
 
@@ -520,31 +624,29 @@ __How would I expose one or more modules as a global window property?__
 
 - You can use the `globalModules` option to list all of the modules that you would like to expose as a `window` property
 
-__I am having a scope problem with all of the local module variables.  What can I do?__
-
-- You can use the `globalObject` option to store all of your modules in a single global object that uses the top-most function scope.  You can even name that global object whatever you prefer by using the `globalObjectName` option.
-
-__I replaced Almond.js with AMDClean and my file is bigger.  Why Is This?__
+__I replaced Almond.js with AMDclean and my file is bigger.  Why Is This?__
 
 - There could be a couple of reasons:
 
   * Unneccessary files are still being included with your build. Make sure that both Almond.js and the RequireJS text! plugin are not still being included, since they are not needed.  You can use the `removeModules` option to make sure certain modules are not included (e.g. text plugin).
 
-  * You are using an old version of AMDClean (`0.6.0` or earlier).  The latest versions of AMDClean do a better job of optimizing modules.
+  * You are using an old version of AMDclean (`0.6.0` or earlier).  The latest versions of AMDclean do an amazing job of optimizing modules.
 
-  *  Many of your individual module names are pretty long since they include the full path to a file.  An example is `text_templates_headinghtml`.  This module name could be changed to just `headinghtml` to save space. You can override the AMDClean module naming logic with the `prefixTransform` option to save some space.
-
-__I am building a JavaScript library and want to provide conditional AMD support, but AMDClean seems to be wiping away my if statement.  How do I fix this?__
+__I am building a JavaScript library and want to provide conditional AMD support, but AMDclean seems to be wiping away my if statement.  How do I fix this?__
 
 - You have two options:
 
   1.  Set the `transformAMDChecks` to `false`
 
-  2.  Make sure that you have a comment (that matches your AMDClean `commentCleanName` option) one line above your conditional AMD if statement
+  2.  Make sure that you have a comment (that matches your AMDclean `commentCleanName` option) one line above your conditional AMD if statement
 
-__I don't like the way AMDClean normalizes the names of my modules with underscores.  Can I change this?__
+__I don't like the way AMDclean normalizes the names of my modules with underscores.  Can I change this?__
 
 - You sure can.  You can either use the `prefixMode` and change it to camelCase, or you can override all of the logic with your own logic by using the `prefixTransform` option hook.
+
+__I can't seem to get AMDclean 2.0 to work.  What gives?__
+
+- Please make sure you are using the `onModuleBundleComplete` Require.js hook and **NOT** the `onBuildWrite` Require.js hook.  The `onBuildWrite` hook has been deprecated for AMDclean versions `> 2.0`.
 
 
 ## License

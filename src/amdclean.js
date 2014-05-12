@@ -1,4 +1,4 @@
-/*! amdclean - v2.0.0 - 2014-05-11
+/*! amdclean - v2.0.0 - 2014-05-12
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko; Licensed MIT */
 
@@ -1155,7 +1155,7 @@
                                 assignmentNodes = [],
                                 assignments = {},
                                 mappedParameters = _.filter(publicAPI.callbackParameterMap[assignmentName], function(currentParameter) {
-                                    return currentParameter.count > 1;
+                                    return currentParameter && currentParameter.count > 1;
                                 }),
                                 mappedCbDependencyNames,
                                 mappedCbParameterNames,
