@@ -2,6 +2,10 @@ require('jasmine-only');
 describe('amdclean specs', function() {
 	var amdclean = module.require('../../src/amdclean');
 
+	// Don't need the IIFE wrapping for the Jasmine tests
+	amdclean.defaultOptions.wrap.start = '';
+	amdclean.defaultOptions.wrap.end = '';
+
 	describe('define() method conversions', function() {
 
 		describe('functions', function() {

@@ -130,8 +130,8 @@
                 // This should only be used when using the onModuleBundleComplete RequireJS Optimizer build hook
                 // If it is used with the onBuildWrite RequireJS Optimizer build hook, each module will get wrapped
                 'wrap': {
-                    'start': '',
-                    'end': ''
+                    'start': ';(function() {',
+                    'end': '}());'
                 },
                 // Determines if certain aggressive file size optimization techniques will be used to transform the soure code
                 'aggressiveOptimizations': false
