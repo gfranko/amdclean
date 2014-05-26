@@ -656,8 +656,8 @@
                             returnStatements,
                             firstReturnStatement,
                             returnStatementArg;
-                        // If the module has NO dependencies and the callback function is not empty
-                        if(!depLength && callbackFunc && callbackFunc.type === 'FunctionExpression' && callbackFunc.body && _.isArray(callbackFunc.body.body) && callbackFunc.body.body.length) {
+                        // If the module callback function is not empty
+                        if(callbackFunc && callbackFunc.type === 'FunctionExpression' && callbackFunc.body && _.isArray(callbackFunc.body.body) && callbackFunc.body.body.length) {
                             // Filter 'use strict' statements
                             body = _.filter(callbackFunc.body.body, function(node) {
                                 if(publicAPI.options.removeUseStricts === true) return !publicAPI.isUseStrict(node.expression);

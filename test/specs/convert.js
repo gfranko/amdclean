@@ -52,15 +52,15 @@ describe('amdclean specs', function() {
 			it('should not hoist and remove callback and IIFE parameters that are only used once', function() {
 				var AMDcode = "define('example1', function() { var count = 0;return 'firstModule'; });define('example2', function() { var count = 0;return 'secondModule'; });define('example', ['example1', 'example2'], function(yo, yoyo) {var test = true;});define('blah', ['example2'], function(yoooo, comon) { return false; });",
 					cleanedCode = amdclean.clean({ code: AMDcode, aggressiveOptimizations: true, escodegen: { format: { compact: true } }}),
-					standardJavaScript = "var example1,example2,example,blah;example1=function (){var count=0;return'firstModule';}();example2=function (){var count=0;return'secondModule';}();example=function (yo,yoyo){var test=true;}(example1,example2);blah=function (yoooo,comon){return false;}(example2);";
+					standardJavaScript = "var example1,example2,example,blah;example1=function (){var count=0;return'firstModule';}();example2=function (){var count=0;return'secondModule';}();example=function (yo,yoyo){var test=true;}(example1,example2);blah=false;";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
 			it('should hoist and remove callback and IIFE parameters that are used more than once', function() {
-				var AMDcode = "define('example1', function() { var count = 0;return 'firstModule'; });define('example2', function() { var count = 0;return 'secondModule'; });define('example', ['example1', 'example2'], function(yo, yoyo) {var test = true;});define('blah', ['example1', 'example2'], function(yo, yoooo, comon) { return false; });",
+				var AMDcode = "define('example1', function() { var count = 0;return 'firstModule'; });define('example2', function() { var count = 0;return 'secondModule'; });define('example', ['example1', 'example2'], function(yo, yoyo) {var test = true;});define('blah', ['example1', 'example2'], function(yo, yoooo, comon) { var test; return false; });",
 					cleanedCode = amdclean.clean({ code: AMDcode, aggressiveOptimizations: true, escodegen: { format: { compact: true } }}),
-					standardJavaScript = "var example1,example2,example,blah,yo;example1=yo=function (){var count=0;return'firstModule';}();example2=function (){var count=0;return'secondModule';}();example=function (yoyo){var test=true;}(example2);blah=function (yoooo,comon){return false;}(example2);";
+					standardJavaScript = "var example1,example2,example,blah,yo;example1=yo=function (){var count=0;return'firstModule';}();example2=function (){var count=0;return'secondModule';}();example=function (yoyo){var test=true;}(example2);blah=function (yoooo,comon){var test;return false;}(example2);";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
@@ -283,14 +283,6 @@ describe('amdclean specs', function() {
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
 
-				it('should not optimize define() methods that have one or more dependencies', function() {
-					var AMDcode = "define('example', ['exampleDependency'], function () { return function ( thing ) { var anotherThing = true; return !isNaN( parseFloat( thing ) ) && isFinite( thing );};});",
-						cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }}),
-						standardJavaScript = "var example;example=function (){return function(thing){var anotherThing=true;return!isNaN(parseFloat(thing))&&isFinite(thing);};}(exampleDependency);";
-
-					expect(cleanedCode).toBe(standardJavaScript);
-				});
-
 				it('should optimize basic define() methods that return a literal value', function() {
 					var AMDcode = "define('example', [], function() { return 'Convert AMD code to standard JavaScript';});",
 						cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }}),
@@ -307,10 +299,10 @@ describe('amdclean specs', function() {
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
 
-				it('should not optimize basic define() methods that return a literal value that have one or more dependencies', function() {
+				it('should optimize basic define() methods that return a literal value that have one or more dependencies', function() {
 					var AMDcode = "define('example', ['someDependency'], function() { return 'Convert AMD code to standard JavaScript';});",
 						cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }}),
-						standardJavaScript = "var example;example=function (){return'Convert AMD code to standard JavaScript';}(someDependency);";
+						standardJavaScript = "var example;example='Convert AMD code to standard JavaScript';";
 
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
