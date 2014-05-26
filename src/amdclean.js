@@ -729,7 +729,7 @@
                                 });
 
                                 // If a callback parameter is not the exact name of a stored module and there is a dependency that matches the current callback parameter
-                                if(options.aggressiveOptimizations === true && !publicAPI.storedModules[currentName] && dependencyNames[iterator]) {
+                                if(aggressiveOptimizations === true && !publicAPI.storedModules[currentName] && dependencyNames[iterator]) {
                                     // If the current dependency has not been stored
                                     if(!publicAPI.callbackParameterMap[dependencyNames[iterator].name]) {
                                         publicAPI.callbackParameterMap[dependencyNames[iterator].name] = [
@@ -758,9 +758,10 @@
                         originalCallbackFuncParams = deps;
                         // Only return callback function parameters that do not directly match the name of existing stored modules
                         return _.filter(deps || [], function(currentParam) {
-                            return !publicAPI.storedModules[currentParam.name];
+                            return aggressiveOptimizations === true ? !publicAPI.storedModules[currentParam.name] : true;
                         });
                     }(),
+                    isCommonJS = !hasReturnStatement && hasExportsParam,
                     dependencyNameLength,
                     callbackFuncParamsLength;
 
@@ -770,18 +771,20 @@
                         currentDepName = currentDep.name;
                     // If the matching callback parameter matches the name of a stored module, then do not return it
                     // Else if the matching callback parameter does not match the name of a stored module, return the dependency
-                    return !mappedCallbackParameter ||  publicAPI.storedModules[mappedCallbackParameter.name] && mappedCallbackParameter.name === currentDepName ? !publicAPI.storedModules[currentDepName] : !publicAPI.storedModules[mappedCallbackParameter.name];
+                    return aggressiveOptimizations === true ? (!mappedCallbackParameter ||  publicAPI.storedModules[mappedCallbackParameter.name] && mappedCallbackParameter.name === currentDepName ? !publicAPI.storedModules[currentDepName] : !publicAPI.storedModules[mappedCallbackParameter.name]) : true;
                 });
 
                 dependencyNameLength = dependencyNames.length;
                 callbackFuncParamsLength = callbackFuncParams.length;
 
                 // If the module dependencies passed into the current module are greater than the used callback function parameters, do not pass the dependencies
-                if(dependencyNameLength && dependencyNameLength > callbackFuncParamsLength) {
+                // Only do this logic if it is a CommonJS module or the aggressiveOptimizations option is set to true
+                if((isCommonJS || aggressiveOptimizations === true) && dependencyNameLength && dependencyNameLength > callbackFuncParamsLength) {
                     dependencyNames.splice((dependencyNameLength - callbackFuncParamsLength), callbackFuncParamsLength);
                 }
 
-                if(!hasReturnStatement && hasExportsParam) {
+                // If it is a CommonJS module, make sure to return the exports object
+                if(isCommonJS) {
                     callbackFunc.body.body.push({
                         'type': 'ReturnStatement',
                         'argument': {

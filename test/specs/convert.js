@@ -45,38 +45,6 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
-			it('should correctly remove callback and IIFE parameters that directly match stored module names', function() {
-				var AMDcode = "define('example1', function() {});define('example2', function() {});define('example', ['example1', 'example2'], function(example1, example2) {var test = true;});",
-					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }}),
-					standardJavaScript = "var example1,example2,example;example1=undefined;example2=undefined;example=function (){var test=true;}();";
-
-				expect(cleanedCode).toBe(standardJavaScript);
-			});
-
-			it('should correctly preserve callback and IIFE parameters that do not directly match stored module names', function() {
-				var AMDcode = "define('example1', function() {});define('example2', function() {});define('example', ['example1', 'example2'], function(example3, example2) {var test = true;});",
-					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }}),
-					standardJavaScript = "var example1,example2,example;example1=undefined;example2=undefined;example=function (example3){var test=true;}(example1);";
-
-				expect(cleanedCode).toBe(standardJavaScript);
-			});
-
-			it('should correctly preserve callback and IIFE parameters that do not directly match stored module names 2', function() {
-				var AMDcode = "define('example1', function() {});define('example2', function() {});define('example', ['example1', 'example2'], function() {var test = true;});",
-					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }}),
-					standardJavaScript = "var example1,example2,example;example1=undefined;example2=undefined;example=function (){var test=true;}();";
-
-				expect(cleanedCode).toBe(standardJavaScript);
-			});
-
-			it('should handle extra parameters', function() {
-				var AMDcode = "define('example1', function() {});define('example2', ['example1'], function(example1, test) {var test = true;});",
-					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }}),
-					standardJavaScript = "var example1,example2;example1=undefined;example2=function (test){var test=true;}();";
-
-				expect(cleanedCode).toBe(standardJavaScript);
-			});
-
 			it('should not hoist and remove callback and IIFE parameters that are only used once', function() {
 				var AMDcode = "define('example1', function() { var count = 0;return 'firstModule'; });define('example2', function() { var count = 0;return 'secondModule'; });define('example', ['example1', 'example2'], function(yo, yoyo) {var test = true;});define('blah', ['example2'], function(yoooo, comon) { return false; });",
 					cleanedCode = amdclean.clean({ code: AMDcode, aggressiveOptimizations: true, escodegen: { format: { compact: true } }}),
@@ -403,6 +371,40 @@ describe('amdclean specs', function() {
 						standardJavaScript = "var example=anotherModule;";
 
 					expect(cleanedCode).toBe(standardJavaScript);
+				});
+
+				describe('aggressiveOptimizations option', function() {
+					it('should correctly remove callback and IIFE parameters that directly match stored module names', function() {
+						var AMDcode = "define('example1', function() {});define('example2', function() {});define('example', ['example1', 'example2'], function(example1, example2) {var test = true;});",
+							cleanedCode = amdclean.clean({ code: AMDcode, aggressiveOptimizations: true, escodegen: { format: { compact: true } }}),
+							standardJavaScript = "var example1,example2,example;example1=undefined;example2=undefined;example=function (){var test=true;}();";
+
+						expect(cleanedCode).toBe(standardJavaScript);
+					});
+
+					it('should correctly preserve callback and IIFE parameters that do not directly match stored module names', function() {
+						var AMDcode = "define('example1', function() {});define('example2', function() {});define('example', ['example1', 'example2'], function(example3, example2) {var test = true;});",
+							cleanedCode = amdclean.clean({ code: AMDcode, aggressiveOptimizations: true, escodegen: { format: { compact: true } }}),
+							standardJavaScript = "var example1,example2,example;example1=undefined;example2=undefined;example=function (example3){var test=true;}(example1);";
+
+						expect(cleanedCode).toBe(standardJavaScript);
+					});
+
+					it('should correctly preserve callback and IIFE parameters that do not directly match stored module names 2', function() {
+						var AMDcode = "define('example1', function() {});define('example2', function() {});define('example', ['example1', 'example2'], function() {var test = true;});",
+							cleanedCode = amdclean.clean({ code: AMDcode, aggressiveOptimizations: true, escodegen: { format: { compact: true } }}),
+							standardJavaScript = "var example1,example2,example;example1=undefined;example2=undefined;example=function (){var test=true;}();";
+
+						expect(cleanedCode).toBe(standardJavaScript);
+					});
+
+					it('should handle extra parameters', function() {
+						var AMDcode = "define('example1', function() {});define('example2', ['example1'], function(example1, test) {var test = true;});",
+							cleanedCode = amdclean.clean({ code: AMDcode, aggressiveOptimizations: true, escodegen: { format: { compact: true } }}),
+							standardJavaScript = "var example1,example2;example1=undefined;example2=function (test){var test=true;}();";
+
+						expect(cleanedCode).toBe(standardJavaScript);
+					});
 				});
 
 			});
