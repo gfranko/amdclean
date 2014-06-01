@@ -33,7 +33,8 @@
     "gulp-jshint": "~1.3.2",
     "gulp-jasmine": "~0.1.1",
     "gulp-rename": "~0.2.1",
-    "jasmine-only": "~0.1.0"
+    "jasmine-only": "~0.1.0",
+    "requirejs": "~2.1.11"
   },
   "engine": {
     "node": ">= 0.8"

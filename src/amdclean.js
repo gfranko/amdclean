@@ -158,11 +158,11 @@
             },
             // storedModules
             // -------------
-            // An object that will store all of the user module names
+            //  An object that will store all of the user module names
             'storedModules': {},
             // callbackParameterMap
             // --------------------
-            // An object that will store all of the user module callback parameters (that are used and also do not match the exact name of the dependencies they are representing) and the dependencies that they map to
+            //  An object that will store all of the user module callback parameters (that are used and also do not match the exact name of the dependencies they are representing) and the dependencies that they map to
             'callbackParameterMap': {},
             // dependencyBlacklist
             // -------------------
@@ -219,6 +219,23 @@
                     expression.type === 'CallExpression' &&
                     callee.type === 'Identifier' &&
                     callee.name === 'require');
+            },
+            // isModuleExports
+            // ---------------
+            //  Is a module.exports member expression
+            'isModuleExports': function(node) {
+                if(!node) {
+                    return false;
+                }
+                return (node.type === 'AssignmentExpression' &&
+                    node.left &&
+                    node.left.type === 'MemberExpression' &&
+                    node.left.object &&
+                    node.left.object.type === 'Identifier' &&
+                    node.left.object.name === 'module' &&
+                    node.left.property &&
+                    node.left.property.type === 'Identifier' &&
+                    node.left.property.name === 'exports');
             },
             // isRequireExpression
             // -------------------
@@ -529,7 +546,7 @@
                     }()),
                     dependencyNames = obj.dependencyNames,
                     options = publicAPI.options,
-                    cb = (function() {
+                    cb = function() {
                         if(callbackFunc.type === 'Literal' || (callbackFunc.type === 'Identifier' && callbackFunc.name === 'undefined') || isOptimized === true) {
                             return callbackFunc;
                         } else {
@@ -557,7 +574,7 @@
                                 'loc': (callbackFunc.loc || publicAPI.defaultLOC)
                             };
                         }
-                    }()),
+                    }(),
                     updatedNode = {
                         'type': 'ExpressionStatement',
                         'expression': {
@@ -636,20 +653,8 @@
                     depLength = dependencies.length,
                     options = publicAPI.options,
                     aggressiveOptimizations = options.aggressiveOptimizations,
-                    dependencyNames = function() {
-                        var deps = [],
-                            currentName;
-                        _.each(dependencies, function(currentDependency, iterator) {
-                            currentName = publicAPI.normalizeModuleName(publicAPI.normalizeDependencyName(moduleId, currentDependency), moduleId);
-                            deps.push({
-                                'type': 'Identifier',
-                                'name': currentName,
-                                'range': publicAPI.defaultRange,
-                                'loc': publicAPI.defaultLOC
-                            });
-                        });
-                        return deps;
-                    }(),
+                    exportsExpressions = [],
+                    moduleExportsExpressions = [],
                     callbackFunc = function() {
                         var callbackFunc = obj.moduleReturnValue,
                             body,
@@ -658,13 +663,39 @@
                             returnStatementArg;
                         // If the module callback function is not empty
                         if(callbackFunc && callbackFunc.type === 'FunctionExpression' && callbackFunc.body && _.isArray(callbackFunc.body.body) && callbackFunc.body.body.length) {
+
                             // Filter 'use strict' statements
                             body = _.filter(callbackFunc.body.body, function(node) {
                                 if(publicAPI.options.removeUseStricts === true) return !publicAPI.isUseStrict(node.expression);
                                 else return node;
                             });
+
                             // Returns an array of all return statements
-                            returnStatements = _.where(body, { 'type': 'ReturnStatement' });
+                            returnStatements = _.where(body, {
+                                'type': 'ReturnStatement'
+                            });
+
+                            exportsExpressions = _.where(body, {
+                                'left': {
+                                    'type': 'Identifier',
+                                    'name': 'exports'
+                                }
+                            });
+
+                            moduleExportsExpressions = _.where(body, {
+                                'left': {
+                                    'type': 'MemberExpression',
+                                    'object': {
+                                        'type': 'Identifier',
+                                        'name': 'module'
+                                    },
+                                    'property': {
+                                        'type': 'Identifier',
+                                        'name': 'exports'
+                                    }
+                                }
+                            });
+
                             // If there is a return statement
                             if(returnStatements.length) {
                                 firstReturnStatement = returnStatements[0];
@@ -704,21 +735,104 @@
                         }
                         return false;
                     }(),
-                    hasExportsParam = false,
                     originalCallbackFuncParams,
+                    hasExportsParam = function() {
+                        var cbParams = callbackFunc.params || [];
+                        return _.where(cbParams, {
+                            'name': 'exports'
+                        }).length;
+                    }(),
+                    findNewParamName = function findNewParamName(name) {
+                        name = '_' + name + '_';
+                        var containsLocalVariable = function() {
+                            var containsVariable = false;
+                            estraverse.traverse(callbackFunc, {
+                                'enter': function(node, parent) {
+                                    if(node.type === 'VariableDeclarator' &&
+                                        node.id &&
+                                        node.id.type === 'Identifier' &&
+                                        node.id.name === name) {
+                                        containsVariable = true;
+                                    }
+                                }
+                            });
+                            return containsVariable;
+                        }();
+                        // If there is not a local variable declaration with the passed name, return the name and surround it with underscores
+                        // Else if there is already a local variable declaration with the passed name, recursively add more underscores surrounding it
+                        if(!containsLocalVariable) {
+                            return name;
+                        } else {
+                            return findNewParamName(name);
+                        }
+                    },
+                    matchingRequireExpressionNames = function() {
+                        var matchingNames = [];
+                        if(hasExportsParam) {
+                            estraverse.traverse(callbackFunc, {
+                                'enter': function(node, parent) {
+                                    var variableName,
+                                        expressionName;
+
+                                    if(node.type === 'VariableDeclarator' && publicAPI.isRequireExpression(node.init)) {
+                                        // If both variable name and expression names are there
+                                        if(node.id && node.id.name && node.init && node.init['arguments'] && node.init['arguments'][0] && node.init['arguments'][0].value) {
+                                            variableName = node.id.name;
+                                            expressionName = publicAPI.normalizeModuleName(node.init['arguments'][0].value);
+                                        
+                                            if(variableName === expressionName) {
+                                                matchingNames.push({
+                                                    'originalName': expressionName,
+                                                    'newName': findNewParamName(expressionName)
+                                                });
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                        return matchingNames;
+                    }(),
+                    matchingRequireExpressionParams = function() {
+                        var params = [];
+
+                        _.each(matchingRequireExpressionNames, function(currentParam) {
+                            params.push({
+                                'type': 'Identifier',
+                                'name': currentParam.newName ? currentParam.newName : currentParam,
+                                'range': publicAPI.defaultRange,
+                                'loc': publicAPI.defaultLOC
+                            });
+                        });
+
+                        return params;
+                    }(),
+                    dependencyNames = function() {
+                        var deps = [],
+                            currentName;
+
+                        _.each(dependencies, function(currentDependency, iterator) {
+                            currentName = publicAPI.normalizeModuleName(publicAPI.normalizeDependencyName(moduleId, currentDependency), moduleId);
+                            deps.push({
+                                'type': 'Identifier',
+                                'name': currentName,
+                                'range': publicAPI.defaultRange,
+                                'loc': publicAPI.defaultLOC
+                            });
+                        });
+                        return deps;
+                    }(),
                     callbackFuncParams = function() {
                         var deps = [],
                             currentName,
-                            cbParams = callbackFunc.params || dependencyNames || [],
+                            cbParams = _.union((callbackFunc.params || dependencyNames || []), matchingRequireExpressionParams),
                             mappedParameter = {};
+
                         _.each(cbParams, function(currentParam, iterator) {
                             if(currentParam) {
                                 currentName = currentParam.name;
                             } else {
                                 currentName = dependencyNames[iterator].name;
-                            }
-                            if(currentName === 'exports') {
-                                hasExportsParam = true;
                             }
                             if(currentName !== '{}' && publicAPI.dependencyBlacklist[currentName] !== 'remove') {
                                 deps.push({
@@ -755,13 +869,16 @@
                                 }
                             }
                         });
+
                         originalCallbackFuncParams = deps;
+
                         // Only return callback function parameters that do not directly match the name of existing stored modules
                         return _.filter(deps || [], function(currentParam) {
                             return aggressiveOptimizations === true ? !publicAPI.storedModules[currentParam.name] : true;
                         });
                     }(),
                     isCommonJS = !hasReturnStatement && hasExportsParam,
+                    hasExportsAssignment = exportsExpressions.length || moduleExportsExpressions.length,
                     dependencyNameLength,
                     callbackFuncParamsLength;
 
@@ -769,6 +886,7 @@
                 dependencyNames = _.filter(dependencyNames || [], function(currentDep, iterator) {
                     var mappedCallbackParameter = originalCallbackFuncParams[iterator],
                         currentDepName = currentDep.name;
+
                     // If the matching callback parameter matches the name of a stored module, then do not return it
                     // Else if the matching callback parameter does not match the name of a stored module, return the dependency
                     return aggressiveOptimizations === true ? (!mappedCallbackParameter ||  publicAPI.storedModules[mappedCallbackParameter.name] && mappedCallbackParameter.name === currentDepName ? !publicAPI.storedModules[currentDepName] : !publicAPI.storedModules[mappedCallbackParameter.name]) : true;
@@ -783,8 +901,8 @@
                     dependencyNames.splice((dependencyNameLength - callbackFuncParamsLength), callbackFuncParamsLength);
                 }
 
-                // If it is a CommonJS module, make sure to return the exports object
-                if(isCommonJS) {
+                // If it is a CommonJS module and there is an exports assignment, make sure to return the exports object
+                if(isCommonJS && hasExportsAssignment) {
                     callbackFunc.body.body.push({
                         'type': 'ReturnStatement',
                         'argument': {
@@ -797,6 +915,35 @@
                         'loc': publicAPI.defaultLOC
                     });
                 }
+
+                // Makes sure to update all the local variable require expressions to any updated names
+                estraverse.replace(callbackFunc, {
+                    'enter': function(node, parent) {
+                        var normalizedModuleName,
+                            newName;
+
+                        if(publicAPI.isRequireExpression(node)) {
+                            if(node['arguments'] && node['arguments'][0] && node['arguments'][0].value) {
+                                normalizedModuleName = publicAPI.normalizeModuleName(node['arguments'][0].value);
+                                if(_.where(matchingRequireExpressionNames, {
+                                    'originalName': normalizedModuleName
+                                }).length) {
+                                    newName = _.where(matchingRequireExpressionNames, {
+                                    'originalName': normalizedModuleName
+                                    })[0].newName;
+                                }
+                                return {
+                                    'type': 'Identifier',
+                                    'name': newName ? newName : normalizedModuleName,
+                                    'range': publicAPI.defaultRange,
+                                    'loc': publicAPI.defaultLOC
+                                };
+                            } else {
+                                return node;
+                            }
+                        }
+                    }
+                });
 
                 if(isDefine) {
                     return publicAPI.convertToIIFEDeclaration({
@@ -885,7 +1032,7 @@
                         } else {
                             deps = [];
                         }
-                        if(Array.isArray(deps) && deps.length) {
+                        if(_.isArray(deps) && deps.length) {
                             _.each(deps, function(currentDependency) {
                                 if(publicAPI.dependencyBlacklist[currentDependency.value] !== 'remove') {
                                     if(publicAPI.dependencyBlacklist[currentDependency.value]) {
@@ -975,21 +1122,22 @@
                                 'type': 'Identifier'
                             }
                         }).length) {
-                        // Adds the logical expression, 'exports = exports || {}', to the beginning of the function expression
-                        node.body.body.unshift({
-                            'type': 'ExpressionStatement',
-                            'expression': {
-                                'type': 'AssignmentExpression',
-                                'operator': '=',
-                                'left': {
-                                    'type': 'Identifier',
-                                    'name': 'exports',
-                                    'range': publicAPI.defaultRange,
-                                    'loc': publicAPI.defaultLOC
-                                },
-                                'right': {
-                                    'type': 'LogicalExpression',
-                                    'operator': '||',
+
+                        if(parent && parent.arguments)
+                        var parentHasFunctionExpressionArgument = function() {
+                            if(parent && _.isArray(parent.arguments)) {
+                                return _.where(parent.arguments, { 'type': 'FunctionExpression' }).length;
+                            }
+                            return false;
+                        }();
+
+                        if(parentHasFunctionExpressionArgument) {
+                            // Adds the logical expression, 'exports = exports || {}', to the beginning of the function expression
+                            node.body.body.unshift({
+                                'type': 'ExpressionStatement',
+                                'expression': {
+                                    'type': 'AssignmentExpression',
+                                    'operator': '=',
                                     'left': {
                                         'type': 'Identifier',
                                         'name': 'exports',
@@ -997,8 +1145,20 @@
                                         'loc': publicAPI.defaultLOC
                                     },
                                     'right': {
-                                        'type': 'ObjectExpression',
-                                        'properties': [],
+                                        'type': 'LogicalExpression',
+                                        'operator': '||',
+                                        'left': {
+                                            'type': 'Identifier',
+                                            'name': 'exports',
+                                            'range': publicAPI.defaultRange,
+                                            'loc': publicAPI.defaultLOC
+                                        },
+                                        'right': {
+                                            'type': 'ObjectExpression',
+                                            'properties': [],
+                                            'range': publicAPI.defaultRange,
+                                            'loc': publicAPI.defaultLOC
+                                        },
                                         'range': publicAPI.defaultRange,
                                         'loc': publicAPI.defaultLOC
                                     },
@@ -1007,10 +1167,9 @@
                                 },
                                 'range': publicAPI.defaultRange,
                                 'loc': publicAPI.defaultLOC
-                            },
-                            'range': publicAPI.defaultRange,
-                            'loc': publicAPI.defaultLOC
-                        });
+                            });
+                        }
+
                         // Adds the return statement, 'return exports', to the end of the function expression 
                         node.body.body.push({
                             'type': 'ReturnStatement',
@@ -1055,7 +1214,8 @@
                 }
                 estraverse.traverse(ast, {
                     'enter': function(node, parent) {
-                        var moduleName = publicAPI.getNormalizedModuleName(node, parent);
+                        var moduleName = publicAPI.getNormalizedModuleName(node, parent)
+
                         // If the current module has not been stored, store it
                         if(moduleName && !publicAPI.storedModules[moduleName]) {
                             publicAPI.storedModules[moduleName] = true;
@@ -1136,10 +1296,13 @@
                 } else {
                     throw new Error(publicAPI.errorMsgs.invalidObject('clean'));
                 }
+
                 // Creates and stores an AST representation of the code
                 originalAst = publicAPI.createAst(code);
+
                 // Loops through the AST, finds all module ids, and stores them inside of publicAPI.storedModules
                 publicAPI.findAndStoreAllModuleIds(originalAst);
+
                 // Traverse the AST and removes any AMD trace
                 ast = publicAPI.traverseAndUpdateAst({
                     ast: originalAst
@@ -1181,6 +1344,16 @@
                                 } else {
                                     return node;
                                 }
+                            } else if(publicAPI.isModuleExports(node)) {
+                                return {
+                                    'type': 'AssignmentExpression',
+                                    'operator': '=',
+                                    'left': {
+                                        'type': 'Identifier',
+                                        'name': 'exports'
+                                    },
+                                    'right': node.right
+                                };
                             } else if(options.aggressiveOptimizations === true && node.type === 'AssignmentExpression' && assignmentName) {
                                 // The names of all of the current callback function parameters
                                 mappedCbParameterNames = _.map((cb && cb.callee && cb.callee.params ? cb.callee.params : []), function(currentParam) {

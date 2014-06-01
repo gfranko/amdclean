@@ -1,6 +1,8 @@
 require('jasmine-only');
 describe('amdclean specs', function() {
-	var amdclean = module.require('../../src/amdclean');
+	var amdclean = module.require('../../src/amdclean'),
+		requirejs = module.require('requirejs'),
+		fs = module.require('fs');
 
 	// Don't need the IIFE wrapping for the Jasmine tests
 	amdclean.defaultOptions.wrap.start = '';
@@ -141,22 +143,6 @@ describe('amdclean specs', function() {
 				var AMDcode = "define('exampleModule', ['example1', 'example2'], function(one, two) {});define('exampleModule2', function() {})",
 					cleanedCode = amdclean.clean({ code: AMDcode, removeModules: ['exampleModule'], escodegen: { format: { compact: true } }}),
 					standardJavaScript = "var exampleModule,exampleModule2;exampleModule2=undefined;";
-
-				expect(cleanedCode).toBe(standardJavaScript);
-			});
-
-			it('should support the simplified CJS wrapper', function() {
-				var AMDcode = "define('foo', ['require', 'exports', './bar'], function(require, exports, bar){exports.bar = require('./bar');});",
-					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }}),
-					standardJavaScript = "var foo;foo=function (exports,bar){exports.bar=bar;return exports;}({},bar);";
-
-				expect(cleanedCode).toBe(standardJavaScript);
-			});
-
-			it('should support the plain simplified CJS wrapper', function() {
-				var AMDcode = "define('foo',['require','exports','module','bar'],function(require, exports){exports.bar = require('bar');});",
-					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }}),
-					standardJavaScript = "var foo;foo=function (exports){exports.bar=bar;return exports;}({});";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
@@ -331,22 +317,6 @@ describe('amdclean specs', function() {
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
 
-				it('should convert CommonJS require() calls and use the character prefix', function() {
-					var AMDcode = "var example = require('bb_customs');",
-						cleanedCode = amdclean.clean({ prefixMode: 'camelCase', code: AMDcode, escodegen: { format: { compact: true } }}),
-						standardJavaScript = "var example=bbCustoms;";
-
-					expect(cleanedCode).toBe(standardJavaScript);
-				});
-
-				it('should convert CommonJS require() calls and use the character prefix', function() {
-					var AMDcode = "var example = require('util/anotherModule');",
-						cleanedCode = amdclean.clean({ prefixMode: 'camelCase', code: AMDcode,  escodegen: { format: { compact: true } }}),
-						standardJavaScript = "var example=utilAnotherModule;";
-
-					expect(cleanedCode).toBe(standardJavaScript);
-				});
-
 				it('should correctly transform each module name when using the prefixTransform option', function() {
 					var AMDcode = "var example = require('util/anotherModule');",
 						cleanedCode = amdclean.clean({
@@ -419,7 +389,7 @@ describe('amdclean specs', function() {
 
 		});
 
-		describe('CommonJS Variable Declarations', function() {
+		describe('CommonJS Support', function() {
 
 			it('should convert CommonJS require() calls', function() {
 				var AMDcode = "var example = require('anotherModule');",
@@ -459,6 +429,73 @@ describe('amdclean specs', function() {
 					standardJavaScript = "var example=anotherModule.prop();";
 
 				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should support the simplified CJS wrapper', function() {
+				var AMDcode = "define('foo', ['require', 'exports', './bar'], function(require, exports, bar){exports.bar = require('./bar');});",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }}),
+					standardJavaScript = "var foo;foo=function (exports,bar){exports.bar=bar;return exports;}({},bar);";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should support the plain simplified CJS wrapper', function() {
+				var AMDcode = "define('foo',['require','exports','module','bar'],function(require, exports){exports.bar = require('bar');});",
+					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }}),
+					standardJavaScript = "var foo;foo=function (exports){exports.bar=bar;return exports;}({});";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should convert CommonJS require() calls and use the character prefix', function() {
+				var AMDcode = "var example = require('bb_customs');",
+					cleanedCode = amdclean.clean({ prefixMode: 'camelCase', code: AMDcode, escodegen: { format: { compact: true } }}),
+					standardJavaScript = "var example=bbCustoms;";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should convert CommonJS require() calls and use the character prefix', function() {
+				var AMDcode = "var example = require('util/anotherModule');",
+					cleanedCode = amdclean.clean({ prefixMode: 'camelCase', code: AMDcode,  escodegen: { format: { compact: true } }}),
+					standardJavaScript = "var example=utilAnotherModule;";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should support the Require.js optimizer cjsTranslate option that converts CommonJS modules to AMD modules', function() {
+				var cleanedCode,
+					onModuleBundleCompleted,
+					standardJavaScript = "var commonjs3,commonjs2,commonjs4,commonjs1;commonjs3=function (exports){exports.exampleFunc=function(){var test=true;return test;};return exports;}({});commonjs2=function (exports){exports={'exampleBool':true,'exampleFunc':commonjs3.exampleFunc};return exports;}({});commonjs4=function (exports){exports.test='this is a test';return exports;}({});commonjs1=function (exports,__commonjs2__,_commonjs4_){var commonjs2=__commonjs2__;var _commonjs2_='blah';var commonjs4=_commonjs4_;commonjs2.exampleFunc();return exports;}({},commonjs2,commonjs4);";
+
+				requirejs.optimize({
+					'baseUrl': './test/',
+					'include': ['commonjs1'],
+					'out': './test/commonjsoutput.js',
+					'cjsTranslate': true,
+					'optimize': 'none',
+					'onModuleBundleComplete': function (data) {
+						var outputFile = data.path;
+						cleanedCode = amdclean.clean({
+							'code': fs.readFileSync(outputFile),
+							'escodegen': {
+								format: {
+									compact: true
+								}
+							}
+						});
+						fs.writeFileSync(outputFile, cleanedCode);
+						onModuleBundleCompleted = true;
+					}
+				});
+
+				waitsFor(function() {
+				  return onModuleBundleCompleted === true;
+				}, "the onModuleBundleComplete hook to complete", 5000);
+
+				runs(function() {
+					expect(cleanedCode).toBe(standardJavaScript);
+				});
 			});
 
 		});
@@ -580,7 +617,7 @@ describe('amdclean specs', function() {
 					"return Backbone.Validation;" +
 					"}));",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }}),
-					standardJavaScript = "var backbonevalidation;(function(factory){if(typeof exports==='object'){module.exports=factory(backbone,underscore);}else if(true){backbonevalidation=function (backbone,underscore){return factory(backbone,underscore);}(backbone,underscore);}}(function(Backbone,_){//= backbone-validation.js\nreturn Backbone.Validation;}));";
+					standardJavaScript = "var backbonevalidation;(function(factory){if(typeof exports==='object'){exports=factory(backbone,underscore);}else if(true){backbonevalidation=function (backbone,underscore){return factory(backbone,underscore);}(backbone,underscore);}}(function(Backbone,_){//= backbone-validation.js\nreturn Backbone.Validation;}));";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
