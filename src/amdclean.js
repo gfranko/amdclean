@@ -742,20 +742,42 @@
                             'name': 'exports'
                         }).length;
                     }(),
+                    normalizeDependencyNames = {},
+                    dependencyNames = function() {
+                        var deps = [],
+                            currentName;
+
+                        _.each(dependencies, function(currentDependency, iterator) {
+                            currentName = publicAPI.normalizeModuleName(publicAPI.normalizeDependencyName(moduleId, currentDependency), moduleId);
+                            normalizeDependencyNames[currentName] = true;
+                            deps.push({
+                                'type': 'Identifier',
+                                'name': currentName,
+                                'range': publicAPI.defaultRange,
+                                'loc': publicAPI.defaultLOC
+                            });
+                        });
+                        return deps;
+                    }(),
+                    // Makes sure the new name is not an existing callback function dependency and/or existing local variable
                     findNewParamName = function findNewParamName(name) {
                         name = '_' + name + '_';
                         var containsLocalVariable = function() {
                             var containsVariable = false;
-                            estraverse.traverse(callbackFunc, {
-                                'enter': function(node, parent) {
-                                    if(node.type === 'VariableDeclarator' &&
-                                        node.id &&
-                                        node.id.type === 'Identifier' &&
-                                        node.id.name === name) {
-                                        containsVariable = true;
+                            if(normalizeDependencyNames[name]) {
+                                containsVariable = true;
+                            } else {
+                                estraverse.traverse(callbackFunc, {
+                                    'enter': function(node, parent) {
+                                        if(node.type === 'VariableDeclarator' &&
+                                            node.id &&
+                                            node.id.type === 'Identifier' &&
+                                            node.id.name === name) {
+                                            containsVariable = true;
+                                        }
                                     }
-                                }
-                            });
+                                });
+                            }
                             return containsVariable;
                         }();
                         // If there is not a local variable declaration with the passed name, return the name and surround it with underscores
@@ -806,21 +828,6 @@
                         });
 
                         return params;
-                    }(),
-                    dependencyNames = function() {
-                        var deps = [],
-                            currentName;
-
-                        _.each(dependencies, function(currentDependency, iterator) {
-                            currentName = publicAPI.normalizeModuleName(publicAPI.normalizeDependencyName(moduleId, currentDependency), moduleId);
-                            deps.push({
-                                'type': 'Identifier',
-                                'name': currentName,
-                                'range': publicAPI.defaultRange,
-                                'loc': publicAPI.defaultLOC
-                            });
-                        });
-                        return deps;
                     }(),
                     callbackFuncParams = function() {
                         var deps = [],
