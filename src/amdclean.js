@@ -405,34 +405,32 @@
                             callee = modReturnValue.callee;
                             params = callee.params;
                             if(params && params.length && _.isArray(params) && _.where(params, { 'name': 'global' })) {
-                                if(_.isObject(callee.body)) {
-                                    if(_.isArray(callee.body.body)) {
-                                        returnStatement = _.where(callee.body.body, { 'type': 'ReturnStatement' })[0];
-                                        if(_.isObject(returnStatement) && _.isObject(returnStatement.argument) && returnStatement.argument.type === 'FunctionExpression') {
-                                            internalFunctionExpression = returnStatement.argument;
-                                            if(_.isObject(internalFunctionExpression.body) && _.isArray(internalFunctionExpression.body.body)) {
-                                                nestedReturnStatement = _.where(internalFunctionExpression.body.body, { 'type': 'ReturnStatement' })[0];
-                                                if(_.isObject(nestedReturnStatement.argument) && _.isObject(nestedReturnStatement.argument.right) && _.isObject(nestedReturnStatement.argument.right.property)) {
-                                                    if(nestedReturnStatement.argument.right.property.name) {
-                                                        modReturnValue = {
-                                                            'type': 'MemberExpression',
-                                                            'computed': false,
-                                                            'object': {
-                                                                'type': 'Identifier',
-                                                                'name': 'window',
-                                                                'range': publicAPI.defaultRange,
-                                                                'loc': publicAPI.defaultLOC
-                                                            },
-                                                            'property': {
-                                                                'type': 'Identifier',
-                                                                'name': nestedReturnStatement.argument.right.property.name,
-                                                                'range': publicAPI.defaultRange,
-                                                                'loc': publicAPI.defaultLOC
-                                                            },
+                                if(_.isObject(callee.body) && _.isArray(callee.body.body)) {
+                                    returnStatement = _.where(callee.body.body, { 'type': 'ReturnStatement' })[0];
+                                    if(_.isObject(returnStatement) && _.isObject(returnStatement.argument) && returnStatement.argument.type === 'FunctionExpression') {
+                                        internalFunctionExpression = returnStatement.argument;
+                                        if(_.isObject(internalFunctionExpression.body) && _.isArray(internalFunctionExpression.body.body)) {
+                                            nestedReturnStatement = _.where(internalFunctionExpression.body.body, { 'type': 'ReturnStatement' })[0];
+                                            if(_.isObject(nestedReturnStatement.argument) && _.isObject(nestedReturnStatement.argument.right) && _.isObject(nestedReturnStatement.argument.right.property)) {
+                                                if(nestedReturnStatement.argument.right.property.name) {
+                                                    modReturnValue = {
+                                                        'type': 'MemberExpression',
+                                                        'computed': false,
+                                                        'object': {
+                                                            'type': 'Identifier',
+                                                            'name': 'window',
                                                             'range': publicAPI.defaultRange,
                                                             'loc': publicAPI.defaultLOC
-                                                        };
-                                                    }
+                                                        },
+                                                        'property': {
+                                                            'type': 'Identifier',
+                                                            'name': nestedReturnStatement.argument.right.property.name,
+                                                            'range': publicAPI.defaultRange,
+                                                            'loc': publicAPI.defaultLOC
+                                                        },
+                                                        'range': publicAPI.defaultRange,
+                                                        'loc': publicAPI.defaultLOC
+                                                    };
                                                 }
                                             }
                                         }
@@ -518,14 +516,51 @@
                                     'body': [{
                                         'type': 'ReturnStatement',
                                         'argument': {
-                                            'type': 'CallExpression',
-                                            'callee': {
+                                            'type': 'ConditionalExpression',
+                                            'test': {
+                                                'type': 'BinaryExpression',
+                                                'operator': '===',
+                                                'left': {
+                                                    'type': 'UnaryExpression',
+                                                    'operator': 'typeof',
+                                                    'argument': {
+                                                        'type': 'Identifier',
+                                                        'name': cbFunc.name,
+                                                        'range': (cbFunc.range || publicAPI.defaultRange),
+                                                        'loc': (cbFunc.loc || publicAPI.defaultLOC)
+                                                    },
+                                                    'prefix': true,
+                                                    'range': (cbFunc.range || publicAPI.defaultRange),
+                                                    'loc': (cbFunc.loc || publicAPI.defaultLOC)
+                                                },
+                                                'right': {
+                                                    'type': 'Literal',
+                                                    'value': 'function',
+                                                    'raw': "'function'",
+                                                    'range': (cbFunc.range || publicAPI.defaultRange),
+                                                    'loc': (cbFunc.loc || publicAPI.defaultLOC)
+                                                },
+                                                'range': (cbFunc.range || publicAPI.defaultRange),
+                                                'loc': (cbFunc.loc || publicAPI.defaultLOC)
+                                            },
+                                            'consequent': {
+                                                'type': 'CallExpression',
+                                                'callee': {
+                                                    'type': 'Identifier',
+                                                    'name': cbFunc.name,
+                                                    'range': (cbFunc.range || publicAPI.defaultRange),
+                                                    'loc': (cbFunc.loc || publicAPI.defaultLOC)
+                                                },
+                                                'arguments': callbackFuncParams,
+                                                'range': (cbFunc.range || publicAPI.defaultRange),
+                                                'loc': (cbFunc.loc || publicAPI.defaultLOC)
+                                            },
+                                            'alternate': {
                                                 'type': 'Identifier',
                                                 'name': cbFunc.name,
                                                 'range': (cbFunc.range || publicAPI.defaultRange),
                                                 'loc': (cbFunc.loc || publicAPI.defaultLOC)
                                             },
-                                            'arguments': callbackFuncParams,
                                             'range': (cbFunc.range || publicAPI.defaultRange),
                                             'loc': (cbFunc.loc || publicAPI.defaultLOC)
                                         },
@@ -903,9 +938,8 @@
                 callbackFuncParamsLength = callbackFuncParams.length;
 
                 // If the module dependencies passed into the current module are greater than the used callback function parameters, do not pass the dependencies
-                // Only do this logic if it is a CommonJS module or the aggressiveOptimizations option is set to true
-                if((isCommonJS || aggressiveOptimizations === true) && dependencyNameLength && dependencyNameLength > callbackFuncParamsLength) {
-                    dependencyNames.splice((dependencyNameLength - callbackFuncParamsLength), callbackFuncParamsLength);
+                if(dependencyNameLength && dependencyNameLength > callbackFuncParamsLength) {
+                    dependencyNames.splice((dependencyNameLength - (callbackFuncParamsLength || 1)), callbackFuncParamsLength || 1);
                 }
 
                 // If it is a CommonJS module and there is an exports assignment, make sure to return the exports object
