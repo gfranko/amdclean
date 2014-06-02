@@ -179,14 +179,6 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
-			it('should correctly convert amd check if statements to if(true){}', function() {
-				var AMDcode = "if(typeof define == 'function') { var test = true; }",
-					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }}),
-					standardJavaScript = "if(true){var test=true;}";
-
-				expect(cleanedCode).toBe(standardJavaScript);
-			});
-
 			it('should not remove comments from the source code', function() {
 				var AMDcode = "//Test comment\n define('example', [], function() {});",
 					cleanedCode = amdclean.clean({ code: AMDcode, escodegen: { format: { compact: true } }}),
@@ -203,10 +195,18 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
-			it('should not automatically convert conditional AMD checks if the transformAMDChecks option is set to false', function() {
-				var AMDcode = "if(typeof define === 'function') {}",
+			it('should not automatically convert conditional AMD checks, and the associated named AMD module, if the transformAMDChecks option is set to false', function() {
+				var AMDcode = "if(typeof define === 'function') { define('example', [], function() {}); }",
 					cleanedCode = amdclean.clean({ code: AMDcode, transformAMDChecks: false, escodegen: { format: { compact: true } }}),
-					standardJavaScript = "if(typeof define==='function'){}";
+					standardJavaScript = "if(typeof define==='function'){define('example',[],function(){});}";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should not automatically convert conditional AMD checks, and the associated anonymous AMD module, if the transformAMDChecks option is set to false', function() {
+				var AMDcode = "if(typeof define === 'function') { define([], function() {}); }",
+					cleanedCode = amdclean.clean({ code: AMDcode, transformAMDChecks: false, escodegen: { format: { compact: true } }}),
+					standardJavaScript = "if(typeof define==='function'){define([],function(){});}";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});

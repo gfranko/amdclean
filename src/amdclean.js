@@ -164,6 +164,10 @@
             // --------------------
             //  An object that will store all of the user module callback parameters (that are used and also do not match the exact name of the dependencies they are representing) and the dependencies that they map to
             'callbackParameterMap': {},
+            // conditionalModulesToIgnore
+            // --------------------------
+            //  An object that will store any modules that should be ignored (not cleaned)
+            'conditionalModulesToIgnore': {},
             // dependencyBlacklist
             // -------------------
             //  Variable names that are not allowed as dependencies to functions
@@ -287,10 +291,10 @@
             //  Returns if the current AST node is an if statement AMD check
             //  e.g. if(typeof define === 'function') {}
             'isAMDConditional': function(node) {
-                if(publicAPI.options.transformAMDChecks !== true || (node && node.type !== 'IfStatement' ||
+                if(node && node.type !== 'IfStatement' ||
                     !_.isObject(node.test) ||
                     !_.isObject(node.test.left) ||
-                    _.isNull(node.test.left.value))) {
+                    _.isNull(node.test.left.value)) {
                     return false;
                 }
                 var matchObject = {
@@ -1033,7 +1037,10 @@
                     callbackFuncArg = false,
                     type = '',
                     options = publicAPI.options,
-                    shouldBeIgnored;
+                    shouldBeIgnored,
+                    moduleToBeIgnored,
+                    parentHasFunctionExpressionArgument;
+
                 if(node.type === 'Program') {
                     comments = (function() {
                         var arr = [];
@@ -1053,15 +1060,36 @@
                 }
                 startLineNumber = isDefine || isRequire ? node.expression.loc.start.line : node && node.loc && node.loc.start ? node.loc.start.line : null;
                 shouldBeIgnored = (publicAPI.commentLineNumbers[startLineNumber] || publicAPI.commentLineNumbers['' + (parseInt(startLineNumber, 10) - 1)]);
-                if(!shouldBeIgnored && publicAPI.isAMDConditional(node)) {
-                    node.test = {
-                        'type': 'Literal',
-                        'value': true,
-                        'raw': 'true',
-                        'range': publicAPI.defaultRange,
-                        'loc': publicAPI.defaultLOC
-                    };
-                    return node;
+                
+                // If it is an AMD conditional statement
+                // e.g. if(typeof define === 'function') {}
+                if(publicAPI.isAMDConditional(node)) {
+                    // If the AMD conditional statement should be transformed and not ignored
+                    if(!shouldBeIgnored && publicAPI.options.transformAMDChecks === true) {
+                        // Transform the AMD conditional statement
+                        // e.g. if(typeof define === 'function') {} -> if(true) {}
+                        node.test = {
+                            'type': 'Literal',
+                            'value': true,
+                            'raw': 'true',
+                            'range': publicAPI.defaultRange,
+                            'loc': publicAPI.defaultLOC
+                        };
+                        return node;
+                    }
+
+                    // If the AMD conditional statement should not be transformed
+                    if(publicAPI.options.transformAMDChecks === false) {
+                        // Add the module name to the ignore list
+                        if(node.consequent && _.isArray(node.consequent.body) && node.consequent.body.length) {
+                            moduleToBeIgnored = node.consequent.body[0];
+                            if(moduleToBeIgnored.expression && moduleToBeIgnored.expression.arguments && moduleToBeIgnored.expression.arguments.length) {
+                                if(moduleToBeIgnored.expression.arguments[0] && moduleToBeIgnored.expression.arguments[0].value) {
+                                    publicAPI.conditionalModulesToIgnore[moduleToBeIgnored.expression.arguments[0].value] = true;
+                                }
+                            }
+                        }
+                    }
                 }
                 if(isDefine || isRequire) {
                     args = Array.prototype.slice.call(node.expression['arguments'], 0);
@@ -1101,7 +1129,7 @@
                             isRequire: isRequire
                     };
                     if(isDefine) {
-                        if(shouldBeIgnored) {
+                        if(shouldBeIgnored || !moduleName || publicAPI.conditionalModulesToIgnore[moduleName] === true) {
                             publicAPI.options.ignoreModules.push(moduleName);
                             return node;
                         }
@@ -1165,7 +1193,7 @@
                         }).length) {
 
                         if(parent && parent.arguments)
-                        var parentHasFunctionExpressionArgument = function() {
+                        parentHasFunctionExpressionArgument = function() {
                             if(parent && _.isArray(parent.arguments)) {
                                 return _.where(parent.arguments, { 'type': 'FunctionExpression' }).length;
                             }
@@ -1255,7 +1283,7 @@
                 }
                 estraverse.traverse(ast, {
                     'enter': function(node, parent) {
-                        var moduleName = publicAPI.getNormalizedModuleName(node, parent)
+                        var moduleName = publicAPI.getNormalizedModuleName(node, parent);
 
                         // If the current module has not been stored, store it
                         if(moduleName && !publicAPI.storedModules[moduleName]) {
@@ -1560,6 +1588,8 @@
 
                 // Resets all of the stored callback parameter/dependency mappings
                 publicAPI.callbackParameterMap = {};
+
+                publicAPI.conditionalModulesToIgnore = {};
 
                 // Converts the updated AST to a string of code
                 generatedCode = publicAPI.generateCode(ast, options);
