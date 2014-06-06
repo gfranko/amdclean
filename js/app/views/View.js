@@ -9,7 +9,7 @@ define(['jquery',
     'codemirror_closebrackets',
     'codemirror_matchbrackets'],
 
-    function($, Backbone, _, amdclean, esprima) {
+    function($, Backbone, _/*, amdclean, esprima*/) {
 
         var View = Backbone.View.extend({
 

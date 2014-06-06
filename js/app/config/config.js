@@ -53,7 +53,6 @@ require.config({
         'exports': 'Backbone'
 
       },
-      'amdclean': ['underscore', 'esprima', 'estraverse'],
       // CodeMirror Plugins
       'codemirror_javascript': ['codemirror'],
       'codemirror_closebrackets': ['codemirror'],

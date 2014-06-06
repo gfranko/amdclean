@@ -4,11 +4,8 @@ module.exports = function(grunt) {
     amdclean_logic = function (data) {
       var outputFile = data.path;
       fs.writeFileSync(outputFile, amdclean.clean({
-        'code': fs.readFileSync(outputFile),
-        'wrap': {
-          'start': '(function() {',
-          'end': '}());'
-        }
+        'filePath': outputFile,
+        'globalObject': true
       }));
     };
   grunt.initConfig({
@@ -20,7 +17,7 @@ module.exports = function(grunt) {
           paths: {
             'mobile': 'init/MobileInit'
           },
-          wrap: true,
+          wrap: false,
           optimize: 'none',
           mainConfigFile: './js/app/config/config.js',
           useStrict: true,
@@ -42,7 +39,7 @@ module.exports = function(grunt) {
           paths: {
             'desktop': 'init/DesktopInit'
           },
-          wrap: true,
+          wrap: false,
           optimize: 'none',
           mainConfigFile: './js/app/config/config.js',
           useStrict: true,
