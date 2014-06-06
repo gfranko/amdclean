@@ -17,6 +17,8 @@ A build tool that converts AMD code to standard JavaScript.
 
 ## Used By
 
+* [AMDclean](https://github.com/gfranko/amdclean) - A build tool that converts AMD code to standard JavaScript
+
 * [Backbone-Require-Boilerplate](https://github.com/BoilerplateMVC/Backbone-Require-Boilerplate) - A Rad Backbone.js and Require.js Boilerplate Project
 
 * [Ractive.js](http://www.ractivejs.org/) - Next-generation DOM manipulation
@@ -30,9 +32,9 @@ A build tool that converts AMD code to standard JavaScript.
 
 ## Why
 
-Many developers like to use the AMD API to write modular JavaScript, but do not want to include a full AMD loader (e.g. [require.js](https://github.com/jrburke/requirejs)), or AMD shim (e.g. [almond.js](https://github.com/jrburke/almond)) because of file size/source code readability concerns.
+Many developers like to use the AMD and/or CommonJS (CJS) module APIs to write modular JavaScript, but do not want to include a full AMD or CJS loader (e.g. [require.js](https://github.com/jrburke/requirejs)), or shim (e.g. [almond.js](https://github.com/jrburke/almond), [browserify](http://browserify.org/)) because of file size/source code readability concerns.
 
-By incorporating AMDclean.js into the build process, there is no need for Require or Almond.
+By incorporating AMDclean.js into the build process, you no longer need to include Require.js or use Browserify.
 
 Since AMDclean rewrites your source code into standard JavaScript, it is a great
 fit for JavaScript library/web app authors who want a tiny download in one file after using the
@@ -62,7 +64,9 @@ It is best used for libraries or apps that use AMD or CommonJS (using the [cjsTr
 
 * [Shimmed modules](http://requirejs.org/docs/api.html#config-shim)
 
-* [Simplified CJS wrapper](https://github.com/jrburke/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#wiki-cjs) (The [cjsTranslate](https://github.com/jrburke/r.js/blob/master/build/example.build.js#L574) option can be used to support CommonJS modules)
+* [Simplified CJS wrapper](https://github.com/jrburke/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#wiki-cjs)
+
+- full-fledged CommonJS files using the [cjsTranslate](https://github.com/jrburke/r.js/blob/master/build/example.build.js#L574) Require.js option.
 
 * Exporting global modules to the global `window` object
 
@@ -92,30 +96,18 @@ There are a few different ways that AMDclean can be used including:
 
 * `npm install amdclean --save-dev`
 
-* Make sure that each of your AMD modules have a module ID `path` alias name (this is not required, but a good idea)
-
-```javascript
-paths: {
-
-  'first': '../modules/firstModule',
-
-  'second': '../modules/secondModule',
-
-  'third': '../modules/thirdModule'
-
-}
-```
-
 * Add an `onModuleBundleComplete` config property to your RequireJS build configuration file instead.  Like this:
 
 ```javascript
 onModuleBundleComplete: function (data) {
   var fs = module.require('fs'),
     amdclean = module.require('amdclean'),
-    outputFile = data.path;
-  fs.writeFileSync(outputFile, amdclean.clean({
-    'filePath': outputFile
-  }));
+    outputFile = data.path,
+    cleanedCode = amdclean.clean({
+      'filePath': outputFile
+    });
+
+  fs.writeFileSync(outputFile, cleanedCode);
 }
 ```
 
@@ -153,6 +145,37 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-requirejs');
   grunt.registerTask('build', ['requirejs:js']);
   grunt.registerTask('default', ['build']);
+};
+```
+
+* If you are using the RequireJS node module with [Gulp](http://gulpjs.com/), then it is very easy to integrate amdclean using the `onModuleBundleComplete` config option. Here is an example Gulp task that includes the RequireJS optimizer node module with AMDclean support:
+
+```javascript
+gulp.task('build', function() {
+  requirejs.optimize({
+    'findNestedDependencies': true,
+    'baseUrl': './src/',
+    'optimize': 'none',
+    'include': ['first'],
+    'out': './build/example.js',
+    'onModuleBundleComplete': function(data) {
+      var outputFile = data.path,
+        cleanedCode = amdclean.clean({
+          'filePath': outputFile
+        });
+
+      if(error) {
+        console.log('Looks like there was an error building, stopping the build... ' + cleanedCode);
+        return;
+      }
+      fs.writeFileSync(outputFile, fullCode);
+    }
+  }, function() {
+    console.log('Your Require.js optimizer build was successful');
+  }, function(err) {
+    console.log('Looks like there was an error building, stopping the build... ', err);
+  });
+});
 };
 ```
 
@@ -534,8 +557,10 @@ amdclean.clean({
   // If it is used with the onBuildWrite RequireJS Optimizer build hook, each
   // module will get wrapped
   'wrap': {
-    'start': '',
-    'end': ''
+    // This string is prepended to the file
+    'start': ';(function() {\n',
+    // This string is appended to the file
+    'end': '\n}());'
   }
 })
 ```
@@ -551,7 +576,7 @@ Please send all PR's to the `dev` branch.
 
 If your PR is a code change:
 
-1.  Update `amdclean.js` inside of the `src` directory.
+1.  Update the appropriate module inside of the `src/modules` directory.
 2.  Add a Jasmine unit test to `convert.js` inside of the `test/specs` folder
 3.  Install all node.js dev dependencies: `npm install`
 4.  Install gulp.js globally: `sudo npm install gulp -g`
@@ -559,12 +584,37 @@ If your PR is a code change:
 6.  Verify that the minified output file has been updated in `build/amdclean.min.js`
 7.  Send the PR!
 
-**Note:** There is a gulp `watch` set up called, `amdclean-watch`, that will automatically lint, minify, and run all the AMDclean unit tests when `src/amdclean.js` is changed.  Feel free to use it.
+**Note:** There is a gulp `watch` set up called, `amdclean-watch`, that will automatically lint, minify, unit test, and build AMDclean whenever a module inside of the `src/modules` directory is changed.  I recommend using it.
 
 
 ## FAQ
 
-__Why would I use AMDclean instead of Almond.js?__
+__Why should I use AMDclean instead of Browserify?__
+
+ - This is a loaded question. Here is a short list of pros/cons when using each library:
+
+ **Browserify Pros**
+
+  * Uses the node.js style `node_modules` file lookup algorithm, which allows you to `npm install` an npm module and automatically use it
+
+ **Browserify Cons**
+
+  * Requires a development build step
+  * Does not support AMD modules out of the box
+  * Adds boilerplate code to files (increasing file size and decreasing code readability)
+
+  **AMDclean Pros**
+
+  * Does not require a build step in development when used with Require.js
+  * Supports both AMD and CommonJS modules when used the Require.js optimizer
+  * Does not add boilerplate code to files and uses advanced file optimizations to decrease file size and increase code readability
+
+ **AMDclean Cons**
+
+  * Does not use the node.js style `node_modules` file lookup algorithm, which means that you can not automatically use `npm` to install modules without having to set up configuration first
+
+
+__Why should I use AMDclean instead of Almond.js?__
 
  - Although Almond is very small (~1k gzipped and minified), most JavaScript library authors do not want to have to include it in their library's source code.  AMDclean allows you to use AMD without increasing your library's file size. AMDclean also implements multiple different optimization algorithms to make your source code even smaller.
 
@@ -583,14 +633,27 @@ onModuleBundleComplete: function (data) {
   }));
 }
  ```
+
+ __Does AMDclean use AMDclean to build itself?__
+
+  - Yes, it does!  With the `2.1.0` release, AMDclean was refactored into AMD modules and builds itself to create a library that can be used in node.js or the browser (AMD environment and web environment).
+
  
 __Is AMDclean only for libraries, or can I use it for my web app?__
 
  - You can use it for both!  The [0.6.0](https://github.com/gfranko/amdclean/releases/tag/0.6.0) release provided support for web apps.
 
+ - By default, AMDclean is set up for use within a web app.  If you are developing a JavaScript library with AMDclean, here are the things you should be aware of:
+
+  * Make sure to set the `transformAMDChecks` option to `false` if you don't want your conditional UMD (Universal Module Definition) pattern affected.
+
+  * If your JavaScript library depends on one or external libraries (libraries that will not be included in your library's source code), then you need to do a little hackery and make sure to hoist the local variables, that will hold the external library values, using the AMDclean `wrap` option.  For more details, take a look at how AMDclean itself handles this situation, or create a Github issue
+
+
 __My comments seem to be getting removed when I use AMDclean.  What am I doing wrong?__
 
  - Before the `1.4.0` release, this was the default behavior.  If you update to `1.4.0` or later, you should see your comments still there after the cleaning process.  Also, if you would like your comments to be removed, then you can set the `comment` **escodegen** option to `false`.
+
 
 __What if I don't want all define() and require() method calls to be removed?__
 
@@ -613,13 +676,16 @@ define('example', [], function() {});
 
 If you want to use different text than `amdclean`, you can customize the comment name by using the `commentCleanName` option.
 
+
 __Why are define() method placeholder functions inserted into my source?__
 
 - This is the default behavior of r.js when a module(s) is not wrapped in a define() method.  Luckily,  this behavior can be overridden by setting the `skipModuleInsertion` option to `true` in your build configuration.
 
+
 __How would I expose one or more modules as a global window property?__
 
 - You can use the `globalModules` option to list all of the modules that you would like to expose as a `window` property
+
 
 __I replaced Almond.js with AMDclean and my file is bigger.  Why Is This?__
 
@@ -629,17 +695,20 @@ __I replaced Almond.js with AMDclean and my file is bigger.  Why Is This?__
 
   * You are using an old version of AMDclean (`0.6.0` or earlier).  The latest versions of AMDclean do an amazing job of optimizing modules.
 
+
 __I am building a JavaScript library and want to provide conditional AMD support, but AMDclean seems to be wiping away my if statement.  How do I fix this?__
 
 - You have two options:
 
-  1.  Set the `transformAMDChecks` to `false`
+  1.  Set the `transformAMDChecks` option to `false`
 
   2.  Make sure that you have a comment (that matches your AMDclean `commentCleanName` option) one line above your conditional AMD if statement
+
 
 __I don't like the way AMDclean normalizes the names of my modules with underscores.  Can I change this?__
 
 - You sure can.  You can either use the `prefixMode` and change it to camelCase, or you can override all of the logic with your own logic by using the `prefixTransform` option hook.
+
 
 __I can't seem to get AMDclean 2.0 to work.  What gives?__
 

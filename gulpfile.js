@@ -6,6 +6,7 @@ var gulp = require('gulp'),
   jshint = require('gulp-jshint'),
   jasmine = require('gulp-jasmine'),
   rename = require('gulp-rename'),
+  insert = require('gulp-insert'),
   requirejs = require('requirejs'),
   fs = require('fs'),
   amdclean = require('./build/amdclean'),
@@ -57,6 +58,8 @@ gulp.task('build', function() {
               'ignoreModules': ['esprima', 'estraverse', 'escodegen', 'lodash', 'fs'],
               'removeUseStricts': false,
               'wrap': {
+                // All of the third party dependencies are hoisted here
+                // It's a hack, but it's not too painful
                 'start': ';(function() {\nvar esprima, estraverse, escodegen, _;\n',
                 'end': '}());'
               }
@@ -100,6 +103,7 @@ gulp.task('minify', function() {
   gulp.src(['src/amdclean.js'])
     .pipe(gulp.dest('build/'))
     .pipe(uglify())
+    .pipe(insert.prepend(headerText + licenseText))
     .pipe(rename('amdclean.min.js'))
     .pipe(gulp.dest('build/'));
 });
