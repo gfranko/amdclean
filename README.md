@@ -134,6 +134,7 @@ module.exports = function(grunt) {
             var fs = require('fs'),
               amdclean = require('amdclean'),
               outputFile = data.path;
+
             fs.writeFileSync(outputFile, amdclean.clean({
               'filePath': outputFile
             }));
@@ -152,6 +153,8 @@ module.exports = function(grunt) {
 
 ```javascript
 gulp.task('build', function() {
+  var requirejs = require('requirejs');
+
   requirejs.optimize({
     'findNestedDependencies': true,
     'baseUrl': './src/',
@@ -159,16 +162,13 @@ gulp.task('build', function() {
     'include': ['first'],
     'out': './build/example.js',
     'onModuleBundleComplete': function(data) {
-      var outputFile = data.path,
-        cleanedCode = amdclean.clean({
-          'filePath': outputFile
-        });
+      var fs = require('fs'),
+        amdclean = require('amdclean'),
+        outputFile = data.path;
 
-      if(error) {
-        console.log('Looks like there was an error building, stopping the build... ' + cleanedCode);
-        return;
-      }
-      fs.writeFileSync(outputFile, fullCode);
+      fs.writeFileSync(outputFile, amdclean.clean({
+        'filePath': outputFile
+      }));
     }
   });
 });
