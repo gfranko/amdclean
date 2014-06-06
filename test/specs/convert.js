@@ -631,9 +631,9 @@ describe('amdclean specs', function() {
 			it('should correctly convert libraries that use factory function parameters', function() {
 				var AMDcode = "(function (factory) {" +
 					"if (typeof exports === 'object') {" +
-					"module.exports = factory(require('backbone'), require('underscore'));" +
+						"module.exports = factory(require('backbone'), require('underscore'));" +
 					"} else if (typeof define === 'function' && define.amd) {" +
-					"define('backbonevalidation', ['backbone', 'underscore'], factory);" +
+						"define('backbonevalidation', ['backbone', 'underscore'], factory);" +
 					"}" +
 					"}(function (Backbone, _) {" +
 					"//= backbone-validation.js\n" +

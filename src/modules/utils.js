@@ -136,10 +136,14 @@ define([
 		        }
 		    };
 
-		    return (_.where(node.test, matchObject).length ||
-		        _.where([node.test], matchObject).length ||
-		        _.where(node.test.left, matchObject).length ||
-		        _.where([node.test.left], matchObject).length);
+		    try {
+			    return (_.where(node.test, matchObject).length ||
+			        _.where([node.test], matchObject).length ||
+			        _.where(node.test.left, matchObject).length ||
+			        _.where([node.test.left], matchObject).length);
+		    } catch(e) {
+		    	return false;
+		    }
 		},
 
 		// returnExpressionIdentifier
