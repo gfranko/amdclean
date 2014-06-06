@@ -45,7 +45,10 @@ gulp.task('build', function() {
     'findNestedDependencies': false,
     'baseUrl': './src/modules/',
     'optimize': 'none',
-    'include': ['index'],
+    'paths': {
+      'amdclean': 'index'
+    },
+    'include': ['amdclean'],
     'out': './src/amdclean.js',
     'onModuleBundleComplete': function(data) {
       var outputFile = data.path,
@@ -60,9 +63,10 @@ gulp.task('build', function() {
               'wrap': {
                 // All of the third party dependencies are hoisted here
                 // It's a hack, but it's not too painful
-                'start': ';(function() {\nvar esprima, estraverse, escodegen, _;\n',
-                'end': '}());'
-              }
+                'start': ';(function(esprima, estraverse, escodegen, _) {\n',
+                'end': '}(typeof esprima !== "undefined" ? esprima: null, typeof estraverse !== "undefined" ? estraverse: null, typeof escodegen !== "undefined" ? escodegen: null, typeof _ !== "undefined" ? _ : null));'
+              },
+              'createAnonymousAMDModule': true
             });
           } catch(e) {
             error = true;

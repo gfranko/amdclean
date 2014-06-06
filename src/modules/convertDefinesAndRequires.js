@@ -66,21 +66,22 @@ define([
 
             // If the AMD conditional statement should not be transformed
             if(options.transformAMDChecks === false) {
-
-                // Add the module name to the ignore list
-                if(node.consequent && _.isArray(node.consequent.body) && node.consequent.body.length) {
-
-                    moduleToBeIgnored = node.consequent.body[0];
-
-                    if(moduleToBeIgnored.expression && moduleToBeIgnored.expression.arguments && moduleToBeIgnored.expression.arguments.length) {
-
-                        if(moduleToBeIgnored.expression.arguments[0] && moduleToBeIgnored.expression.arguments[0].value) {
-                            amdclean.conditionalModulesToIgnore[moduleToBeIgnored.expression.arguments[0].value] = true;
+                estraverse.traverse(node, {
+                    'enter': function(node) {
+                        if(utils.isDefine(node)) {
+                            if(node.expression && node.expression.arguments && node.expression.arguments.length) {
+                                // Add the module name to the ignore list
+                                if(node.expression.arguments[0].type === 'Literal' && node.expression.arguments[0].value) {
+                                    amdclean.conditionalModulesToIgnore[node.expression.arguments[0].value] = true;
+                                    if(options.createAnonymousAMDModule === true) {
+                                        amdclean.storedModules[node.expression.arguments[0].value] = false;
+                                        node.expression.arguments.shift();
+                                    }
+                                }   
+                            }
                         }
-
                     }
-                }
-
+                });
             }
         }
 

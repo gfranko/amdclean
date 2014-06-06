@@ -26,12 +26,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
 
-;(function() {
-var esprima, estraverse, escodegen, _;
+;(function(esprima, estraverse, escodegen, _) {
 // defaultOptions.js
 // =================
 // AMDclean default options
-var defaultOptions, errorMsgs, defaultValues, utils, convertToIIFE, convertToIIFEDeclaration, normalizeModuleName, convertToFunctionExpression, convertToObjectDeclaration, createAst, convertDefinesAndRequires, traverseAndUpdateAst, getNormalizedModuleName, findAndStoreAllModuleIds, generateCode, clean, index;
+var defaultOptions, errorMsgs, defaultValues, utils, convertToIIFE, convertToIIFEDeclaration, normalizeModuleName, convertToFunctionExpression, convertToObjectDeclaration, createAst, convertDefinesAndRequires, traverseAndUpdateAst, getNormalizedModuleName, findAndStoreAllModuleIds, generateCode, clean;
 defaultOptions = {
     'code': '',
     'filePath': '',
@@ -52,6 +51,7 @@ defaultOptions = {
     'removeAllRequires': false,
     'removeUseStricts': true,
     'transformAMDChecks': true,
+    'createAnonymousAMDModule': false,
     'shimOverrides': {},
     'prefixMode': 'standard',
     'prefixTransform': function (moduleName) {
@@ -802,15 +802,22 @@ convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
         }
         // If the AMD conditional statement should not be transformed
         if (options.transformAMDChecks === false) {
-            // Add the module name to the ignore list
-            if (node.consequent && _.isArray(node.consequent.body) && node.consequent.body.length) {
-                moduleToBeIgnored = node.consequent.body[0];
-                if (moduleToBeIgnored.expression && moduleToBeIgnored.expression.arguments && moduleToBeIgnored.expression.arguments.length) {
-                    if (moduleToBeIgnored.expression.arguments[0] && moduleToBeIgnored.expression.arguments[0].value) {
-                        amdclean.conditionalModulesToIgnore[moduleToBeIgnored.expression.arguments[0].value] = true;
+            estraverse.traverse(node, {
+                'enter': function (node) {
+                    if (utils.isDefine(node)) {
+                        if (node.expression && node.expression.arguments && node.expression.arguments.length) {
+                            // Add the module name to the ignore list
+                            if (node.expression.arguments[0].type === 'Literal' && node.expression.arguments[0].value) {
+                                amdclean.conditionalModulesToIgnore[node.expression.arguments[0].value] = true;
+                                if (options.createAnonymousAMDModule === true) {
+                                    amdclean.storedModules[node.expression.arguments[0].value] = false;
+                                    node.expression.arguments.shift();
+                                }
+                            }
+                        }
                     }
                 }
-            }
+            });
         }
     }
     if (isDefine || isRequire) {
@@ -1292,12 +1299,19 @@ clean = function clean() {
                 factory.env = 'web';
             }
             factory.amd = true;
-            index = factory({
-                'esprima': esprima,
-                'estraverse': estraverse,
-                'escodegen': escodegen,
-                'underscore': underscore
-            }, root);
+            define([
+                'esprima',
+                'estraverse',
+                'escodegen',
+                'underscore'
+            ], function (esprima, estraverse, escodegen, underscore) {
+                return factory({
+                    'esprima': esprima,
+                    'estraverse': estraverse,
+                    'escodegen': escodegen,
+                    'underscore': underscore
+                }, root);
+            });
         } else if (typeof exports !== 'undefined') {
             factory.env = 'node';
             module.exports = factory(null, root);
@@ -1406,4 +1420,4 @@ clean = function clean() {
         }();
         return publicAPI;
     }));
-}());}());
+}());}(typeof esprima !== "undefined" ? esprima: null, typeof estraverse !== "undefined" ? estraverse: null, typeof escodegen !== "undefined" ? escodegen: null, typeof _ !== "undefined" ? _ : null));

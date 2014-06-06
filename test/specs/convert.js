@@ -231,6 +231,15 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
+			it('should create an anonymous AMD module, if the transformAMDChecks option is set to false and the createAnonymousAMDModule option is set to true', function() {
+				var AMDcode = "if(typeof define === 'function') { define('test', [], function() {}); }",
+					options = _.merge(_.cloneDeep(defaultOptions), { 'transformAMDChecks': false, 'createAnonymousAMDModule': true }),
+					cleanedCode = amdclean.clean(AMDcode, options),
+					standardJavaScript = "if(typeof define==='function'){define([],function(){});}";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
 			describe('optimized defines', function() {
 
 				it('should optimize basic define() methods that return a function expression', function() {

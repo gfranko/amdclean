@@ -534,6 +534,10 @@ amdclean.clean({
   // Determines if conditional AMD checks are transformed
   // e.g. if(typeof define == 'function') {} -> if(true) {}
   'transformAMDChecks': true,
+  // Determines if a named or anonymous AMD module will be created inside of your conditional AMD check
+  // Note: This is only applicable to JavaScript libraries, do not change this for web apps
+  // If set to true: e.g. define('example', [], function() {}) -> define([], function() {})
+  'createAnonymousAMDModule': false,
   // Allows you to pass an expression that will override shimmed modules return
   // values e.g. { 'backbone': 'window.Backbone' }
   'shimOverrides': {},
@@ -699,6 +703,10 @@ __I am building a JavaScript library and want to provide conditional AMD support
   1.  Set the `transformAMDChecks` option to `false`
 
   2.  Make sure that you have a comment (that matches your AMDclean `commentCleanName` option) one line above your conditional AMD if statement
+
+__I am building a JavaScript library and want to create a conditional anonymous AMD module, but Require.js and AMDclean seems to always setting a module ID.  How do I fix this?__
+
+- It's easy, just make sure to set the `createAnonymousAMDModule` option to `true`,
 
 
 __I don't like the way AMDclean normalizes the names of my modules with underscores.  Can I change this?__

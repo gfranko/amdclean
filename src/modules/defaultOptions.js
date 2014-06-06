@@ -40,6 +40,10 @@ define({
 	// Determines if conditional AMD checks are transformed
 	// e.g. if(typeof define == 'function') {} -> if(true) {}
 	'transformAMDChecks': true,
+	// Determines if a named or anonymous AMD module will be created inside of your conditional AMD check
+	// Note: This is only applicable to JavaScript libraries, do not change this for web apps
+	// If set to true: e.g. define('example', [], function() {}) -> define([], function() {})
+	'createAnonymousAMDModule': false,
 	// Allows you to pass an expression that will override shimmed modules return values
 	// e.g. { 'backbone': 'window.Backbone' }
 	'shimOverrides': {},
