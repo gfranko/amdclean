@@ -36,7 +36,8 @@ var gulp = require('gulp'),
   }()),
   headerText = '/*! amdclean - v' + packageJson.version + ' - ' + currentDate +
                '\n* http://gregfranko.com/amdclean' +
-               '\n* Copyright (c) ' + currentYear + ' Greg Franko */\n'
+               '\n* Copyright (c) ' + currentYear + ' Greg Franko */\n',
+  error = false;
 
 gulp.task('build', function() {
   requirejs.optimize({
@@ -47,25 +48,38 @@ gulp.task('build', function() {
     'out': './src/amdclean.js',
     'onModuleBundleComplete': function(data) {
       var outputFile = data.path,
-        cleanedCode = amdclean.clean({
-        'filePath': outputFile,
-        'transformAMDChecks': false,
-        'aggressiveOptimizations': true,
-        'ignoreModules': ['esprima', 'estraverse', 'escodegen', 'lodash', 'fs'],
-        'removeUseStricts': false,
-        'wrap': {
-          'start': ';(function() {\nvar esprima, estraverse, escodegen, _;\n',
-          'end': '}());'
-        }
-      }),
+        cleanedCode = (function() {
+          try {
+            return amdclean.clean({
+              'filePath': outputFile,
+              'transformAMDChecks': false,
+              'aggressiveOptimizations': true,
+              'ignoreModules': ['esprima', 'estraverse', 'escodegen', 'lodash', 'fs'],
+              'removeUseStricts': false,
+              'wrap': {
+                'start': ';(function() {\nvar esprima, estraverse, escodegen, _;\n',
+                'end': '}());'
+              }
+            });
+          } catch(e) {
+            error = true;
+            return '' + e;
+          }
+        }()),
         fullCode = headerText + licenseText + cleanedCode;
 
+      if(error) {
+        console.log('Looks like there was an error building, stopping the build... ' + cleanedCode);
+        return;
+      }
       fs.writeFileSync(outputFile, fullCode);
     }
   }, function() {
-    gulp.run('lint', 'test', 'minify');
+    if(!error) {
+      gulp.run('lint', 'test', 'minify');
+    }
   }, function(err) {
-    console.log('there was an error building AMDclean: ', err);
+    console.log('Looks like there was an error building, stopping the build... ', err);
   });
 });
 
@@ -96,7 +110,7 @@ gulp.task('default', function() {
 });
 
 gulp.task('amdclean-watch', function() {
-  gulp.watch('src/amdclean.js', function(event) {
+  gulp.watch('src/modules/*.js', function(event) {
     gulp.run('build');
   });
 });
