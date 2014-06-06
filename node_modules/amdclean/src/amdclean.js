@@ -593,7 +593,7 @@ convertToFunctionExpression = function convertToFunctionExpression(obj) {
                 } else {
                     currentName = dependencyNames[iterator].name;
                 }
-                if (currentName !== '{}' && defaultValues.dependencyBlacklist[currentName] !== 'remove') {
+                if (currentName !== '{}' && (!hasExportsParam || defaultValues.dependencyBlacklist[currentName] !== 'remove')) {
                     deps.push({
                         'type': 'Identifier',
                         'name': currentName,
@@ -640,7 +640,11 @@ convertToFunctionExpression = function convertToFunctionExpression(obj) {
     callbackFuncParamsLength = callbackFuncParams.length;
     // If the module dependencies passed into the current module are greater than the used callback function parameters, do not pass the dependencies
     if (dependencyNameLength && dependencyNameLength > callbackFuncParamsLength) {
-        dependencyNames.splice(dependencyNameLength - (callbackFuncParamsLength || 1), callbackFuncParamsLength || 1);
+        if (dependencyNameLength - callbackFuncParamsLength < 2) {
+            dependencyNames.splice(dependencyNameLength - (callbackFuncParamsLength || 1), callbackFuncParamsLength || 1);
+        } else {
+            dependencyNames.splice(callbackFuncParamsLength || 1, dependencyNameLength - (callbackFuncParamsLength || 1));
+        }
     }
     // If it is a CommonJS module and there is an exports assignment, make sure to return the exports object
     if (isCommonJS && hasExportsAssignment) {
@@ -827,21 +831,24 @@ convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
     if (isDefine || isRequire) {
         args = Array.prototype.slice.call(node.expression['arguments'], 0);
         dependencies = function () {
-            var deps = isRequire ? args[0] : args[args.length - 2], depNames = [];
+            var deps = isRequire ? args[0] : args[args.length - 2], depNames = [], hasExportsParam;
             if (_.isPlainObject(deps)) {
                 deps = deps.elements || [];
             } else {
                 deps = [];
             }
+            hasExportsParam = _.where(deps, { 'value': 'exports' }).length;
             if (_.isArray(deps) && deps.length) {
                 _.each(deps, function (currentDependency) {
                     if (dependencyBlacklist[currentDependency.value] !== 'remove') {
                         if (dependencyBlacklist[currentDependency.value]) {
-                            if (dependencyBlacklist[currentDependency.value] !== 'remove') {
-                                depNames.push('{}');
-                            }
+                            depNames.push('{}');
                         } else {
                             depNames.push(currentDependency.value);
+                        }
+                    } else {
+                        if (!hasExportsParam) {
+                            depNames.push('{}');
                         }
                     }
                 });
