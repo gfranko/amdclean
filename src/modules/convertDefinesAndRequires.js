@@ -90,13 +90,18 @@ define([
 
             dependencies = (function() {
                 var deps = isRequire ? args[0] : args[args.length - 2],
-                    depNames = [];
+                    depNames = [],
+                    hasExportsParam;
 
                 if(_.isPlainObject(deps)) {
                     deps = deps.elements || [];
                 } else {
                     deps = [];
                 }
+
+                hasExportsParam = _.where(deps, {
+                    'value': 'exports'
+                }).length;
 
                 if(_.isArray(deps) && deps.length) {
 
@@ -105,13 +110,13 @@ define([
                         if(dependencyBlacklist[currentDependency.value] !== 'remove') {
 
                             if(dependencyBlacklist[currentDependency.value]) {
-
-                                if(dependencyBlacklist[currentDependency.value] !== 'remove') {
-                                    depNames.push('{}');
-                                }
-
+                                depNames.push('{}');
                             } else {
                                 depNames.push(currentDependency.value);
+                            }
+                        } else {
+                            if(!hasExportsParam) {
+                                depNames.push('{}');
                             }
                         }
                     });

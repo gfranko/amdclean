@@ -234,7 +234,7 @@ define([
                     } else {
                         currentName = dependencyNames[iterator].name;
                     }
-                    if(currentName !== '{}' && defaultValues.dependencyBlacklist[currentName] !== 'remove') {
+                    if(currentName !== '{}' && (!hasExportsParam || defaultValues.dependencyBlacklist[currentName] !== 'remove')) {
                         deps.push({
                             'type': 'Identifier',
                             'name': currentName,
@@ -299,7 +299,11 @@ define([
 
         // If the module dependencies passed into the current module are greater than the used callback function parameters, do not pass the dependencies
         if(dependencyNameLength && dependencyNameLength > callbackFuncParamsLength) {
-            dependencyNames.splice((dependencyNameLength - (callbackFuncParamsLength || 1)), callbackFuncParamsLength || 1);
+            if(dependencyNameLength - callbackFuncParamsLength < 2) {
+                dependencyNames.splice((dependencyNameLength - (callbackFuncParamsLength || 1)), callbackFuncParamsLength || 1);
+            } else {
+                dependencyNames.splice(callbackFuncParamsLength || 1, dependencyNameLength - (callbackFuncParamsLength || 1));
+            }
         }
 
         // If it is a CommonJS module and there is an exports assignment, make sure to return the exports object
