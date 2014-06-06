@@ -12,12 +12,12 @@ A build tool that converts AMD and/or CommonJS code to standard JavaScript.
 
 ## Use Case
 
-**Single file** client-side JavaScript libraries or web apps that want to use AMD or CommonJS modules to structure and build their code, but don't want any additional footprint.
+**Single file** client-side JavaScript libraries or web apps that want to use AMD and/or CommonJS modules to structure and build their code, but don't want any additional footprint.
 
 
 ## Used By
 
-* [AMDclean](https://github.com/gfranko/amdclean) - A build tool that converts AMD code to standard JavaScript
+* [AMDclean](https://github.com/gfranko/amdclean) - A build tool that converts AMD code to standard JavaScript (this is not a typo)
 
 * [Backbone-Require-Boilerplate](https://github.com/BoilerplateMVC/Backbone-Require-Boilerplate) - A Rad Backbone.js and Require.js Boilerplate Project
 
@@ -34,7 +34,7 @@ A build tool that converts AMD and/or CommonJS code to standard JavaScript.
 
 Many developers like to use the AMD and/or CommonJS (CJS) module APIs to write modular JavaScript, but do not want to include a full AMD or CJS loader (e.g. [require.js](https://github.com/jrburke/requirejs)), or shim (e.g. [almond.js](https://github.com/jrburke/almond), [browserify](http://browserify.org/)) because of file size/source code readability concerns.
 
-By incorporating AMDclean.js into the build process, you no longer need to include Require.js or use Browserify.
+By incorporating AMDclean.js into the build process, you no longer need to include Require.js or Almond.js in production, or use Browserify.
 
 Since AMDclean rewrites your source code into standard JavaScript, it is a great
 fit for JavaScript library/web app authors who want a tiny download in one file after using the
@@ -66,7 +66,7 @@ It is best used for libraries or apps that use AMD or CommonJS (using the [cjsTr
 
 * [Simplified CJS wrapper](https://github.com/jrburke/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#wiki-cjs)
 
-- full-fledged CommonJS files using the [cjsTranslate](https://github.com/jrburke/r.js/blob/master/build/example.build.js#L574) Require.js option.
+- full-fledged CommonJS files using the [cjsTranslate](https://github.com/jrburke/r.js/blob/master/build/example.build.js#L584) Require.js option.
 
 * Exporting global modules to the global `window` object
 
@@ -74,7 +74,7 @@ It is best used for libraries or apps that use AMD or CommonJS (using the [cjsTr
 
 Node - `npm install amdclean --save-dev`
 
-Web - [Latest release](https://github.com/gfranko/amdclean/blob/master/src/amdclean.js)
+Web - [Latest release](https://github.com/gfranko/amdclean/blob/master/build/amdclean.js)
 
 
 ## Usage
@@ -87,7 +87,7 @@ There are a few different ways that AMDclean can be used including:
 
 * As a client-side library
 
-**Note:** AMDclean does not have any module ordering logic, so if you do not use the RequireJS optimizer you need to find another solution for resolving module dependencies before your files can be "cleaned".
+**Note:** AMDclean does not have any module ordering logic, so if you do not use the RequireJS optimizer then you need to find another solution for resolving module dependencies before your files can be "cleaned".
 
 
 ###AMDclean with the RequireJS Optimizer
@@ -96,7 +96,7 @@ There are a few different ways that AMDclean can be used including:
 
 * `npm install amdclean --save-dev`
 
-* Add an `onModuleBundleComplete` config property to your RequireJS build configuration file instead.  Like this:
+* Add a `onModuleBundleComplete` config property to your RequireJS build configuration file instead.  Like this:
 
 ```javascript
 onModuleBundleComplete: function (data) {
@@ -113,7 +113,7 @@ onModuleBundleComplete: function (data) {
 
 * Run the optimizer using [Node](http://nodejs.org) (also [works in Java](https://github.com/jrburke/r.js/blob/master/README.md)).  More details can be found in the the [r.js](https://github.com/jrburke/r.js/) repo.
 
-* If you are using the RequireJS optimizer [Grunt task](https://github.com/gruntjs/grunt-contrib-requirejs), then it is very easy to integrate amdclean using the `onModuleBundleComplete` config option. Here is an example Grunt file that includes the RequireJS optimizer plugin with AMDclean support:
+* If you are using the RequireJS optimizer [Grunt task](https://github.com/gruntjs/grunt-contrib-requirejs), then it is very easy to integrate AMDclean using the `onModuleBundleComplete` config option. Here is an example Grunt file that includes the RequireJS optimizer plugin with AMDclean support:
 
 ```javascript
 module.exports = function(grunt) {
@@ -148,7 +148,7 @@ module.exports = function(grunt) {
 };
 ```
 
-* If you are using the RequireJS node module with [Gulp](http://gulpjs.com/), then it is very easy to integrate amdclean using the `onModuleBundleComplete` config option. Here is an example Gulp task that includes the RequireJS optimizer node module with AMDclean support:
+* If you are using the RequireJS node module with [Gulp](http://gulpjs.com/), then it is very easy to integrate AMDclean using the `onModuleBundleComplete` config option. Here is an example Gulp task that includes the RequireJS optimizer node module with AMDclean support:
 
 ```javascript
 gulp.task('build', function() {
@@ -170,13 +170,8 @@ gulp.task('build', function() {
       }
       fs.writeFileSync(outputFile, fullCode);
     }
-  }, function() {
-    console.log('Your Require.js optimizer build was successful');
-  }, function(err) {
-    console.log('Looks like there was an error building, stopping the build... ', err);
   });
 });
-};
 ```
 
 ###AMDclean as a Node Module
@@ -377,7 +372,7 @@ third = {
 
 ###Require Calls
 
-**Note:** `require(['someModule'])` calls are removed from the built source code
+**Note:** `require(['someModule'])` calls, with no callback function, are removed from the built source code
 
 _AMD_
 
@@ -418,7 +413,7 @@ _Standard_
 
 AMDclean uses a few different strategies to decrease file size:
 
-**Remove Unused Dependencies**
+**Remove Unused Dependencies/Parameters**
 
 _AMD_
 
@@ -432,14 +427,14 @@ _Standard_
 
 ```javascript
 // Since no callback parameters were provided in the AMD code,
-// the 'example1' and 'example2' parameters were removed
+// the 'example1' and 'example2' dependencies/parameters were not added
 var example;
 example = function() {
   var test = true;
 }();
 ```
 
-**Remove Exact Matching Dependencies**
+**Remove Exact Matching Dependencies/Parameters**
 
 _AMD_
 
@@ -452,8 +447,8 @@ define('example', ['example1', 'example2'], function(example1, anotherExample) {
 _Standard_
 
 ```javascript
-// Since the `example1` callback function parameter exactly matched,
-// the name of the `example1 dependency, it's parameters were removed
+// Since the `example1` callback function parameter exactly matched
+// the name of the `example1 dependency, it's `example1` dependency/parameter was removed
 var example;
 example = function(anotherExample) {
   var test = true;
@@ -568,7 +563,7 @@ amdclean.clean({
 
 ## Unit Tests
 
-All unit tests are written using the [jasmine-node](https://github.com/mhevery/jasmine-node) library and can be found in the `test/specs/` folder.  You can run the unit tests by typing: `npm test`.
+All unit tests are written using the [jasmine-node](https://github.com/mhevery/jasmine-node) library and can be found in the `test/specs/` folder.  You can run the unit tests by typing: `npm test` or `gulp test`.
 
 ## Contributing
 
@@ -601,12 +596,13 @@ __Why should I use AMDclean instead of Browserify?__
 
   * Requires a development build step
   * Does not support AMD modules out of the box
+  * Does not support dynamic module loading out of the box
   * Adds boilerplate code to files (increasing file size and decreasing code readability)
 
   **AMDclean Pros**
 
   * Does not require a build step in development when used with Require.js
-  * Supports both AMD and CommonJS modules when used the Require.js optimizer
+  * Supports both AMD and CommonJS modules when used with the Require.js optimizer
   * Does not add boilerplate code to files and uses advanced file optimizations to decrease file size and increase code readability
 
  **AMDclean Cons**
@@ -652,12 +648,12 @@ __Is AMDclean only for libraries, or can I use it for my web app?__
 
 __My comments seem to be getting removed when I use AMDclean.  What am I doing wrong?__
 
- - Before the `1.4.0` release, this was the default behavior.  If you update to `1.4.0` or later, you should see your comments still there after the cleaning process.  Also, if you would like your comments to be removed, then you can set the `comment` **escodegen** option to `false`.
+ - Before the `2.1.0` release, this was the default behavior.  If you update to `2.1.0` or later, you should see your comments still there after the cleaning process.  Also, if you would like your comments to be removed, then you can set the `comment` **escodegen** option to `false`.
 
 
 __What if I don't want all define() and require() method calls to be removed?__
 
- - If you don't want one or more define() and require() methods to be removed by `amdclean`, you have a few options.  If the module has a named module id associated with it, then you can add the associated module id to the `ignoreModules` option array.  Like this:
+ - If you don't want one or more define() and require() methods to be removed by AMDclean, you have a few options.  If the module has a named module id associated with it, then you can add the associated module id to the `ignoreModules` option array.  Like this:
 
  ```javascript
 var amdclean = require('amdclean');
