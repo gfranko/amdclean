@@ -1,4 +1,4 @@
-/*! amdclean - v2.1.0 - 2014-06-06
+/*! amdclean - v2.2.0 - 2014-06-13
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko */
 
@@ -30,8 +30,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // defaultOptions.js
 // =================
 // AMDclean default options
-var defaultOptions, errorMsgs, defaultValues, utils, convertToIIFE, convertToIIFEDeclaration, normalizeModuleName, convertToFunctionExpression, convertToObjectDeclaration, createAst, convertDefinesAndRequires, traverseAndUpdateAst, getNormalizedModuleName, findAndStoreAllModuleIds, generateCode, clean;
-defaultOptions = {
+var errorMsgs, defaultValues, utils, convertToIIFE, convertToIIFEDeclaration, normalizeModuleName, convertToFunctionExpression, convertToObjectDeclaration, createAst, convertDefinesAndRequires, traverseAndUpdateAst, getNormalizedModuleName, findAndStoreAllModuleIds, generateCode, clean, _defaultOptions_;
+_defaultOptions_ = {
     'code': '',
     'filePath': '',
     'globalModules': [],
@@ -99,11 +99,11 @@ defaultValues = {
         0
     ]
 };
-// utils.js
+// Utils.js
 // ========
 // Abstract Syntax Tree (AST) and other helper utility methods
 utils = function () {
-    var utils = {
+    var Utils = {
             'isDefine': function (node) {
                 var expression = node.expression || {}, callee = expression.callee;
                 return _.isObject(node) && node.type === 'ExpressionStatement' && expression && expression.type === 'CallExpression' && callee.type === 'Identifier' && callee.name === 'define';
@@ -203,7 +203,7 @@ utils = function () {
                 }
             },
             'normalizeDependencyName': function (moduleId, dep) {
-                if (!moduleId || !dep || !utils.isRelativeFilePath(dep)) {
+                if (!moduleId || !dep || !Utils.isRelativeFilePath(dep)) {
                     return dep;
                 }
                 var normalizePath = function (path) {
@@ -232,7 +232,7 @@ utils = function () {
                 ].join('/'));
             }
         };
-    return utils;
+    return Utils;
 }();
 // convertToIIFE.js
 // ================
@@ -424,6 +424,17 @@ normalizeModuleName = function normalizeModuleName(name, moduleId) {
     }
     preNormalized = utils.prefixReservedWords(name.replace(/\./g, '').replace(/[^A-Za-z0-9_$]/g, '_').replace(/^_+/, ''));
     postNormalized = prefixMode === 'camelCase' ? utils.convertToCamelCase(preNormalized) : preNormalized;
+    if (options.ignoreModules.indexOf(postNormalized) === -1 && amdclean.variablesStore[postNormalized]) {
+        amdclean.storedModules[postNormalized] = false;
+        postNormalized = function findValidName(currentName) {
+            if (amdclean.variablesStore[currentName]) {
+                return findValidName('_' + currentName + '_');
+            } else {
+                return currentName;
+            }
+        }(postNormalized);
+        amdclean.storedModules[postNormalized] = true;
+    }
     if (_.isFunction(prefixTransform)) {
         prefixTransformValue = prefixTransform(postNormalized, moduleId);
         if (_.isString(prefixTransformValue) && prefixTransformValue.length) {
@@ -437,7 +448,7 @@ normalizeModuleName = function normalizeModuleName(name, moduleId) {
 // Returns either an IIFE or variable declaration.
 // Internally calls either convertToIIFE() or convertToIIFEDeclaration()
 convertToFunctionExpression = function convertToFunctionExpression(obj) {
-    var amdclean = this, options = amdclean.options, ignoreModules = options.ignoreModules, node = obj.node, isDefine = obj.isDefine, isRequire = obj.isRequire, isOptimized = false, moduleName = obj.moduleName, moduleId = obj.moduleId, dependencies = obj.dependencies, depLength = dependencies.length, aggressiveOptimizations = options.aggressiveOptimizations, exportsExpressions = [], moduleExportsExpressions = [], defaultRange = defaultValues.defaultRange, defaultLOC = defaultValues.defaultLOC, range = obj.range || defaultRange, loc = obj.loc || defaultLOC, callbackFunc = function () {
+    var amdclean = this, options = amdclean.options, ignoreModules = options.ignoreModules, node = obj.node, isDefine = obj.isDefine, isRequire = obj.isRequire, isOptimized = false, moduleName = obj.moduleName, moduleId = obj.moduleId, dependencies = obj.dependencies, depLength = dependencies.length, aggressiveOptimizations = options.aggressiveOptimizations, exportsExpressions = [], moduleExportsExpressions = [], defaultRange = defaultValues.defaultRange, defaultLOC = defaultValues.defaultLOC, range = obj.range || defaultRange, loc = obj.loc || defaultLOC, shouldOptimize = obj.shouldOptimize, dependencyBlacklist = defaultValues.dependencyBlacklist, hasNonMatchingParameter = false, callbackFunc = function () {
             var callbackFunc = obj.moduleReturnValue, body, returnStatements, firstReturnStatement, returnStatementArg;
             // If the module callback function is not empty
             if (callbackFunc && callbackFunc.type === 'FunctionExpression' && callbackFunc.body && _.isArray(callbackFunc.body.body) && callbackFunc.body.body.length) {
@@ -474,10 +485,20 @@ convertToFunctionExpression = function convertToFunctionExpression(obj) {
                 if (returnStatements.length) {
                     firstReturnStatement = returnStatements[0];
                     returnStatementArg = firstReturnStatement.argument;
+                    hasNonMatchingParameter = function () {
+                        var nonMatchingParameter = false;
+                        _.each(callbackFunc.params, function (currentParam) {
+                            var currentParamName = currentParam.name;
+                            if (!amdclean.storedModules[currentParamName] && !dependencyBlacklist[currentParamName]) {
+                                nonMatchingParameter = true;
+                            }
+                        });
+                        return nonMatchingParameter;
+                    }();
                     // If something other than a function expression is getting returned
                     // and there is more than one AST child node in the factory function
                     // return early
-                    if (!utils.isFunctionExpression(firstReturnStatement) && body.length > 1 || returnStatementArg && returnStatementArg.type === 'Identifier') {
+                    if (hasNonMatchingParameter || !shouldOptimize || !utils.isFunctionExpression(firstReturnStatement) && body.length > 1 || returnStatementArg && returnStatementArg.type === 'Identifier') {
                         return callbackFunc;
                     } else {
                         // Optimize the AMD module by setting the callback function to the return statement argument
@@ -586,14 +607,21 @@ convertToFunctionExpression = function convertToFunctionExpression(obj) {
             });
             return params;
         }(), callbackFuncParams = function () {
-            var deps = [], currentName, cbParams = _.union(callbackFunc.params || dependencyNames || [], matchingRequireExpressionParams), mappedParameter = {};
+            var deps = [], currentName, cbParams = _.union(callbackFunc.params && callbackFunc.params.length ? callbackFunc.params : !shouldOptimize && dependencyNames && dependencyNames.length ? dependencyNames : [], matchingRequireExpressionParams), mappedParameter = {};
             _.each(cbParams, function (currentParam, iterator) {
                 if (currentParam) {
                     currentName = currentParam.name;
                 } else {
                     currentName = dependencyNames[iterator].name;
                 }
-                if (currentName !== '{}' && (!hasExportsParam || defaultValues.dependencyBlacklist[currentName] !== 'remove')) {
+                if (!shouldOptimize && currentName !== '{}') {
+                    deps.push({
+                        'type': 'Identifier',
+                        'name': currentName,
+                        'range': defaultRange,
+                        'loc': defaultLOC
+                    });
+                } else if (currentName !== '{}' && (!hasExportsParam || defaultValues.dependencyBlacklist[currentName] !== 'remove')) {
                     deps.push({
                         'type': 'Identifier',
                         'name': currentName,
@@ -626,7 +654,7 @@ convertToFunctionExpression = function convertToFunctionExpression(obj) {
             originalCallbackFuncParams = deps;
             // Only return callback function parameters that do not directly match the name of existing stored modules
             return _.filter(deps || [], function (currentParam) {
-                return aggressiveOptimizations === true ? !amdclean.storedModules[currentParam.name] : true;
+                return aggressiveOptimizations === true && shouldOptimize ? !amdclean.storedModules[currentParam.name] : true;
             });
         }(), isCommonJS = !hasReturnStatement && hasExportsParam, hasExportsAssignment = exportsExpressions.length || moduleExportsExpressions.length, dependencyNameLength, callbackFuncParamsLength;
     // Only return dependency names that do not directly match the name of existing stored modules
@@ -634,17 +662,19 @@ convertToFunctionExpression = function convertToFunctionExpression(obj) {
         var mappedCallbackParameter = originalCallbackFuncParams[iterator], currentDepName = currentDep.name;
         // If the matching callback parameter matches the name of a stored module, then do not return it
         // Else if the matching callback parameter does not match the name of a stored module, return the dependency
-        return aggressiveOptimizations === true ? !mappedCallbackParameter || amdclean.storedModules[mappedCallbackParameter.name] && mappedCallbackParameter.name === currentDepName ? !amdclean.storedModules[currentDepName] : !amdclean.storedModules[mappedCallbackParameter.name] : true;
+        return aggressiveOptimizations === true && shouldOptimize ? !mappedCallbackParameter || amdclean.storedModules[mappedCallbackParameter.name] && mappedCallbackParameter.name === currentDepName ? !amdclean.storedModules[currentDepName] : !amdclean.storedModules[mappedCallbackParameter.name] : true;
+    });
+    dependencyNames = _.map(dependencyNames || [], function (currentDep, iterator) {
+        if (dependencyBlacklist[currentDep.name]) {
+            currentDep.name = '{}';
+        }
+        return currentDep;
     });
     dependencyNameLength = dependencyNames.length;
     callbackFuncParamsLength = callbackFuncParams.length;
     // If the module dependencies passed into the current module are greater than the used callback function parameters, do not pass the dependencies
-    if (dependencyNameLength && dependencyNameLength > callbackFuncParamsLength) {
-        if (dependencyNameLength - callbackFuncParamsLength < 2) {
-            dependencyNames.splice(dependencyNameLength - (callbackFuncParamsLength || 1), callbackFuncParamsLength || 1);
-        } else {
-            dependencyNames.splice(callbackFuncParamsLength || 1, dependencyNameLength - (callbackFuncParamsLength || 1));
-        }
+    if (dependencyNameLength > callbackFuncParamsLength) {
+        dependencyNames.splice(callbackFuncParamsLength, dependencyNameLength - callbackFuncParamsLength);
     }
     // If it is a CommonJS module and there is an exports assignment, make sure to return the exports object
     if (isCommonJS && hasExportsAssignment) {
@@ -789,12 +819,34 @@ createAst = function createAst(providedCode) {
 // ============================
 //  Replaces define() and require() methods to standard JavaScript
 convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
-    var amdclean = this, options = amdclean.options, moduleName, args, dependencies, moduleReturnValue, moduleId, params, isDefine = utils.isDefine(node), isRequire = utils.isRequire(node), startLineNumber, callbackFuncArg = false, type = '', shouldBeIgnored, moduleToBeIgnored, parentHasFunctionExpressionArgument, defaultRange = defaultValues.defaultRange, defaultLOC = defaultValues.defaultLOC, range = node.range || defaultRange, loc = node.loc || defaultLOC, dependencyBlacklist = defaultValues.dependencyBlacklist;
+    var amdclean = this, options = amdclean.options, moduleName, args, dependencies, moduleReturnValue, moduleId, params, isDefine = utils.isDefine(node), isRequire = utils.isRequire(node), startLineNumber, callbackFuncArg = false, type = '', shouldBeIgnored, moduleToBeIgnored, parentHasFunctionExpressionArgument, defaultRange = defaultValues.defaultRange, defaultLOC = defaultValues.defaultLOC, range = node.range || defaultRange, loc = node.loc || defaultLOC, dependencyBlacklist = defaultValues.dependencyBlacklist, shouldOptimize;
     startLineNumber = isDefine || isRequire ? node.expression.loc.start.line : node && node.loc && node.loc.start ? node.loc.start.line : null;
     shouldBeIgnored = amdclean.matchingCommentLineNumbers[startLineNumber] || amdclean.matchingCommentLineNumbers[startLineNumber - 1];
     // If it is an AMD conditional statement
     // e.g. if(typeof define === 'function') {}
     if (utils.isAMDConditional(node)) {
+        estraverse.traverse(node, {
+            'enter': function (node) {
+                var normalizedModuleName;
+                if (utils.isDefine(node)) {
+                    if (node.expression && node.expression.arguments && node.expression.arguments.length) {
+                        // Add the module name to the ignore list
+                        if (node.expression.arguments[0].type === 'Literal' && node.expression.arguments[0].value) {
+                            normalizedModuleName = normalizeModuleName.call(amdclean, node.expression.arguments[0].value);
+                            if (options.transformAMDChecks !== true) {
+                                amdclean.conditionalModulesToIgnore[normalizedModuleName] = true;
+                            } else {
+                                amdclean.conditionalModulesToNotOptimize[normalizedModuleName] = true;
+                            }
+                            if (options.createAnonymousAMDModule === true) {
+                                amdclean.storedModules[normalizedModuleName] = false;
+                                node.expression.arguments.shift();
+                            }
+                        }
+                    }
+                }
+            }
+        });
         // If the AMD conditional statement should be transformed and not ignored
         if (!shouldBeIgnored && options.transformAMDChecks === true) {
             // Transform the AMD conditional statement
@@ -808,28 +860,13 @@ convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
             };
             return node;
         }
-        // If the AMD conditional statement should not be transformed
-        if (options.transformAMDChecks === false) {
-            estraverse.traverse(node, {
-                'enter': function (node) {
-                    if (utils.isDefine(node)) {
-                        if (node.expression && node.expression.arguments && node.expression.arguments.length) {
-                            // Add the module name to the ignore list
-                            if (node.expression.arguments[0].type === 'Literal' && node.expression.arguments[0].value) {
-                                amdclean.conditionalModulesToIgnore[node.expression.arguments[0].value] = true;
-                                if (options.createAnonymousAMDModule === true) {
-                                    amdclean.storedModules[node.expression.arguments[0].value] = false;
-                                    node.expression.arguments.shift();
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
     }
     if (isDefine || isRequire) {
         args = Array.prototype.slice.call(node.expression['arguments'], 0);
+        moduleReturnValue = isRequire ? args[1] : args[args.length - 1];
+        moduleId = node.expression['arguments'][0].value;
+        moduleName = normalizeModuleName.call(amdclean, moduleId);
+        shouldOptimize = !amdclean.conditionalModulesToNotOptimize[moduleName];
         dependencies = function () {
             var deps = isRequire ? args[0] : args[args.length - 2], depNames = [], hasExportsParam;
             if (_.isPlainObject(deps)) {
@@ -840,7 +877,9 @@ convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
             hasExportsParam = _.where(deps, { 'value': 'exports' }).length;
             if (_.isArray(deps) && deps.length) {
                 _.each(deps, function (currentDependency) {
-                    if (dependencyBlacklist[currentDependency.value] !== 'remove') {
+                    if (dependencyBlacklist[currentDependency.value] && !shouldOptimize) {
+                        depNames.push(currentDependency.value);
+                    } else if (dependencyBlacklist[currentDependency.value] !== 'remove') {
                         if (dependencyBlacklist[currentDependency.value]) {
                             depNames.push('{}');
                         } else {
@@ -855,9 +894,6 @@ convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
             }
             return depNames;
         }();
-        moduleReturnValue = isRequire ? args[1] : args[args.length - 1];
-        moduleId = node.expression['arguments'][0].value;
-        moduleName = normalizeModuleName.call(amdclean, moduleId);
         params = {
             'node': node,
             'moduleName': moduleName,
@@ -867,7 +903,8 @@ convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
             'isDefine': isDefine,
             'isRequire': isRequire,
             'range': range,
-            'loc': loc
+            'loc': loc,
+            'shouldOptimize': shouldOptimize
         };
         if (isDefine) {
             if (shouldBeIgnored || !moduleName || amdclean.conditionalModulesToIgnore[moduleName] === true) {
@@ -923,10 +960,7 @@ convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
         if (node.type === 'FunctionExpression' && _.isArray(node.params) && _.where(node.params, {
                 'type': 'Identifier',
                 'name': 'exports'
-            }).length && _.isObject(node.body) && _.isArray(node.body.body) && !_.where(node.body.body, {
-                'type': 'ReturnStatement',
-                'argument': { 'type': 'Identifier' }
-            }).length) {
+            }).length && _.isObject(node.body) && _.isArray(node.body.body) && !_.where(node.body.body, { 'type': 'ReturnStatement' }).length) {
             parentHasFunctionExpressionArgument = function () {
                 if (!parent || !parent.arguments) {
                     return false;
@@ -1060,6 +1094,15 @@ findAndStoreAllModuleIds = function findAndStoreAllModuleIds(ast) {
             // If the current module has not been stored, store it
             if (moduleName && !amdclean.storedModules[moduleName]) {
                 amdclean.storedModules[moduleName] = true;
+            }
+            // If it is a return statement that returns a define() method call, strip the return statement
+            if (node.type === 'ReturnStatement' && node.argument && node.argument.callee && node.argument.callee.name === 'define') {
+                node.type = 'ExpressionStatement';
+                node.expression = node.argument;
+                delete node.argument;
+            }
+            if (node.type === 'VariableDeclarator') {
+                amdclean.variablesStore[node.id.name] = true;
             }
         }
     });
@@ -1299,7 +1342,7 @@ clean = function clean() {
 // Wraps AMDclean in the UMD pattern to support being loaded in multiple environments,
 // Sets all of the third-party dependencies
 // And exposes the public API
-(function () {
+(function (defaultOptions) {
     (function (root, factory, undefined) {
         
         // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, and plain browser loading
@@ -1353,6 +1396,14 @@ clean = function clean() {
                 // -------------
                 // An object that will store all of the user module names
                 this.storedModules = {};
+                // variablesStore
+                // --------------
+                // An object that will store all of the local variables that are declared
+                this.variablesStore = {};
+                // originalAst
+                // -----------
+                // The original AST (Abstract Syntax Tree) before it is transformed
+                this.originalAst = {};
                 // callbackParameterMap
                 // --------------------
                 // An object that will store all of the user module callback parameters (that are used and also do not match the exact name of the dependencies they are representing) and the dependencies that they map to
@@ -1361,6 +1412,10 @@ clean = function clean() {
                 // --------------------------
                 // An object that will store any modules that should be ignored (not cleaned)
                 this.conditionalModulesToIgnore = {};
+                // conditionalModulesToNotOptimize
+                // -------------------------------
+                // An object that will store any modules that should not be optimized (but still cleaned)
+                this.conditionalModulesToNotOptimize = {};
                 // matchingCommentLineNumbers
                 // --------------------------
                 // An object that stores any comments that match the commentCleanName option
@@ -1431,4 +1486,4 @@ clean = function clean() {
         }();
         return publicAPI;
     }));
-}());}(typeof esprima !== "undefined" ? esprima: null, typeof estraverse !== "undefined" ? estraverse: null, typeof escodegen !== "undefined" ? escodegen: null, typeof _ !== "undefined" ? _ : null));
+}(_defaultOptions_));}(typeof esprima !== "undefined" ? esprima: null, typeof estraverse !== "undefined" ? estraverse: null, typeof escodegen !== "undefined" ? escodegen: null, typeof _ !== "undefined" ? _ : null));
