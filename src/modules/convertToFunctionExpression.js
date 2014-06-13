@@ -8,13 +8,15 @@ define([
 	'convertToIIFE',
 	'convertToIIFEDeclaration',
     'defaultValues',
-    'normalizeModuleName'
+    'normalizeModuleName',
+    'defaultValues'
 ], function(
 	utils,
 	convertToIIFE,
 	convertToIIFEDeclaration,
     defaultValues,
-    normalizeModuleName
+    normalizeModuleName,
+    defaultValues
 ) {
     return function convertToFunctionExpression(obj) {
         var amdclean = this,
@@ -35,6 +37,9 @@ define([
             defaultLOC = defaultValues.defaultLOC,
             range = obj.range || defaultRange,
             loc = obj.loc || defaultLOC,
+            shouldOptimize = obj.shouldOptimize,
+            dependencyBlacklist = defaultValues.dependencyBlacklist,
+            hasNonMatchingParameter = false,
             callbackFunc = (function() {
                 var callbackFunc = obj.moduleReturnValue,
                     body,
@@ -85,10 +90,21 @@ define([
                         firstReturnStatement = returnStatements[0];
                         returnStatementArg = firstReturnStatement.argument;
 
+                        hasNonMatchingParameter = function () {
+                            var nonMatchingParameter = false;
+                            _.each(callbackFunc.params, function (currentParam) {
+                                var currentParamName = currentParam.name;
+                                if(!amdclean.storedModules[currentParamName] && !dependencyBlacklist[currentParamName]) {
+                                    nonMatchingParameter = true;
+                                }
+                            });
+                            return nonMatchingParameter;
+                        }();
+
                         // If something other than a function expression is getting returned
                         // and there is more than one AST child node in the factory function
                         // return early
-                        if((!utils.isFunctionExpression(firstReturnStatement) && body.length > 1) || (returnStatementArg && returnStatementArg.type === 'Identifier')) {
+                        if(hasNonMatchingParameter || !shouldOptimize || (!utils.isFunctionExpression(firstReturnStatement) && body.length > 1) || (returnStatementArg && returnStatementArg.type === 'Identifier')) {
                             return callbackFunc;
                         } else {
                             // Optimize the AMD module by setting the callback function to the return statement argument
@@ -225,7 +241,7 @@ define([
             callbackFuncParams = (function() {
                 var deps = [],
                     currentName,
-                    cbParams = _.union((callbackFunc.params || dependencyNames || []), matchingRequireExpressionParams),
+                    cbParams = _.union((callbackFunc.params && callbackFunc.params.length ? callbackFunc.params : !shouldOptimize && dependencyNames && dependencyNames.length ? dependencyNames : []), matchingRequireExpressionParams),
                     mappedParameter = {};
 
                 _.each(cbParams, function(currentParam, iterator) {
@@ -234,7 +250,15 @@ define([
                     } else {
                         currentName = dependencyNames[iterator].name;
                     }
-                    if(currentName !== '{}' && (!hasExportsParam || defaultValues.dependencyBlacklist[currentName] !== 'remove')) {
+
+                    if(!shouldOptimize && currentName !== '{}') {
+                        deps.push({
+                            'type': 'Identifier',
+                            'name': currentName,
+                            'range': defaultRange,
+                            'loc': defaultLOC
+                        });
+                    } else if(currentName !== '{}' && (!hasExportsParam || defaultValues.dependencyBlacklist[currentName] !== 'remove')) {
                         deps.push({
                             'type': 'Identifier',
                             'name': currentName,
@@ -276,7 +300,7 @@ define([
 
                 // Only return callback function parameters that do not directly match the name of existing stored modules
                 return _.filter(deps || [], function(currentParam) {
-                    return aggressiveOptimizations === true ? !amdclean.storedModules[currentParam.name] : true;
+                    return aggressiveOptimizations === true && shouldOptimize ? !amdclean.storedModules[currentParam.name] : true;
                 });
             }()),
             isCommonJS = !hasReturnStatement && hasExportsParam,
@@ -291,19 +315,22 @@ define([
 
             // If the matching callback parameter matches the name of a stored module, then do not return it
             // Else if the matching callback parameter does not match the name of a stored module, return the dependency
-            return aggressiveOptimizations === true ? (!mappedCallbackParameter ||  amdclean.storedModules[mappedCallbackParameter.name] && mappedCallbackParameter.name === currentDepName ? !amdclean.storedModules[currentDepName] : !amdclean.storedModules[mappedCallbackParameter.name]) : true;
+            return aggressiveOptimizations === true && shouldOptimize ? (!mappedCallbackParameter ||  amdclean.storedModules[mappedCallbackParameter.name] && mappedCallbackParameter.name === currentDepName ? !amdclean.storedModules[currentDepName] : !amdclean.storedModules[mappedCallbackParameter.name]) : true;
+        });
+
+        dependencyNames = _.map(dependencyNames || [], function(currentDep, iterator) {
+            if(dependencyBlacklist[currentDep.name]) {
+                currentDep.name = '{}';
+            }
+            return currentDep;
         });
 
         dependencyNameLength = dependencyNames.length;
         callbackFuncParamsLength = callbackFuncParams.length;
 
         // If the module dependencies passed into the current module are greater than the used callback function parameters, do not pass the dependencies
-        if(dependencyNameLength && dependencyNameLength > callbackFuncParamsLength) {
-            if(dependencyNameLength - callbackFuncParamsLength < 2) {
-                dependencyNames.splice((dependencyNameLength - (callbackFuncParamsLength || 1)), callbackFuncParamsLength || 1);
-            } else {
-                dependencyNames.splice(callbackFuncParamsLength || 1, dependencyNameLength - (callbackFuncParamsLength || 1));
-            }
+        if (dependencyNameLength > callbackFuncParamsLength) {
+            dependencyNames.splice(callbackFuncParamsLength, dependencyNameLength - callbackFuncParamsLength);
         }
 
         // If it is a CommonJS module and there is an exports assignment, make sure to return the exports object

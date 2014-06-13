@@ -1,4 +1,4 @@
-// utils.js
+// Utils.js
 // ========
 // Abstract Syntax Tree (AST) and other helper utility methods
 
@@ -9,7 +9,7 @@ define([
 	errorMsgs,
 	defaultValues
 ) {
-	var utils = {
+	var Utils = {
 
 		// isDefine
 		// --------
@@ -225,7 +225,7 @@ define([
 	    // -----------------------
 	    //  Returns a normalized dependency name that handles relative file paths
 	    'normalizeDependencyName': function(moduleId, dep) {
-	        if(!moduleId || !dep || !utils.isRelativeFilePath(dep)) {
+	        if(!moduleId || !dep || !Utils.isRelativeFilePath(dep)) {
 	            return dep;
 	        }
 
@@ -260,5 +260,5 @@ define([
 
 	};
 
-	return utils;
+	return Utils;
 });

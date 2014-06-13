@@ -66,7 +66,7 @@ describe('amdclean specs', function() {
 				var AMDcode = "define('example1', function() { var count = 0;return 'firstModule'; });define('example2', function() { var count = 0;return 'secondModule'; });define('example', ['example1', 'example2'], function(yo, yoyo) {var test = true;});define('blah', ['example2'], function(yoooo, comon) { return false; });",
 					options = _.merge(_.cloneDeep(defaultOptions), { 'aggressiveOptimizations': true });
 					cleanedCode = amdclean.clean(AMDcode, options),
-					standardJavaScript = "var example1,example2,example,blah;example1=function (){var count=0;return'firstModule';}();example2=function (){var count=0;return'secondModule';}();example=function (yo,yoyo){var test=true;}(example1,example2);blah=false;";
+					standardJavaScript = "var example1,example2,example,blah;example1=function (){var count=0;return'firstModule';}();example2=function (){var count=0;return'secondModule';}();example=function (yo,yoyo){var test=true;}(example1,example2);blah=function (yoooo,comon){return false;}(example2);";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
@@ -311,7 +311,7 @@ describe('amdclean specs', function() {
 				it('should not optimize basic define() methods that return a literal value and contain more than one code block', function() {
 					var AMDcode = "define('example', [], function() { var example = true; return 'Convert AMD code to standard JavaScript';});",
 						cleanedCode = amdclean.clean(AMDcode, defaultOptions),
-						standardJavaScript = "var example;example=function (){var example=true;return'Convert AMD code to standard JavaScript';}();";
+						standardJavaScript = "var _example_;_example_=function (){var example=true;return'Convert AMD code to standard JavaScript';}();";
 
 					expect(cleanedCode).toBe(standardJavaScript);
 				});
@@ -497,7 +497,7 @@ describe('amdclean specs', function() {
 
 			it('should support the Require.js optimizer cjsTranslate option that converts CommonJS modules to AMD modules', function(done) {
 				var cleanedCode,
-					standardJavaScript = "var commonjs3,commonjs2,commonjs4,commonjs1;commonjs3=function (exports){exports.exampleFunc=function(){var test=true;return test;};return exports;}({});commonjs2=function (exports){exports={'exampleBool':true,'exampleFunc':commonjs3.exampleFunc};return exports;}({});commonjs4=function (exports){exports.test='this is a test';return exports;}({});commonjs1=function (exports,__commonjs2__,_commonjs4_){var commonjs2=__commonjs2__;var _commonjs2_='blah';var commonjs4=_commonjs4_;commonjs2.exampleFunc();return exports;}({},commonjs2,commonjs4);";
+					standardJavaScript = "var commonjs3,commonjs1,__commonjs2__,_commonjs4_;commonjs3=function (exports){exports.exampleFunc=function(){var test=true;return test;};return exports;}({});__commonjs2__=function (exports){exports={'exampleBool':true,'exampleFunc':commonjs3.exampleFunc};return exports;}({});_commonjs4_=function (exports){exports.test='this is a test';return exports;}({});commonjs1=function (exports){var commonjs2=__commonjs2__;var _commonjs2_='blah';var commonjs4=_commonjs4_;commonjs2.exampleFunc();return exports;}({});";
 
 				requirejs.optimize({
 					'baseUrl': './test/',
@@ -609,6 +609,7 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
+
 			it('should correctly convert libraries with simple conditional AMD checks', function() {
 				var AMDcode = "(function (root, factory) {" +
 					"'use strict';" +
@@ -623,7 +624,7 @@ describe('amdclean specs', function() {
 					"var test = true;" +
 					"}));",
 					cleanedCode = amdclean.clean(AMDcode, defaultOptions),
-					standardJavaScript = "var esprima;(function(root,factory){'use strict';if(true){esprima=function (){return typeof factory==='function'?factory():factory;}();}else if(typeof exports!=='undefined'){factory(exports);}else{factory(root.esprima={});}}(this,function(exports){exports=exports||{};var test=true;return exports;}));";
+					standardJavaScript = "var esprima;(function(root,factory){'use strict';if(true){esprima=function (exports){return typeof factory==='function'?factory(exports):factory;}({});}else if(typeof exports!=='undefined'){factory(exports);}else{factory(root.esprima={});}}(this,function(exports){exports=exports||{};var test=true;return exports;}));";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
@@ -641,6 +642,47 @@ describe('amdclean specs', function() {
 					"}));",
 					cleanedCode = amdclean.clean(AMDcode, defaultOptions),
 					standardJavaScript = "var backbonevalidation;(function(factory){if(typeof exports==='object'){module.exports=factory(backbone,underscore);}else if(true){backbonevalidation=function (backbone,underscore){return typeof factory==='function'?factory(backbone,underscore):factory;}(backbone,underscore);}}(function(Backbone,_){//= backbone-validation.js\nreturn Backbone.Validation;}));";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should correctly convert libraries that return define methods', function() {
+				var AMDcode = "(function(window, factory) {" +
+					"if (typeof define === 'function' && define.amd) {" +
+						"return define('backbonelayoutmanager', ['backbone', 'underscore', 'jquery'], function() {" +
+							"return factory.apply(window, arguments);" +
+						"});" +
+					"}" +
+					"}());",
+					cleanedCode = amdclean.clean(AMDcode, defaultOptions);
+					standardJavaScript = "(function(window,factory){if(true){backbonelayoutmanager=function (backbone,underscore,jquery){return factory.apply(window,arguments);}(backbone,underscore,jquery);}}());";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should correctly convert libraries that include an exports parameter', function() {
+				var AMDcode = "(function(window, factory) {" +
+					"if (typeof define === 'function' && define.amd) {" +
+						"define('backbonerelational', ['exports', 'backbone', 'underscore'], factory)" +
+					"}" +
+					"}());",
+					cleanedCode = amdclean.clean(AMDcode, defaultOptions);
+					standardJavaScript = "var backbonerelational;(function(window,factory){if(true){backbonerelational=function (exports,backbone,underscore){return typeof factory==='function'?factory(exports,backbone,underscore):factory;}({},backbone,underscore);}}());";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
+			it('should correctly convert libraries that include require, exports, and module parameters', function() {
+				var AMDcode = "(function(window, factory) {" +
+					"var moment;" +
+					"if (typeof define === 'function' && define.amd) {" +
+						"return define('moment', ['require', 'exports', 'module'], function(require, exports, module) {" +
+							"return moment" +
+						"});" +
+					"}" +
+					"}());",
+					cleanedCode = amdclean.clean(AMDcode, defaultOptions);
+					standardJavaScript = "var _moment_;(function(window,factory){var moment;if(true){_moment_=function (require,exports,module){return moment;}({},{},{});}}());";
 
 				expect(cleanedCode).toBe(standardJavaScript);
 			});

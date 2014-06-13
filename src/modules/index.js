@@ -71,6 +71,16 @@ require([
                 // An object that will store all of the user module names
                 this.storedModules = {};
 
+                // variablesStore
+                // --------------
+                // An object that will store all of the local variables that are declared
+                this.variablesStore = {};
+
+                // originalAst
+                // -----------
+                // The original AST (Abstract Syntax Tree) before it is transformed
+                this.originalAst = {};
+
                 // callbackParameterMap
                 // --------------------
                 // An object that will store all of the user module callback parameters (that are used and also do not match the exact name of the dependencies they are representing) and the dependencies that they map to
@@ -80,6 +90,11 @@ require([
                 // --------------------------
                 // An object that will store any modules that should be ignored (not cleaned)
                 this.conditionalModulesToIgnore = {};
+
+                // conditionalModulesToNotOptimize
+                // -------------------------------
+                // An object that will store any modules that should not be optimized (but still cleaned)
+                this.conditionalModulesToNotOptimize = {};
 
                 // matchingCommentLineNumbers
                 // --------------------------

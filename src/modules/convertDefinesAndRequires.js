@@ -38,7 +38,8 @@ define([
             defaultLOC = defaultValues.defaultLOC,
             range = node.range || defaultRange,
             loc = node.loc || defaultLOC,
-            dependencyBlacklist = defaultValues.dependencyBlacklist;
+            dependencyBlacklist = defaultValues.dependencyBlacklist,
+            shouldOptimize;
 
         startLineNumber = isDefine || isRequire ? node.expression.loc.start.line : node && node.loc && node.loc.start ? node.loc.start.line : null;
 
@@ -47,6 +48,29 @@ define([
         // If it is an AMD conditional statement
         // e.g. if(typeof define === 'function') {}
         if(utils.isAMDConditional(node)) {
+
+            estraverse.traverse(node, {
+                'enter': function(node) {
+                    var normalizedModuleName;
+                    if(utils.isDefine(node)) {
+                        if(node.expression && node.expression.arguments && node.expression.arguments.length) {
+                            // Add the module name to the ignore list
+                            if(node.expression.arguments[0].type === 'Literal' && node.expression.arguments[0].value) {
+                                normalizedModuleName = normalizeModuleName.call(amdclean, node.expression.arguments[0].value);
+                                if(options.transformAMDChecks !== true) {
+                                    amdclean.conditionalModulesToIgnore[normalizedModuleName] = true;
+                                } else {
+                                    amdclean.conditionalModulesToNotOptimize[normalizedModuleName] = true;
+                                }
+                                if(options.createAnonymousAMDModule === true) {
+                                    amdclean.storedModules[normalizedModuleName] = false;
+                                    node.expression.arguments.shift();
+                                }
+                            }   
+                        }
+                    }
+                }
+            });
 
             // If the AMD conditional statement should be transformed and not ignored
             if(!shouldBeIgnored && options.transformAMDChecks === true) {
@@ -64,29 +88,18 @@ define([
                 return node;
             }
 
-            // If the AMD conditional statement should not be transformed
-            if(options.transformAMDChecks === false) {
-                estraverse.traverse(node, {
-                    'enter': function(node) {
-                        if(utils.isDefine(node)) {
-                            if(node.expression && node.expression.arguments && node.expression.arguments.length) {
-                                // Add the module name to the ignore list
-                                if(node.expression.arguments[0].type === 'Literal' && node.expression.arguments[0].value) {
-                                    amdclean.conditionalModulesToIgnore[node.expression.arguments[0].value] = true;
-                                    if(options.createAnonymousAMDModule === true) {
-                                        amdclean.storedModules[node.expression.arguments[0].value] = false;
-                                        node.expression.arguments.shift();
-                                    }
-                                }   
-                            }
-                        }
-                    }
-                });
-            }
         }
 
         if(isDefine || isRequire) {
             args = Array.prototype.slice.call(node.expression['arguments'], 0);
+
+            moduleReturnValue = isRequire ? args[1] : args[args.length - 1];
+
+            moduleId = node.expression['arguments'][0].value;
+
+            moduleName = normalizeModuleName.call(amdclean, moduleId);
+
+            shouldOptimize = !amdclean.conditionalModulesToNotOptimize[moduleName];
 
             dependencies = (function() {
                 var deps = isRequire ? args[0] : args[args.length - 2],
@@ -106,9 +119,9 @@ define([
                 if(_.isArray(deps) && deps.length) {
 
                     _.each(deps, function(currentDependency) {
-
-                        if(dependencyBlacklist[currentDependency.value] !== 'remove') {
-
+                        if(dependencyBlacklist[currentDependency.value] && !shouldOptimize) {
+                            depNames.push(currentDependency.value);
+                        } else if(dependencyBlacklist[currentDependency.value] !== 'remove') {
                             if(dependencyBlacklist[currentDependency.value]) {
                                 depNames.push('{}');
                             } else {
@@ -124,22 +137,17 @@ define([
                 return depNames;
             }());
 
-            moduleReturnValue = isRequire ? args[1] : args[args.length - 1];
-
-            moduleId = node.expression['arguments'][0].value;
-
-            moduleName = normalizeModuleName.call(amdclean, moduleId);
-
             params = {
-                    'node': node,
-                    'moduleName': moduleName,
-                    'moduleId': moduleId,
-                    'dependencies': dependencies,
-                    'moduleReturnValue': moduleReturnValue,
-                    'isDefine': isDefine,
-                    'isRequire': isRequire,
-                    'range': range,
-                    'loc': loc
+                'node': node,
+                'moduleName': moduleName,
+                'moduleId': moduleId,
+                'dependencies': dependencies,
+                'moduleReturnValue': moduleReturnValue,
+                'isDefine': isDefine,
+                'isRequire': isRequire,
+                'range': range,
+                'loc': loc,
+                'shouldOptimize': shouldOptimize
             };
 
             if(isDefine) {
@@ -215,10 +223,7 @@ define([
                 _.isObject(node.body) &&
                 _.isArray(node.body.body) &&
                 !_.where(node.body.body, {
-                    'type': 'ReturnStatement',
-                    'argument': {
-                        'type': 'Identifier'
-                    }
+                    'type': 'ReturnStatement'
                 }).length) {
 
                 parentHasFunctionExpressionArgument = (function () {
