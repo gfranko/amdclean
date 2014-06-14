@@ -122,15 +122,14 @@ module.exports = function(grunt) {
     requirejs: {
       js: {
         options: {
-          findNestedDependencies: true,
-          baseUrl: 'src/js/app/modules',
-          wrap: true,
-          preserveLicenseComments: false,
-          optimize: 'none',
-          mainConfigFile: 'src/js/app/config/config.js',
-          include: ['first'],
-          out: 'src/js/app/exampleLib.js',
-          onModuleBundleComplete: function (data) {
+          'findNestedDependencies': true,
+          'baseUrl': 'src/js/app/modules',
+          'optimize': 'none',
+          'skipModuleInsertion': true,
+          'mainConfigFile': 'src/js/app/config/config.js',
+          'include': ['first'],
+          'out': 'src/js/app/exampleLib.js',
+          'onModuleBundleComplete': function (data) {
             var fs = require('fs'),
               amdclean = require('amdclean'),
               outputFile = data.path;
@@ -159,6 +158,7 @@ gulp.task('build', function() {
     'findNestedDependencies': true,
     'baseUrl': './src/',
     'optimize': 'none',
+    'skipModuleInsertion': true,
     'include': ['first'],
     'out': './build/example.js',
     'onModuleBundleComplete': function(data) {
@@ -587,6 +587,17 @@ If your PR is a code change:
 
 
 ## FAQ
+
+__After I build with AMDclean, I am getting JavaScript errors.  What gives?__
+
+- There could be a couple of reasons:
+
+  * Make sure to set the Require.js `skipModuleInsertion` option to `true`. By default, Require.js creates a `define()` wrapper for files that are not wrapped in a `define()`. This can cause issues with AMDclean.
+
+  * Make sure you are not pointing to minified files when building with AMDclean. This will definitely cause issues.
+
+  * There may be a bug with AMDclean (I doubt it, but it is possible). Please report any issues and they will be fixed as soon as possible.
+
 
 __Why should I use AMDclean instead of Browserify?__
 
