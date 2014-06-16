@@ -1,4 +1,4 @@
-/*! amdclean - v2.2.1 - 2014-06-15
+/*! amdclean - v2.2.2 - 2014-06-16
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko */
 
@@ -580,7 +580,7 @@ convertToFunctionExpression = function convertToFunctionExpression(obj) {
                             // If both variable name and expression names are there
                             if (node.id && node.id.name && node.init && node.init['arguments'] && node.init['arguments'][0] && node.init['arguments'][0].value) {
                                 variableName = node.id.name;
-                                expressionName = normalizeModuleName.call(amdclean, node.init['arguments'][0].value);
+                                expressionName = normalizeModuleName.call(amdclean, utils.normalizeDependencyName(moduleId, node.init['arguments'][0].value, moduleId));
                                 if (!_.contains(ignoreModules, expressionName) && variableName === expressionName) {
                                     matchingNames.push({
                                         'originalName': expressionName,
@@ -696,7 +696,7 @@ convertToFunctionExpression = function convertToFunctionExpression(obj) {
             var normalizedModuleName, newName;
             if (utils.isRequireExpression(node)) {
                 if (node['arguments'] && node['arguments'][0] && node['arguments'][0].value) {
-                    normalizedModuleName = normalizeModuleName.call(amdclean, node['arguments'][0].value);
+                    normalizedModuleName = normalizeModuleName.call(amdclean, utils.normalizeDependencyName(moduleId, node['arguments'][0].value, moduleId));
                     if (_.contains(ignoreModules, normalizedModuleName)) {
                         return node;
                     }
@@ -1431,7 +1431,7 @@ clean = function clean() {
             },
             // The object that is publicly accessible
             publicAPI = {
-                'VERSION': '2.2.1',
+                'VERSION': '2.2.2',
                 'clean': function (options, overloadedOptions) {
                     // Creates a new AMDclean instance
                     var amdclean = new AMDclean(options, overloadedOptions), cleanedCode = amdclean.clean();

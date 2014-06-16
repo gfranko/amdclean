@@ -207,7 +207,7 @@ define([
                                 // If both variable name and expression names are there
                                 if(node.id && node.id.name && node.init && node.init['arguments'] && node.init['arguments'][0] && node.init['arguments'][0].value) {
                                     variableName = node.id.name;
-                                    expressionName = normalizeModuleName.call(amdclean, node.init['arguments'][0].value);
+                                    expressionName = normalizeModuleName.call(amdclean, utils.normalizeDependencyName(moduleId, node.init['arguments'][0].value, moduleId));
                                 
                                     if (!_.contains(ignoreModules, expressionName) && (variableName === expressionName)) {
                                         matchingNames.push({
@@ -358,7 +358,7 @@ define([
 
                     if(node['arguments'] && node['arguments'][0] && node['arguments'][0].value) {
 
-                        normalizedModuleName = normalizeModuleName.call(amdclean, node['arguments'][0].value);
+                        normalizedModuleName = normalizeModuleName.call(amdclean, utils.normalizeDependencyName(moduleId, node['arguments'][0].value, moduleId));
 
                         if(_.contains(ignoreModules, normalizedModuleName)) {
                             return node;

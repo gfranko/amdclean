@@ -485,6 +485,14 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
+			it('should support relative dependency paths for require expressions', function() {
+				var AMDcode = "define('app/utils/test', [], function(){return function(){console.log('hello world!');}});define('app/utils/test2',[], function(){exports.test = require('./test');});",
+					cleanedCode = amdclean.clean(AMDcode, defaultOptions),
+					standardJavaScript = "var app_utils_test,app_utils_test2;app_utils_test=function(){console.log('hello world!');};app_utils_test2=function (){exports.test=app_utils_test;}();";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
 			it('should convert CommonJS require() calls and use the character prefix', function() {
 				var AMDcode = "var example = require('bb_customs');",
 					options = _.merge(_.cloneDeep(defaultOptions), { 'prefixMode': 'camelCase' }),
