@@ -477,6 +477,14 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
+			it('should support the plain simplified CJS wrapper and not bomb when a variable is not initialized', function() {
+				var AMDcode = "define('has',['require','exports','module'],function( require, exports, module ){exports.all = function( subject, properties ){if(subject === undefined || typeof subject != 'object'){return false;}var i = 0,len = properties.length,prop; //<--- error thrown because this isn't initialized\nfor(; i < len; i++){prop = properties[i];if(!(prop in subject)){return false;}}return true;};});",
+					cleanedCode = amdclean.clean(AMDcode, defaultOptions),
+					standardJavaScript = "var has;has=function (exports){exports.all=function(subject,properties){if(subject===undefined||typeof subject!='object'){return false;}var i=0,len=properties.length,prop;//<--- error thrown because this isn't initialized\nfor(;i<len;i++){prop=properties[i];if(!(prop in subject)){return false;}}return true;};return exports;}({});";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
 			it('should convert CommonJS require() calls and use the character prefix', function() {
 				var AMDcode = "var example = require('bb_customs');",
 					options = _.merge(_.cloneDeep(defaultOptions), { 'prefixMode': 'camelCase' }),

@@ -66,7 +66,8 @@ define([
 		// Returns if the current AST node is a require() call expression
 		// e.g. var example = require('someModule');
 		'isRequireExpression': function(node) {
-		    return (node.type === 'CallExpression' &&
+		    return (node &&
+		    		node.type === 'CallExpression' &&
 		        node.callee &&
 		        node.callee.name === 'require');
 		},
