@@ -1,4 +1,4 @@
-/*! amdclean - v2.2.0 - 2014-06-13
+/*! amdclean - v2.2.1 - 2014-06-15
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko */
 
@@ -119,7 +119,7 @@ utils = function () {
                 return node.type === 'AssignmentExpression' && node.left && node.left.type === 'MemberExpression' && node.left.object && node.left.object.type === 'Identifier' && node.left.object.name === 'module' && node.left.property && node.left.property.type === 'Identifier' && node.left.property.name === 'exports';
             },
             'isRequireExpression': function (node) {
-                return node.type === 'CallExpression' && node.callee && node.callee.name === 'require';
+                return node && node.type === 'CallExpression' && node.callee && node.callee.name === 'require';
             },
             'isObjectExpression': function (expression) {
                 return expression && expression && expression.type === 'ObjectExpression';
@@ -1431,7 +1431,7 @@ clean = function clean() {
             },
             // The object that is publicly accessible
             publicAPI = {
-                'VERSION': '2.1.0',
+                'VERSION': '2.2.1',
                 'clean': function (options, overloadedOptions) {
                     // Creates a new AMDclean instance
                     var amdclean = new AMDclean(options, overloadedOptions), cleanedCode = amdclean.clean();
