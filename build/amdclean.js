@@ -1431,7 +1431,7 @@ clean = function clean() {
             },
             // The object that is publicly accessible
             publicAPI = {
-                'VERSION': '2.1.0',
+                'VERSION': '2.2.1',
                 'clean': function (options, overloadedOptions) {
                     // Creates a new AMDclean instance
                     var amdclean = new AMDclean(options, overloadedOptions), cleanedCode = amdclean.clean();
