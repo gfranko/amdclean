@@ -1,6 +1,6 @@
 #AMDclean
 
-A build tool that converts AMD and/or CommonJS code to standard JavaScript.
+A build tool that converts AMD code to standard JavaScript.
 
 [![Build Status](https://travis-ci.org/gfranko/amdclean.png?branch=master)](https://travis-ci.org/gfranko/amdclean)
 [![NPM version](https://badge.fury.io/js/amdclean.png)](http://badge.fury.io/js/amdclean)
