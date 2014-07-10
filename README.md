@@ -516,6 +516,7 @@ amdclean.clean({
     'comment': true,
     'format': {
       'indent': {
+        'style': '  ',
         'adjustMultilineComment': true
       }
     }

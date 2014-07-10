@@ -3,16 +3,16 @@
 //  Replaces define() and require() methods to standard JavaScript
 
 define([
-	'utils',
-	'convertToFunctionExpression',
-	'convertToObjectDeclaration',
+    'utils',
+    'convertToFunctionExpression',
+    'convertToObjectDeclaration',
     'defaultValues',
     'normalizeModuleName',
     'createAst'
 ], function(
-	utils,
-	convertToFunctionExpression,
-	convertToObjectDeclaration,
+    utils,
+    convertToFunctionExpression,
+    convertToObjectDeclaration,
     defaultValues,
     normalizeModuleName,
     createAst

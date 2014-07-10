@@ -17,13 +17,7 @@ require([
         'use strict';
         // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, and plain browser loading
         if (typeof define === 'function' && define.amd) {
-            if(typeof exports !== 'undefined') {
-                factory.env = 'node';
-            } else {
-                factory.env = 'web';
-            }
             factory.amd = true;
-
             define(['esprima', 'estraverse', 'escodegen', 'underscore'], function(esprima, estraverse, escodegen, underscore) {
                 return factory({
                     'esprima': esprima,
@@ -33,19 +27,58 @@ require([
                 }, root);
             });
         } else if (typeof exports !== 'undefined') {
-            factory.env = 'node';
+            factory.commonjs = true;
             module.exports = factory(null, root);
         } else {
-            factory.env = 'web';
             root.amdclean = factory(null, root);
         }
     }(this, function cleanamd(amdDependencies, context) {
         'use strict';
 
-        // Environment - either node or web
-        var codeEnv = cleanamd.env,
-            // AMDclean constructor function
-            AMDclean = function(options, overloadedOptions) {
+        // Third-Party Dependencies
+        // Note: These dependencies are hoisted to the top (as local variables) at build time (Look in the gulpfile.js file and the AMDclean wrap option for more details)
+        esprima = (function() {
+            if(cleanamd.amd && amdDependencies && amdDependencies.esprima && amdDependencies.esprima.parse) {
+                return amdDependencies.esprima;
+            } else if(cleanamd.commonjs) {
+                return require('esprima');
+            } else if(context && context.esprima && context.esprima.parse) {
+                return context.esprima;
+            }
+        }());
+
+        estraverse = (function() {
+            if(cleanamd.amd && amdDependencies && amdDependencies.estraverse && amdDependencies.estraverse.traverse) {
+                return amdDependencies.estraverse;
+            } else if(cleanamd.commonjs) {
+                return require('estraverse');
+            } else if(context && context.estraverse && context.estraverse.traverse) {
+                return context.estraverse;
+            }
+        }());
+
+        escodegen = (function() {
+            if(cleanamd.amd && amdDependencies && amdDependencies.escodegen && amdDependencies.escodegen.generate) {
+                return amdDependencies.escodegen;
+            } else if(cleanamd.commonjs) {
+                return require('escodegen');
+            } else if(context && context.escodegen && context.escodegen.generate) {
+                return context.escodegen;
+            }
+        }());
+
+        _ = (function() {
+            if(cleanamd.amd && amdDependencies && (amdDependencies.underscore || amdDependencies.lodash || amdDependencies._)) {
+                return amdDependencies.underscore || amdDependencies.lodash || amdDependencies._;
+            } else if(cleanamd.commonjs) {
+                return require('lodash');
+            } else if(context && context._) {
+                return context._;
+            }
+        }());
+
+        // AMDclean constructor function
+        var AMDclean = function(options, overloadedOptions) {
                 if(!esprima) {
                     throw new Error(errorMsgs.esprima);
                 } else if(!estraverse) {
@@ -114,7 +147,7 @@ require([
             // The object that is publicly accessible
             publicAPI = {
                 // Current project version number
-                'VERSION': '2.2.2',
+                'VERSION': '2.2.3',
                 'clean': function(options, overloadedOptions) {
                     // Creates a new AMDclean instance
                     var amdclean = new AMDclean(options, overloadedOptions),
@@ -127,11 +160,6 @@ require([
 
             // AMDclean prototype object
             AMDclean.prototype = {
-                // env
-                // ---
-                // Environment - either node or web
-                'env': codeEnv,
-
                 // clean
                 // -----
                 // Creates an AST using Esprima, traverse and updates the AST using Estraverse, and generates standard JavaScript using Escodegen.
@@ -143,49 +171,6 @@ require([
                 'defaultOptions': defaultOptions
             };
 
-            amdDependencies = amdDependencies || {};
-
-            // Third-Party Dependencies
-            // Note: These dependencies are hoisted to the top (as local variables) at build time (Look in the gulpfile.js file and the AMDclean wrap option for more details)
-            esprima = (function() {
-                if(cleanamd.amd && amdDependencies.esprima && amdDependencies.esprima.parse) {
-                    return amdDependencies.esprima;
-                } else if(context && context.esprima && context.esprima.parse) {
-                    return context.esprima;
-                } else if(codeEnv === 'node') {
-                    return require('esprima');
-                }
-            }());
-
-            estraverse = (function() {
-                if(cleanamd.amd && amdDependencies.estraverse && amdDependencies.estraverse.traverse) {
-                    return amdDependencies.estraverse;
-                } else if(context && context.estraverse && context.estraverse.traverse) {
-                    return context.estraverse;
-                } else if(codeEnv === 'node') {
-                    return require('estraverse');
-                }
-            }());
-
-            escodegen = (function() {
-                if(cleanamd.amd && amdDependencies.escodegen && amdDependencies.escodegen.generate) {
-                    return amdDependencies.escodegen;
-                } else if(context && context.escodegen && context.escodegen.generate) {
-                    return context.escodegen;
-                } else if(codeEnv === 'node') {
-                    return require('escodegen');
-                }
-            }());
-
-            _ = (function() {
-                if(cleanamd.amd && amdDependencies.underscore) {
-                    return amdDependencies.underscore;
-                } else if(context && context._) {
-                    return context._;
-                } else if(codeEnv === 'node') {
-                    return require('lodash');
-                }
-            }());
         return publicAPI;
     }));
 });

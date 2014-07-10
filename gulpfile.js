@@ -3,6 +3,7 @@
 */
 var gulp = require('gulp'),
   uglify = require('gulp-uglify'),
+  beautify = require('gulp-jsbeautifier'),
   jshint = require('gulp-jshint'),
   jasmine = require('gulp-jasmine'),
   rename = require('gulp-rename'),
@@ -63,8 +64,7 @@ gulp.task('build', function() {
               'wrap': {
                 // All of the third party dependencies are hoisted here
                 // It's a hack, but it's not too painful
-                'start': ';(function(esprima, estraverse, escodegen, _) {\n',
-                'end': '}(typeof esprima !== "undefined" ? esprima: null, typeof estraverse !== "undefined" ? estraverse: null, typeof escodegen !== "undefined" ? escodegen: null, typeof _ !== "undefined" ? _ : null));'
+                'start': ';(function() {\n// Third-party dependencies that are hoisted\nvar esprima, estraverse, escodegen, _;\n'
               },
               'createAnonymousAMDModule': true
             });

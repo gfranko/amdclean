@@ -13,19 +13,20 @@ define({
 	'globalModules': [],
 	// All esprima API options are supported: http://esprima.org/doc/
 	'esprima': {
-	    'comment': true,
-	    'loc': true,
-	    'range': true,
-	    'tokens': true
+		'comment': true,
+		'loc': true,
+		'range': true,
+		'tokens': true
 	},
 	// All escodegen API options are supported: https://github.com/Constellation/escodegen/wiki/API
 	'escodegen': {
-	    'comment': true,
-	    'format': {
-	      'indent': {
-	        'adjustMultilineComment': true
-	      }
-	    }
+		'comment': true,
+		'format': {
+			'indent': {
+				'style': '  ',
+				'adjustMultilineComment': true
+			}
+		}
 	},
 	// If there is a comment (that contains the following text) on the same line or one line above a specific module, the module will not be removed
 	'commentCleanName': 'amdclean',
@@ -60,8 +61,8 @@ define({
 	// This should only be used when using the onModuleBundleComplete RequireJS Optimizer build hook
 	// If it is used with the onBuildWrite RequireJS Optimizer build hook, each module will get wrapped
 	'wrap': {
-	    'start': ';(function() {\n',
-	    'end': '\n}());'
+		'start': ';(function() {\n',
+		'end': '\n}());'
 	},
 	// Determines if certain aggressive file size optimization techniques will be used to transform the soure code
 	'aggressiveOptimizations': false

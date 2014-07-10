@@ -3,17 +3,17 @@
 // Removes any AMD and/or CommonJS trace from the provided source code
 
 define([
-	'utils',
+    'utils',
     'defaultValues',
-	'traverseAndUpdateAst',
+    'traverseAndUpdateAst',
     'findAndStoreAllModuleIds',
     'createAst',
     'generateCode',
     'normalizeModuleName'
 ], function(
-	utils,
+    utils,
     defaultValues,
-	traverseAndUpdateAst,
+    traverseAndUpdateAst,
     findAndStoreAllModuleIds,
     createAst,
     generateCode,
@@ -26,7 +26,7 @@ define([
         var amdclean = this,
             options = amdclean.options,
             ignoreModules = options.ignoreModules,
-        	originalAst = {},
+            originalAst = {},
             ast = {},
             generatedCode,
             declarations = [],
@@ -76,7 +76,7 @@ define([
                         if(node['arguments'] && node['arguments'][0] && node['arguments'][0].value) {
                             normalizedModuleName = normalizeModuleName.call(amdclean, node['arguments'][0].value);
 
-							if(ignoreModules.indexOf(normalizedModuleName) === -1) {
+                            if(ignoreModules.indexOf(normalizedModuleName) === -1) {
 	                            return {
 	                                'type': 'Identifier',
 	                                'name': normalizedModuleName,
@@ -84,7 +84,7 @@ define([
 	                                'loc': (node.loc || defaultLOC)
 	                            };
 	                        } else {
-	                        	return node;
+                                return node;
 	                        }
                         } else {
                             return node;

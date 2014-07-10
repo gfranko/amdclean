@@ -4,26 +4,26 @@
 // Internally calls either convertToIIFE() or convertToIIFEDeclaration()
 
 define([
-	'utils',
-	'convertToIIFE',
-	'convertToIIFEDeclaration',
+    'utils',
+    'convertToIIFE',
+    'convertToIIFEDeclaration',
     'defaultValues',
     'normalizeModuleName',
     'defaultValues'
 ], function(
-	utils,
-	convertToIIFE,
-	convertToIIFEDeclaration,
+    utils,
+    convertToIIFE,
+    convertToIIFEDeclaration,
     defaultValues,
     normalizeModuleName,
     defaultValues
 ) {
     return function convertToFunctionExpression(obj) {
         var amdclean = this,
-        	options = amdclean.options,
+            options = amdclean.options,
             ignoreModules = options.ignoreModules,
             node = obj.node,
-        	isDefine = obj.isDefine,
+            isDefine = obj.isDefine,
             isRequire = obj.isRequire,
             isOptimized = false,
             moduleName  = obj.moduleName,

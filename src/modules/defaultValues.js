@@ -7,19 +7,19 @@ define({
 	// -------------------
 	// Variable names that are not allowed as dependencies to functions
 	'dependencyBlacklist': {
-	    'require': 'remove',
-	    'exports': true,
-	    'module': 'remove'
+		'require': 'remove',
+		'exports': true,
+		'module': 'remove'
 	},
 
 	// defaultLOC
 	// ----------
 	// Default line of code property
 	'defaultLOC': {
-	    'start': {
-	        'line': 0,
-	        'column': 0
-	    }
+		'start': {
+			'line': 0,
+			'column': 0
+		}
 	},
 
 	// defaultRange

@@ -10,14 +10,14 @@ define([
 	normalizeModuleName
 ) {
 	return function getNormalizedModuleName(node) {
-	    if(!utils.isDefine(node)) {
-	        return;
-	    }
+		if(!utils.isDefine(node)) {
+			return;
+		}
 
-	    var amdclean = this,
-	    	moduleId = node.expression['arguments'][0].value,
-	        moduleName = normalizeModuleName.call(amdclean, moduleId);
+		var amdclean = this,
+			moduleId = node.expression['arguments'][0].value,
+			moduleName = normalizeModuleName.call(amdclean, moduleId);
 
-	    return moduleName;
+		return moduleName;
 	};
 });
