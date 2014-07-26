@@ -1,4 +1,4 @@
-/*! amdclean - v2.2.3 - 2014-07-10
+/*! amdclean - v2.2.4 - 2014-07-26
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko */
 
@@ -157,8 +157,12 @@ utils = function () {
               'value': 'function'
             }
           };
+        var reversedMatchObject = {
+            'left': matchObject.right,
+            'right': matchObject.left
+          };
         try {
-          return _.where(node.test, matchObject).length || _.where([node.test], matchObject).length || _.where(node.test.left, matchObject).length || _.where([node.test.left], matchObject).length;
+          return _.where(node.test, matchObject).length || _.where([node.test], matchObject).length || _.where(node.test.left, matchObject).length || _.where([node.test.left], matchObject).length || _.where(node.test, reversedMatchObject).length || _.where([node.test], reversedMatchObject).length || _.where(node.test.left, reversedMatchObject).length || _.where([node.test.left], reversedMatchObject).length;
         } catch (e) {
           return false;
         }
@@ -1468,7 +1472,7 @@ clean = function clean() {
       },
       // The object that is publicly accessible
       publicAPI = {
-        'VERSION': '2.2.3',
+        'VERSION': '2.2.4',
         'clean': function (options, overloadedOptions) {
           // Creates a new AMDclean instance
           var amdclean = new AMDclean(options, overloadedOptions), cleanedCode = amdclean.clean();
