@@ -703,6 +703,25 @@ describe('amdclean specs', function() {
 				expect(cleanedCode).toBe(standardJavaScript);
 			});
 
+			it('should correctly convert libraries with simple reversed conditional AMD checks', function() {
+				var AMDcode = "(function (root, factory) {" +
+					"'use strict';" +
+					"if ('function' === typeof define) {" +
+					"define('esprima', ['exports'], factory);" +
+					"} else if (typeof exports !== 'undefined') {" +
+					"factory(exports);" +
+					"} else {" +
+					"factory((root.esprima = {}));" +
+					"}" +
+					"}(this, function (exports) {" +
+					"var test = true;" +
+					"}));",
+					cleanedCode = amdclean.clean(AMDcode, defaultOptions),
+					standardJavaScript = "var esprima;(function(root,factory){'use strict';if(true){esprima=function (exports){return typeof factory==='function'?factory(exports):factory;}({});}else if(typeof exports!=='undefined'){factory(exports);}else{factory(root.esprima={});}}(this,function(exports){exports=exports||{};var test=true;return exports;}));";
+
+				expect(cleanedCode).toBe(standardJavaScript);
+			});
+
 		});
 
 	});
