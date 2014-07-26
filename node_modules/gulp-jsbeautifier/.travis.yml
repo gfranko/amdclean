@@ -1,0 +1,7 @@
+language: node_js
+node_js:
+  - "0.10"
+  - "0.11"
+env:
+  global:
+    - COVERALLS_REPO_TOKEN=sqDxXMd01aMtd3rb6tzOL8BsrsUOV4I66
