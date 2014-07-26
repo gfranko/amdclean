@@ -136,11 +136,20 @@ define([
 				}
 			};
 
+			var reversedMatchObject = {
+				'left': matchObject.right,
+				'right': matchObject.left
+			};
+
 			try {
 				return (_.where(node.test, matchObject).length ||
 					_.where([node.test], matchObject).length ||
 					_.where(node.test.left, matchObject).length ||
-					_.where([node.test.left], matchObject).length);
+					_.where([node.test.left], matchObject).length ||
+					_.where(node.test, reversedMatchObject).length ||
+					_.where([node.test], reversedMatchObject).length ||
+					_.where(node.test.left, reversedMatchObject).length ||
+					_.where([node.test.left], reversedMatchObject).length);
 			} catch(e) {
 				return false;
 			}
