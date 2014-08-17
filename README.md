@@ -125,7 +125,6 @@ module.exports = function(grunt) {
           'findNestedDependencies': true,
           'baseUrl': 'src/js/app/modules',
           'optimize': 'none',
-          'skipModuleInsertion': true,
           'mainConfigFile': 'src/js/app/config/config.js',
           'include': ['first'],
           'out': 'src/js/app/exampleLib.js',
@@ -158,7 +157,6 @@ gulp.task('build', function() {
     'findNestedDependencies': true,
     'baseUrl': './src/',
     'optimize': 'none',
-    'skipModuleInsertion': true,
     'include': ['first'],
     'out': './build/example.js',
     'onModuleBundleComplete': function(data) {
@@ -593,7 +591,7 @@ __After I build with AMDclean, I am getting JavaScript errors.  What gives?__
 
 - There could be a couple of reasons:
 
-  * Make sure to set the Require.js `skipModuleInsertion` option to `true`. By default, Require.js creates a `define()` wrapper for files that are not wrapped in a `define()`. This can cause issues with AMDclean.
+  * If you are **NOT** using the Require.js `shim` configuration, then make sure to set the Require.js `skipModuleInsertion` option to `true`. By default, Require.js creates a `define()` wrapper for files that are not wrapped in a `define()`. This can cause issues with AMDclean.
 
   * Make sure you are not pointing to minified files when building with AMDclean. This will definitely cause issues.
 
