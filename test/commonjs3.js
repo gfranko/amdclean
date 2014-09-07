@@ -1,4 +1,4 @@
 exports.exampleFunc = function() {
-	var test = true;
-	return test;
+  var test = true;
+  return test;
 }

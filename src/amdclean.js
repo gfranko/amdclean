@@ -1,4 +1,4 @@
-/*! amdclean - v2.2.4 - 2014-07-26
+/*! amdclean - v2.2.5 - 2014-09-07
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko */
 
@@ -140,8 +140,11 @@ utils = function () {
       'isUseStrict': function (expression) {
         return expression && expression && expression.value === 'use strict' && expression.type === 'Literal';
       },
+      'isIfStatement': function (node) {
+        return node && node.type === 'IfStatement' && node.test;
+      },
       'isAMDConditional': function (node) {
-        if (node && node.type !== 'IfStatement' || !node.test || !node.test.left) {
+        if (!Utils.isIfStatement(node)) {
           return false;
         }
         var matchObject = {
@@ -156,13 +159,12 @@ utils = function () {
               'type': 'Literal',
               'value': 'function'
             }
-          };
-        var reversedMatchObject = {
+          }, reversedMatchObject = {
             'left': matchObject.right,
             'right': matchObject.left
           };
         try {
-          return _.where(node.test, matchObject).length || _.where([node.test], matchObject).length || _.where(node.test.left, matchObject).length || _.where([node.test.left], matchObject).length || _.where(node.test, reversedMatchObject).length || _.where([node.test], reversedMatchObject).length || _.where(node.test.left, reversedMatchObject).length || _.where([node.test.left], reversedMatchObject).length;
+          return _.find([node.test], matchObject) || _.find([node.test], reversedMatchObject) || _.find([node.test.left || {}], matchObject) || _.find([node.test.left || {}], reversedMatchObject);
         } catch (e) {
           return false;
         }
@@ -1472,7 +1474,7 @@ clean = function clean() {
       },
       // The object that is publicly accessible
       publicAPI = {
-        'VERSION': '2.2.4',
+        'VERSION': '2.2.5',
         'clean': function (options, overloadedOptions) {
           // Creates a new AMDclean instance
           var amdclean = new AMDclean(options, overloadedOptions), cleanedCode = amdclean.clean();

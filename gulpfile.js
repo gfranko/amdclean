@@ -16,16 +16,16 @@ var gulp = require('gulp'),
   currentDate = (function() {
     var today = new Date(),
       dd = today.getDate(),
-      mm = today.getMonth()+1,
+      mm = today.getMonth() + 1,
       yyyy = today.getFullYear();
 
-    if(dd<10) {
-        dd = '0' + dd
-    } 
+    if (dd < 10) {
+      dd = '0' + dd
+    }
 
-    if(mm<10) {
-        mm = '0' + mm
-    } 
+    if (mm < 10) {
+      mm = '0' + mm
+    }
 
     today = yyyy + '-' + mm + '-' + dd;
     return today;
@@ -37,8 +37,8 @@ var gulp = require('gulp'),
     return yyyy;
   }()),
   headerText = '/*! amdclean - v' + packageJson.version + ' - ' + currentDate +
-               '\n* http://gregfranko.com/amdclean' +
-               '\n* Copyright (c) ' + currentYear + ' Greg Franko */\n',
+  '\n* http://gregfranko.com/amdclean' +
+  '\n* Copyright (c) ' + currentYear + ' Greg Franko */\n',
   error = false;
 
 gulp.task('build', function() {
@@ -68,21 +68,21 @@ gulp.task('build', function() {
               },
               'createAnonymousAMDModule': true
             });
-          } catch(e) {
+          } catch (e) {
             error = true;
             return '' + e;
           }
         }()),
         fullCode = headerText + licenseText + cleanedCode;
 
-      if(error) {
+      if (error) {
         console.log('Looks like there was an error building, stopping the build... ' + cleanedCode);
         return;
       }
       fs.writeFileSync(outputFile, fullCode);
     }
   }, function() {
-    if(!error) {
+    if (!error) {
       gulp.run('lint', 'test', 'minify');
     }
   }, function(err) {
@@ -100,7 +100,7 @@ gulp.task('lint', function() {
 
 gulp.task('test', function() {
   gulp.src('test/specs/convert.js')
-      .pipe(jasmine());
+    .pipe(jasmine());
 });
 
 gulp.task('minify', function() {
