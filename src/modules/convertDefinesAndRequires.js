@@ -157,8 +157,6 @@ define([
 
         if (_.contains(options.removeModules, moduleName)) {
 
-          amdclean.storedModules[moduleName] = false;
-
           // Remove the current module from the source
           return {
             'type': 'EmptyStatement'

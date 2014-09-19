@@ -3,7 +3,6 @@
 */
 var gulp = require('gulp'),
   uglify = require('gulp-uglify'),
-  beautify = require('gulp-jsbeautifier'),
   jshint = require('gulp-jshint'),
   jasmine = require('gulp-jasmine'),
   rename = require('gulp-rename'),
