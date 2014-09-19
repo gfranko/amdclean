@@ -170,7 +170,7 @@ describe('amdclean specs', function() {
             'removeModules': ['exampleModule']
           }),
           cleanedCode = amdclean.clean(AMDcode, options),
-          standardJavaScript = "var exampleModule2;exampleModule2=undefined;";
+          standardJavaScript = "var exampleModule,exampleModule2;exampleModule2=undefined;";
 
         expect(cleanedCode).toBe(standardJavaScript);
       });

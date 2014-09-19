@@ -1,4 +1,4 @@
-/*! amdclean - v2.2.5 - 2014-09-19
+/*! amdclean - v2.2.6 - 2014-09-19
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko */
 
