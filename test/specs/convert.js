@@ -195,7 +195,7 @@ describe('amdclean specs', function() {
       });
 
       it('should support setting the module return value via the shimOverrides option', function() {
-        var AMDcode = "define('backbone', ['underscore', 'jquery'], (function (global) { return function () { var ret, fn; return ret || global.Backbone; }; }(this)));",
+        var AMDcode = "define('backbone', ['underscore', 'jquery'], (function (global) { return {}; }(this)));",
           options = _.merge(_.cloneDeep(defaultOptions), {
             'shimOverrides': {
               'backbone': 'window.Backbone'
