@@ -207,6 +207,19 @@ describe('amdclean specs', function() {
         expect(cleanedCode).toBe(standardJavaScript);
       });
 
+      it('should support specifying shimOverrides with module identifier', function() {
+        var AMDcode = "define('bower_components/backbone/backbone', ['underscore', 'jquery'], (function (global) { return {}; }(this)));",
+          options = _.merge(_.cloneDeep(defaultOptions), {
+            'shimOverrides': {
+              'bower_components/backbone/backbone': 'window.Backbone'
+            }
+          }),
+          cleanedCode = amdclean.clean(AMDcode, options),
+          standardJavaScript = "var bower_components_backbone_backbone;bower_components_backbone_backbone=window.Backbone;";
+
+        expect(cleanedCode).toBe(standardJavaScript);
+      });
+
       it('should support converting define() methods with identifiers', function() {
         var AMDcode = "define('esprima', ['exports'], factory);",
           cleanedCode = amdclean.clean(AMDcode, defaultOptions),
