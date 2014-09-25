@@ -220,6 +220,19 @@ describe('amdclean specs', function() {
         expect(cleanedCode).toBe(standardJavaScript);
       });
 
+      it('should correctly rewrite shimmed functions', function() {
+        var AMDcode = "define('browserglobal', (function (global) { return function () { var ret, fn; return ret || global.BrowserGlobal; }; }(this)));",
+          options = _.merge(_.cloneDeep(defaultOptions), {
+            'shimOverrides': {
+              'browserglobal': 'BrowserGlobal'
+            }
+          }),
+          cleanedCode = amdclean.clean(AMDcode, options),
+          standardJavaScript = "var browserglobal;browserglobal=BrowserGlobal;";
+
+        expect(cleanedCode).toBe(standardJavaScript);
+      });
+
       it('should support converting define() methods with identifiers', function() {
         var AMDcode = "define('esprima', ['exports'], factory);",
           cleanedCode = amdclean.clean(AMDcode, defaultOptions),

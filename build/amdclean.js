@@ -1035,8 +1035,7 @@ convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
         } else {
           params.moduleReturnValue = moduleReturnValue;
         }
-      }
-      if (params.moduleReturnValue && params.moduleReturnValue.type === 'Identifier') {
+      } else if (params.moduleReturnValue && params.moduleReturnValue.type === 'Identifier') {
         type = 'functionExpression';
       }
       if (_.contains(options.ignoreModules, moduleName)) {

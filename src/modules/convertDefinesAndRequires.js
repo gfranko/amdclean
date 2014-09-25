@@ -175,9 +175,7 @@ define([
           } else {
             params.moduleReturnValue = moduleReturnValue;
           }
-        }
-
-        if (params.moduleReturnValue && params.moduleReturnValue.type === 'Identifier') {
+        } else if (params.moduleReturnValue && params.moduleReturnValue.type === 'Identifier') {
           type = 'functionExpression';
         }
 
