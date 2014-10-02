@@ -195,7 +195,7 @@ describe('amdclean specs', function() {
       });
 
       it('should support setting the module return value via the shimOverrides option', function() {
-        var AMDcode = "define('backbone', ['underscore', 'jquery'], (function (global) { return function () { var ret, fn; return ret || global.Backbone; }; }(this)));",
+        var AMDcode = "define('backbone', ['underscore', 'jquery'], (function (global) { return {}; }(this)));",
           options = _.merge(_.cloneDeep(defaultOptions), {
             'shimOverrides': {
               'backbone': 'window.Backbone'
@@ -203,6 +203,32 @@ describe('amdclean specs', function() {
           }),
           cleanedCode = amdclean.clean(AMDcode, options),
           standardJavaScript = "var backbone;backbone=window.Backbone;";
+
+        expect(cleanedCode).toBe(standardJavaScript);
+      });
+
+      it('should support specifying shimOverrides with module identifier', function() {
+        var AMDcode = "define('bower_components/backbone/backbone', ['underscore', 'jquery'], (function (global) { return {}; }(this)));",
+          options = _.merge(_.cloneDeep(defaultOptions), {
+            'shimOverrides': {
+              'bower_components/backbone/backbone': 'window.Backbone'
+            }
+          }),
+          cleanedCode = amdclean.clean(AMDcode, options),
+          standardJavaScript = "var bower_components_backbone_backbone;bower_components_backbone_backbone=window.Backbone;";
+
+        expect(cleanedCode).toBe(standardJavaScript);
+      });
+
+      it('should correctly rewrite shimmed functions', function() {
+        var AMDcode = "define('browserglobal', (function (global) { return function () { var ret, fn; return ret || global.BrowserGlobal; }; }(this)));",
+          options = _.merge(_.cloneDeep(defaultOptions), {
+            'shimOverrides': {
+              'browserglobal': 'BrowserGlobal'
+            }
+          }),
+          cleanedCode = amdclean.clean(AMDcode, options),
+          standardJavaScript = "var browserglobal;browserglobal=BrowserGlobal;";
 
         expect(cleanedCode).toBe(standardJavaScript);
       });

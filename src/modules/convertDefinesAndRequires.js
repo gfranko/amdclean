@@ -163,8 +163,8 @@ define([
           };
         }
 
-        if (_.isObject(options.shimOverrides) && options.shimOverrides[moduleName]) {
-          params.moduleReturnValue = createAst.call(amdclean, options.shimOverrides[moduleName]);
+        if (_.isObject(options.shimOverrides) && options.shimOverrides[moduleId]) {
+          params.moduleReturnValue = createAst.call(amdclean, options.shimOverrides[moduleId]);
 
           if (_.isArray(params.moduleReturnValue.body) && _.isObject(params.moduleReturnValue.body[0])) {
 
@@ -175,9 +175,7 @@ define([
           } else {
             params.moduleReturnValue = moduleReturnValue;
           }
-        }
-
-        if (params.moduleReturnValue && params.moduleReturnValue.type === 'Identifier') {
+        } else if (params.moduleReturnValue && params.moduleReturnValue.type === 'Identifier') {
           type = 'functionExpression';
         }
 

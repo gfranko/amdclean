@@ -1,4 +1,4 @@
-/*! amdclean - v2.2.6 - 2014-09-19
+/*! amdclean - v2.2.6 - 2014-09-25
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko */
 
@@ -1025,8 +1025,8 @@ convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
         // Remove the current module from the source
         return { 'type': 'EmptyStatement' };
       }
-      if (_.isObject(options.shimOverrides) && options.shimOverrides[moduleName]) {
-        params.moduleReturnValue = createAst.call(amdclean, options.shimOverrides[moduleName]);
+      if (_.isObject(options.shimOverrides) && options.shimOverrides[moduleId]) {
+        params.moduleReturnValue = createAst.call(amdclean, options.shimOverrides[moduleId]);
         if (_.isArray(params.moduleReturnValue.body) && _.isObject(params.moduleReturnValue.body[0])) {
           if (_.isObject(params.moduleReturnValue.body[0].expression)) {
             params.moduleReturnValue = params.moduleReturnValue.body[0].expression;
@@ -1035,8 +1035,7 @@ convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
         } else {
           params.moduleReturnValue = moduleReturnValue;
         }
-      }
-      if (params.moduleReturnValue && params.moduleReturnValue.type === 'Identifier') {
+      } else if (params.moduleReturnValue && params.moduleReturnValue.type === 'Identifier') {
         type = 'functionExpression';
       }
       if (_.contains(options.ignoreModules, moduleName)) {
