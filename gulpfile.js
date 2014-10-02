@@ -40,7 +40,7 @@ var gulp = require('gulp'),
   '\n* Copyright (c) ' + currentYear + ' Greg Franko */\n',
   error = false;
 
-gulp.task('build', function() {
+gulp.task('build', function(cb) {
   requirejs.optimize({
     'findNestedDependencies': false,
     'baseUrl': './src/modules/',
@@ -82,14 +82,15 @@ gulp.task('build', function() {
     }
   }, function() {
     if (!error) {
-      gulp.run('lint', 'test', 'minify');
+      cb();
     }
   }, function(err) {
-    console.log('Looks like there was an error building, stopping the build... ', err);
+    console.log('Looks like there was an error building, stopping the build... ');
+    return cb(err); // return error
   });
 });
 
-gulp.task('lint', function() {
+gulp.task('lint', ['build'], function() {
   gulp.src('src/amdclean.js')
     .pipe(jshint({
       'evil': true
@@ -97,12 +98,12 @@ gulp.task('lint', function() {
     .pipe(jshint.reporter('default'));
 });
 
-gulp.task('test', function() {
+gulp.task('test', ['build', 'lint'], function() {
   gulp.src('test/specs/convert.js')
     .pipe(jasmine());
 });
 
-gulp.task('minify', function() {
+gulp.task('minify', ['build', 'lint', 'test'], function() {
   gulp.src(['src/amdclean.js'])
     .pipe(gulp.dest('build/'))
     .pipe(uglify())
@@ -112,12 +113,13 @@ gulp.task('minify', function() {
 });
 
 // The default task (called when you run `gulp`)
-gulp.task('default', function() {
-  gulp.run('build');
-});
+gulp.task('default', ['build', 'lint', 'test', 'minify']);
 
-gulp.task('amdclean-watch', function() {
-  gulp.watch('src/modules/*.js', function(event) {
-    gulp.run('build');
+// The watch task that runs the default task on any gifshot module file changes
+gulp.task('watch', function() {
+  var watcher = gulp.watch('src/modules/*.js', ['default']);
+
+  watcher.on('change', function(event) {
+    console.log('File ' + event.path + ' was ' + event.type + ', running tasks...');
   });
 });

@@ -582,7 +582,7 @@ If your PR is a code change:
 6.  Verify that the minified output file has been updated in `build/amdclean.min.js`
 7.  Send the PR!
 
-**Note:** There is a gulp `watch` set up called, `amdclean-watch`, that will automatically lint, minify, unit test, and build AMDclean whenever a module inside of the `src/modules` directory is changed.  I recommend using it.
+**Note:** There is a gulp `watch` task that will automatically lint, minify, unit test, and build AMDclean whenever a module inside of the `src/modules` directory is changed.  I recommend using it.
 
 
 ## FAQ
