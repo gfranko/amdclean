@@ -147,7 +147,7 @@ require([
       // The object that is publicly accessible
       publicAPI = {
         // Current project version number
-        'VERSION': '2.2.5',
+        'VERSION': '2.2.7',
         'clean': function(options, overloadedOptions) {
           // Creates a new AMDclean instance
           var amdclean = new AMDclean(options, overloadedOptions),

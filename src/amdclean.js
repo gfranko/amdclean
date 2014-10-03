@@ -1,4 +1,4 @@
-/*! amdclean - v2.2.6 - 2014-10-01
+/*! amdclean - v2.2.7 - 2014-10-02
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko */
 
@@ -34,15 +34,22 @@ var esprima, estraverse, escodegen, _;
 // AMDclean default options
 var errorMsgs, defaultValues, utils, convertToIIFE, convertToIIFEDeclaration, normalizeModuleName, convertToFunctionExpression, convertToObjectDeclaration, createAst, convertDefinesAndRequires, traverseAndUpdateAst, getNormalizedModuleName, findAndStoreAllModuleIds, generateCode, clean, _defaultOptions_;
 _defaultOptions_ = {
+  // The source code you would like to be 'cleaned'
   'code': '',
+  // The relative file path of the file to be cleaned.  Use this option if you are not using the code option.
+  // Hint: Use the __dirname trick
   'filePath': '',
+  // The modules that you would like to set as window properties
+  // An array of strings (module names)
   'globalModules': [],
+  // All esprima API options are supported: http://esprima.org/doc/
   'esprima': {
     'comment': true,
     'loc': true,
     'range': true,
     'tokens': true
   },
+  // All escodegen API options are supported: https://github.com/Constellation/escodegen/wiki/API
   'escodegen': {
     'comment': true,
     'format': {
@@ -52,35 +59,60 @@ _defaultOptions_ = {
       }
     }
   },
+  // If there is a comment (that contains the following text) on the same line or one line above a specific module, the module will not be removed
   'commentCleanName': 'amdclean',
+  // The ids of all of the modules that you would not like to be 'cleaned'
   'ignoreModules': [],
+  // Determines which modules will be removed from the cleaned code
   'removeModules': [],
+  // Determines if all of the require() method calls will be removed
   'removeAllRequires': false,
+  // Determines if all of the 'use strict' statements will be removed
   'removeUseStricts': true,
+  // Determines if conditional AMD checks are transformed
+  // e.g. if(typeof define == 'function') {} -> if(true) {}
   'transformAMDChecks': true,
+  // Determines if a named or anonymous AMD module will be created inside of your conditional AMD check
+  // Note: This is only applicable to JavaScript libraries, do not change this for web apps
+  // If set to true: e.g. define('example', [], function() {}) -> define([], function() {})
   'createAnonymousAMDModule': false,
+  // Allows you to pass an expression that will override shimmed modules return values
+  // e.g. { 'backbone': 'window.Backbone' }
   'shimOverrides': {},
+  // Determines how to prefix a module name with when a non-JavaScript compatible character is found 
+  // 'standard' or 'camelCase'
+  // 'standard' example: 'utils/example' -> 'utils_example'
+  // 'camelCase' example: 'utils/example' -> 'utilsExample'
   'prefixMode': 'standard',
+  // A function hook that allows you add your own custom logic to how each module name is prefixed/normalized
   'prefixTransform': function (moduleName) {
     return moduleName;
   },
+  // Wrap any build bundle in a start and end text specified by wrap
+  // This should only be used when using the onModuleBundleComplete RequireJS Optimizer build hook
+  // If it is used with the onBuildWrite RequireJS Optimizer build hook, each module will get wrapped
   'wrap': {
     'start': ';(function() {\n',
     'end': '\n}());'
   },
+  // Determines if certain aggressive file size optimization techniques will be used to transform the soure code
   'aggressiveOptimizations': false
 };
 // errorMsgs.js
 // ============
 // AMDclean error messages
 errorMsgs = {
+  // The user has not supplied the cliean method with any code
   'emptyCode': 'There is no code to generate the AST with',
+  // An AST has not been correctly returned by Esprima
   'emptyAst': function (methodName) {
     return 'An AST is not being passed to the ' + methodName + '() method';
   },
+  // A parameter is not an object literal (which is expected)
   'invalidObject': function (methodName) {
     return 'An object is not being passed as the first parameter to the ' + methodName + '() method';
   },
+  // Third-party dependencies have not been included on the page
   'lodash': 'Make sure you have included lodash (https://github.com/lodash/lodash).',
   'esprima': 'Make sure you have included esprima (https://github.com/ariya/esprima).',
   'estraverse': 'Make sure you have included estraverse (https://github.com/Constellation/estraverse).',
@@ -90,17 +122,26 @@ errorMsgs = {
 // ================
 // Stores static default values
 defaultValues = {
+  // dependencyBlacklist
+  // -------------------
+  // Variable names that are not allowed as dependencies to functions
   'dependencyBlacklist': {
     'require': 'remove',
     'exports': true,
     'module': 'remove'
   },
+  // defaultLOC
+  // ----------
+  // Default line of code property
   'defaultLOC': {
     'start': {
       'line': 0,
       'column': 0
     }
   },
+  // defaultRange
+  // ------------
+  // Default range property
   'defaultRange': [
     0,
     0
@@ -111,140 +152,196 @@ defaultValues = {
 // Abstract Syntax Tree (AST) and other helper utility methods
 utils = function () {
   var Utils = {
-      'isDefine': function (node) {
-        var expression = node.expression || {}, callee = expression.callee;
-        return _.isObject(node) && node.type === 'ExpressionStatement' && expression && expression.type === 'CallExpression' && callee.type === 'Identifier' && callee.name === 'define';
-      },
-      'isRequire': function (node) {
-        var expression = node.expression || {}, callee = expression.callee;
-        return node && node.type === 'ExpressionStatement' && expression && expression.type === 'CallExpression' && callee.type === 'Identifier' && callee.name === 'require';
-      },
-      'isModuleExports': function (node) {
-        if (!node) {
-          return false;
-        }
-        return node.type === 'AssignmentExpression' && node.left && node.left.type === 'MemberExpression' && node.left.object && node.left.object.type === 'Identifier' && node.left.object.name === 'module' && node.left.property && node.left.property.type === 'Identifier' && node.left.property.name === 'exports';
-      },
-      'isRequireExpression': function (node) {
-        return node && node.type === 'CallExpression' && node.callee && node.callee.name === 'require';
-      },
-      'isObjectExpression': function (expression) {
-        return expression && expression && expression.type === 'ObjectExpression';
-      },
-      'isFunctionExpression': function (expression) {
-        return expression && expression && expression.type === 'FunctionExpression';
-      },
-      'isFunctionCallExpression': function (expression) {
-        return expression && expression && expression.type === 'CallExpression' && expression.callee && expression.callee.type === 'FunctionExpression';
-      },
-      'isUseStrict': function (expression) {
-        return expression && expression && expression.value === 'use strict' && expression.type === 'Literal';
-      },
-      'isIfStatement': function (node) {
-        return node && node.type === 'IfStatement' && node.test;
-      },
-      'isAMDConditional': function (node) {
-        if (!Utils.isIfStatement(node)) {
-          return false;
-        }
-        var matchObject = {
-            'left': {
-              'operator': 'typeof',
-              'argument': {
-                'type': 'Identifier',
-                'name': 'define'
-              }
-            },
-            'right': {
-              'type': 'Literal',
-              'value': 'function'
+    // isDefine
+    // --------
+    // Returns if the current AST node is a define() method call
+    'isDefine': function (node) {
+      var expression = node.expression || {}, callee = expression.callee;
+      return _.isObject(node) && node.type === 'ExpressionStatement' && expression && expression.type === 'CallExpression' && callee.type === 'Identifier' && callee.name === 'define';
+    },
+    // isRequire
+    // ---------
+    // Returns if the current AST node is a require() method call
+    'isRequire': function (node) {
+      var expression = node.expression || {}, callee = expression.callee;
+      return node && node.type === 'ExpressionStatement' && expression && expression.type === 'CallExpression' && callee.type === 'Identifier' && callee.name === 'require';
+    },
+    // isModuleExports
+    // ---------------
+    // Is a module.exports member expression
+    'isModuleExports': function (node) {
+      if (!node) {
+        return false;
+      }
+      return node.type === 'AssignmentExpression' && node.left && node.left.type === 'MemberExpression' && node.left.object && node.left.object.type === 'Identifier' && node.left.object.name === 'module' && node.left.property && node.left.property.type === 'Identifier' && node.left.property.name === 'exports';
+    },
+    // isRequireExpression
+    // -------------------
+    // Returns if the current AST node is a require() call expression
+    // e.g. var example = require('someModule');
+    'isRequireExpression': function (node) {
+      return node && node.type === 'CallExpression' && node.callee && node.callee.name === 'require';
+    },
+    // isObjectExpression
+    // ------------------
+    // Returns if the current AST node is an object literal
+    'isObjectExpression': function (expression) {
+      return expression && expression && expression.type === 'ObjectExpression';
+    },
+    // isFunctionExpression
+    // --------------------
+    // Returns if the current AST node is a function
+    'isFunctionExpression': function (expression) {
+      return expression && expression && expression.type === 'FunctionExpression';
+    },
+    // isFunctionCallExpression
+    // ------------------------
+    // Returns if the current AST node is a function call expression
+    'isFunctionCallExpression': function (expression) {
+      return expression && expression && expression.type === 'CallExpression' && expression.callee && expression.callee.type === 'FunctionExpression';
+    },
+    // isUseStrict
+    // -----------
+    // Returns if the current AST node is a 'use strict' expression
+    // e.g. 'use strict'
+    'isUseStrict': function (expression) {
+      return expression && expression && expression.value === 'use strict' && expression.type === 'Literal';
+    },
+    // isIfStatement
+    // -------------
+    // Returns if the current AST node is an if statement
+    // e.g. if(true) {}
+    'isIfStatement': function (node) {
+      return node && node.type === 'IfStatement' && node.test;
+    },
+    // isAMDConditional
+    // ----------------
+    // Returns if the current AST node is an if statement AMD check
+    // e.g. if(typeof define === 'function') {}
+    'isAMDConditional': function (node) {
+      if (!Utils.isIfStatement(node)) {
+        return false;
+      }
+      var matchObject = {
+          'left': {
+            'operator': 'typeof',
+            'argument': {
+              'type': 'Identifier',
+              'name': 'define'
             }
-          }, reversedMatchObject = {
-            'left': matchObject.right,
-            'right': matchObject.left
-          };
-        try {
-          return _.find([node.test], matchObject) || _.find([node.test], reversedMatchObject) || _.find([node.test.left || {}], matchObject) || _.find([node.test.left || {}], reversedMatchObject);
-        } catch (e) {
-          return false;
-        }
-      },
-      'returnExpressionIdentifier': function (name) {
-        return {
-          'type': 'ExpressionStatement',
-          'expression': {
-            'type': 'Identifier',
-            'name': name,
-            'range': defaultValues.defaultRange,
-            'loc': defaultValues.defaultLOC
           },
+          'right': {
+            'type': 'Literal',
+            'value': 'function'
+          }
+        }, reversedMatchObject = {
+          'left': matchObject.right,
+          'right': matchObject.left
+        };
+      try {
+        return _.find([node.test], matchObject) || _.find([node.test], reversedMatchObject) || _.find([node.test.left || {}], matchObject) || _.find([node.test.left || {}], reversedMatchObject);
+      } catch (e) {
+        return false;
+      }
+    },
+    // returnExpressionIdentifier
+    // --------------------------
+    // Returns a single identifier
+    // e.g. module
+    'returnExpressionIdentifier': function (name) {
+      return {
+        'type': 'ExpressionStatement',
+        'expression': {
+          'type': 'Identifier',
+          'name': name,
           'range': defaultValues.defaultRange,
           'loc': defaultValues.defaultLOC
-        };
-      },
-      'readFile': function (path) {
-        if (typeof exports !== 'undefined') {
-          var fs = require('fs');
-          return fs.readFileSync(path, 'utf8');
-        } else {
-          return '';
-        }
-      },
-      'isRelativeFilePath': function (path) {
-        var segments = path.split('/');
-        return segments.length !== -1 && (segments[0] === '.' || segments[0] === '..');
-      },
-      convertToCamelCase: function (input, delimiter) {
-        delimiter = delimiter || '_';
-        return input.replace(new RegExp(delimiter + '(.)', 'g'), function (match, group1) {
-          return group1.toUpperCase();
-        });
-      },
-      'prefixReservedWords': function (name) {
-        var reservedWord = false;
-        try {
-          if (name.length) {
-            eval('var ' + name + ' = 1;');
-          }
-        } catch (e) {
-          reservedWord = true;
-        }
-        if (reservedWord === true) {
-          return '_' + name;
-        } else {
-          return name;
-        }
-      },
-      'normalizeDependencyName': function (moduleId, dep) {
-        if (!moduleId || !dep || !Utils.isRelativeFilePath(dep)) {
-          return dep;
-        }
-        var normalizePath = function (path) {
-            var segments = path.split('/'), normalizedSegments;
-            normalizedSegments = _.reduce(segments, function (memo, segment) {
-              switch (segment) {
-              case '.':
-                break;
-              case '..':
-                memo.pop();
-                break;
-              default:
-                memo.push(segment);
-              }
-              return memo;
-            }, []);
-            return normalizedSegments.join('/');
-          }, baseName = function (path) {
-            var segments = path.split('/');
-            segments.pop();
-            return segments.join('/');
-          };
-        return normalizePath([
-          baseName(moduleId),
-          dep
-        ].join('/'));
+        },
+        'range': defaultValues.defaultRange,
+        'loc': defaultValues.defaultLOC
+      };
+    },
+    // readFile
+    // --------
+    // Synchronous file reading for node
+    'readFile': function (path) {
+      if (typeof exports !== 'undefined') {
+        var fs = require('fs');
+        return fs.readFileSync(path, 'utf8');
+      } else {
+        return '';
       }
-    };
+    },
+    // isRelativeFilePath
+    // ------------------
+    // Returns a boolean that determines if the file path provided is a relative file path
+    // e.g. ../exampleModule -> true
+    'isRelativeFilePath': function (path) {
+      var segments = path.split('/');
+      return segments.length !== -1 && (segments[0] === '.' || segments[0] === '..');
+    },
+    // convertToCamelCase
+    // ------------------
+    // Converts a delimited string to camel case
+    // e.g. some_str -> someStr
+    convertToCamelCase: function (input, delimiter) {
+      delimiter = delimiter || '_';
+      return input.replace(new RegExp(delimiter + '(.)', 'g'), function (match, group1) {
+        return group1.toUpperCase();
+      });
+    },
+    // prefixReservedWords
+    // -------------------
+    // Converts a reserved word in JavaScript with an underscore
+    // e.g. class -> _class
+    'prefixReservedWords': function (name) {
+      var reservedWord = false;
+      try {
+        if (name.length) {
+          eval('var ' + name + ' = 1;');
+        }
+      } catch (e) {
+        reservedWord = true;
+      }
+      if (reservedWord === true) {
+        return '_' + name;
+      } else {
+        return name;
+      }
+    },
+    // normalizeDependencyName
+    // -----------------------
+    //  Returns a normalized dependency name that handles relative file paths
+    'normalizeDependencyName': function (moduleId, dep) {
+      if (!moduleId || !dep || !Utils.isRelativeFilePath(dep)) {
+        return dep;
+      }
+      var normalizePath = function (path) {
+          var segments = path.split('/'), normalizedSegments;
+          normalizedSegments = _.reduce(segments, function (memo, segment) {
+            switch (segment) {
+            case '.':
+              break;
+            case '..':
+              memo.pop();
+              break;
+            default:
+              memo.push(segment);
+            }
+            return memo;
+          }, []);
+          return normalizedSegments.join('/');
+        }, baseName = function (path) {
+          var segments = path.split('/');
+          segments.pop();
+          return segments.join('/');
+        };
+      return normalizePath([
+        baseName(moduleId),
+        dep
+      ].join('/'));
+    }
+  };
   return Utils;
 }();
 // convertToIIFE.js
@@ -562,20 +659,20 @@ convertToFunctionExpression = function convertToFunctionExpression(obj) {
     findNewParamName = function findNewParamName(name) {
       name = '_' + name + '_';
       var containsLocalVariable = function () {
-          var containsVariable = false;
-          if (normalizeDependencyNames[name]) {
-            containsVariable = true;
-          } else {
-            estraverse.traverse(callbackFunc, {
-              'enter': function (node) {
-                if (node.type === 'VariableDeclarator' && node.id && node.id.type === 'Identifier' && node.id.name === name) {
-                  containsVariable = true;
-                }
+        var containsVariable = false;
+        if (normalizeDependencyNames[name]) {
+          containsVariable = true;
+        } else {
+          estraverse.traverse(callbackFunc, {
+            'enter': function (node) {
+              if (node.type === 'VariableDeclarator' && node.id && node.id.type === 'Identifier' && node.id.name === name) {
+                containsVariable = true;
               }
-            });
-          }
-          return containsVariable;
-        }();
+            }
+          });
+        }
+        return containsVariable;
+      }();
       // If there is not a local variable declaration with the passed name, return the name and surround it with underscores
       // Else if there is already a local variable declaration with the passed name, recursively add more underscores surrounding it
       if (!containsLocalVariable) {
@@ -1472,7 +1569,8 @@ clean = function clean() {
       },
       // The object that is publicly accessible
       publicAPI = {
-        'VERSION': '2.2.5',
+        // Current project version number
+        'VERSION': '2.2.7',
         'clean': function (options, overloadedOptions) {
           // Creates a new AMDclean instance
           var amdclean = new AMDclean(options, overloadedOptions), cleanedCode = amdclean.clean();
@@ -1482,7 +1580,13 @@ clean = function clean() {
       };
     // AMDclean prototype object
     AMDclean.prototype = {
+      // clean
+      // -----
+      // Creates an AST using Esprima, traverse and updates the AST using Estraverse, and generates standard JavaScript using Escodegen.
       'clean': clean,
+      // defaultOptions
+      // --------------
+      // Environment - either node or web
       'defaultOptions': defaultOptions
     };
     return publicAPI;
