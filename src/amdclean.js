@@ -1,4 +1,4 @@
-/*! amdclean - v2.2.7 - 2014-10-02
+/*! amdclean - v2.2.8 - 2014-10-02
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko */
 
@@ -85,8 +85,8 @@ _defaultOptions_ = {
   // 'camelCase' example: 'utils/example' -> 'utilsExample'
   'prefixMode': 'standard',
   // A function hook that allows you add your own custom logic to how each module name is prefixed/normalized
-  'prefixTransform': function (moduleName) {
-    return moduleName;
+  'prefixTransform': function (postNormalizedModuleName, preNormalizedModuleName) {
+    return postNormalizedModuleName;
   },
   // Wrap any build bundle in a start and end text specified by wrap
   // This should only be used when using the onModuleBundleComplete RequireJS Optimizer build hook
@@ -546,7 +546,7 @@ normalizeModuleName = function normalizeModuleName(name, moduleId) {
     amdclean.storedModules[postNormalized] = true;
   }
   if (_.isFunction(prefixTransform)) {
-    prefixTransformValue = prefixTransform(postNormalized, moduleId);
+    prefixTransformValue = prefixTransform(postNormalized, name);
     if (_.isString(prefixTransformValue) && prefixTransformValue.length) {
       return prefixTransformValue;
     }
@@ -1570,7 +1570,7 @@ clean = function clean() {
       // The object that is publicly accessible
       publicAPI = {
         // Current project version number
-        'VERSION': '2.2.7',
+        'VERSION': '2.2.8',
         'clean': function (options, overloadedOptions) {
           // Creates a new AMDclean instance
           var amdclean = new AMDclean(options, overloadedOptions), cleanedCode = amdclean.clean();

@@ -46,7 +46,7 @@ define([
     }
 
     if (_.isFunction(prefixTransform)) {
-      prefixTransformValue = prefixTransform(postNormalized, moduleId);
+      prefixTransformValue = prefixTransform(postNormalized, name);
       if (_.isString(prefixTransformValue) && prefixTransformValue.length) {
         return prefixTransformValue;
       }

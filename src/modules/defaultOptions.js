@@ -54,8 +54,8 @@ define({
   // 'camelCase' example: 'utils/example' -> 'utilsExample'
   'prefixMode': 'standard',
   // A function hook that allows you add your own custom logic to how each module name is prefixed/normalized
-  'prefixTransform': function(moduleName) {
-    return moduleName;
+  'prefixTransform': function(postNormalizedModuleName, preNormalizedModuleName) {
+    return postNormalizedModuleName;
   },
   // Wrap any build bundle in a start and end text specified by wrap
   // This should only be used when using the onModuleBundleComplete RequireJS Optimizer build hook

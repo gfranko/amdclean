@@ -103,6 +103,11 @@ gulp.task('test', ['build', 'lint'], function() {
     .pipe(jasmine());
 });
 
+gulp.task('test-only', function() {
+  gulp.src('test/specs/convert.js')
+    .pipe(jasmine());
+});
+
 gulp.task('minify', ['build', 'lint', 'test'], function() {
   gulp.src(['src/amdclean.js'])
     .pipe(gulp.dest('build/'))
