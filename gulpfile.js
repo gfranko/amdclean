@@ -115,7 +115,7 @@ gulp.task('minify', ['build', 'lint', 'test'], function() {
 // The default task (called when you run `gulp`)
 gulp.task('default', ['build', 'lint', 'test', 'minify']);
 
-// The watch task that runs the default task on any gifshot module file changes
+// The watch task that runs the default task on any AMDclean module file changes
 gulp.task('watch', function() {
   var watcher = gulp.watch('src/modules/*.js', ['default']);
 
