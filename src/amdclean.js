@@ -239,7 +239,7 @@ utils = function () {
           'right': matchObject.left
         };
       try {
-        return _.find([node.test], matchObject) || _.find([node.test], reversedMatchObject) || _.find([node.test.left || {}], matchObject) || _.find([node.test.left || {}], reversedMatchObject);
+        return _.find(node.test, matchObject) || _.find([node.test], matchObject) || _.find(node.test, reversedMatchObject) || _.find([node.test], reversedMatchObject) || _.find(node.test.left || {}, matchObject) || _.find([node.test.left || {}], matchObject) || _.find(node.test.left || {}, reversedMatchObject) || _.find([node.test.left || {}], reversedMatchObject);
       } catch (e) {
         return false;
       }

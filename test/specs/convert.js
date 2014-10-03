@@ -750,6 +750,19 @@ describe('amdclean specs', function() {
         expect(cleanedCode).toBe(standardJavaScript);
       });
 
+      it('should correctly convert libraries that do define.amd checks in their AMD conditional', function() {
+        var AMDcode = "  if (typeof define == 'function' && typeof define.amd == 'object' && define.amd) {" +
+            "root._ = _;" +
+            "define(function() {" +
+              "return _;" +
+            "});" +
+          "}",
+            cleanedCode = amdclean.clean(AMDcode, defaultOptions),
+            standardJavaScript = "if(true){root._=_;define(function(){return _;});}";
+
+        expect(cleanedCode).toBe(standardJavaScript);
+      });
+
       it('should correctly convert libraries that include an exports parameter', function() {
         var AMDcode = "(function(window, factory) {" +
           "if (typeof define === 'function' && define.amd) {" +
