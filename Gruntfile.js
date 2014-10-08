@@ -1,11 +1,15 @@
 module.exports = function(grunt) {
   var amdclean = require('amdclean'),
     fs = require('fs'),
-    amdclean_logic = function (data) {
+    amdclean_logic = function(data) {
       var outputFile = data.path;
       fs.writeFileSync(outputFile, amdclean.clean({
         'filePath': outputFile,
-        'globalObject': true
+        'config': {
+          moment: {
+            noGlobal: true
+          }
+        }
       }));
     };
   grunt.initConfig({
