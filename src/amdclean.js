@@ -1,4 +1,4 @@
-/*! amdclean - v2.2.8 - 2014-10-02
+/*! amdclean - v2.3.0 - 2014-10-08
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko */
 
@@ -96,7 +96,10 @@ _defaultOptions_ = {
     'end': '\n}());'
   },
   // Determines if certain aggressive file size optimization techniques will be used to transform the soure code
-  'aggressiveOptimizations': false
+  'aggressiveOptimizations': false,
+  // Configuration info for modules
+  // Note: Further info can be found here - http://requirejs.org/docs/api.html#config-moduleconfig
+  'config': {}
 };
 // errorMsgs.js
 // ============
@@ -379,7 +382,7 @@ convertToIIFE = function convertToIIFE(obj) {
 // Returns a function expression that is executed immediately
 // e.g. var example = function(){}()
 convertToIIFEDeclaration = function convertToIIFEDeclaration(obj) {
-  var moduleName = obj.moduleName, callbackFuncParams = obj.callbackFuncParams, isOptimized = obj.isOptimized, callback = obj.callbackFunc, node = obj.node, name = callback.name, type = callback.type, range = node.range || defaultValues.defaultRange, loc = node.loc || defaultValues.defaultLOC, callbackFunc = function () {
+  var amdclean = this, options = amdclean.options, moduleId = obj.moduleId, moduleName = obj.moduleName, hasModuleParam = obj.hasModuleParam, hasExportsParam = obj.hasExportsParam, callbackFuncParams = obj.callbackFuncParams, isOptimized = obj.isOptimized, callback = obj.callbackFunc, node = obj.node, name = callback.name, type = callback.type, range = node.range || defaultValues.defaultRange, loc = node.loc || defaultValues.defaultLOC, callbackFunc = function () {
       var cbFunc = obj.callbackFunc;
       if (type === 'Identifier' && name !== 'undefined') {
         cbFunc = {
@@ -454,7 +457,40 @@ convertToIIFEDeclaration = function convertToIIFEDeclaration(obj) {
         };
       }
       return cbFunc;
-    }(), dependencyNames = obj.dependencyNames, cb = function () {
+    }(), dependencyNames = function () {
+      var depNames = obj.dependencyNames, objExpression = {
+          'type': 'ObjectExpression',
+          'properties': [],
+          'range': range,
+          'loc': loc
+        }, configMemberExpression = {
+          'type': 'MemberExpression',
+          'computed': false,
+          'object': {
+            'type': 'Identifier',
+            'name': 'module'
+          },
+          'property': {
+            'type': 'Identifier',
+            'name': moduleId
+          }
+        }, moduleDepIndex;
+      if (options.config && options.config[moduleId]) {
+        if (hasExportsParam && hasModuleParam) {
+          return [
+            objExpression,
+            objExpression,
+            configMemberExpression
+          ];
+        } else if (hasModuleParam) {
+          moduleDepIndex = _.findIndex(depNames, function (currentDep) {
+            return currentDep.name === '{}';
+          });
+          depNames[moduleDepIndex] = configMemberExpression;
+        }
+      }
+      return depNames;
+    }(), cb = function () {
       if (callbackFunc.type === 'Literal' || callbackFunc.type === 'Identifier' && callbackFunc.name === 'undefined' || isOptimized === true) {
         return callbackFunc;
       } else {
@@ -641,6 +677,9 @@ convertToFunctionExpression = function convertToFunctionExpression(obj) {
     }(), originalCallbackFuncParams, hasExportsParam = function () {
       var cbParams = callbackFunc.params || [];
       return _.where(cbParams, { 'name': 'exports' }).length;
+    }(), hasModuleParam = function () {
+      var cbParams = callbackFunc.params || [];
+      return _.where(cbParams, { 'name': 'module' }).length;
     }(), normalizeDependencyNames = {}, dependencyNames = function () {
       var deps = [], currentName;
       _.each(dependencies, function (currentDependency) {
@@ -827,9 +866,11 @@ convertToFunctionExpression = function convertToFunctionExpression(obj) {
   });
   if (isDefine) {
     return convertToIIFEDeclaration.call(amdclean, {
+      'moduleId': moduleId,
       'moduleName': moduleName,
       'dependencyNames': dependencyNames,
       'callbackFuncParams': callbackFuncParams,
+      'hasModuleParam': hasModuleParam,
       'hasExportsParam': hasExportsParam,
       'callbackFunc': callbackFunc,
       'isOptimized': isOptimized,
@@ -1237,7 +1278,7 @@ generateCode = function generateCode(ast) {
 // ========
 // Removes any AMD and/or CommonJS trace from the provided source code
 clean = function clean() {
-  var amdclean = this, options = amdclean.options, ignoreModules = options.ignoreModules, originalAst = {}, ast = {}, generatedCode, declarations = [], hoistedVariables = {}, hoistedCallbackParameters = {}, defaultRange = defaultValues.defaultRange, defaultLOC = defaultValues.defaultLOC;
+  var amdclean = this, options = amdclean.options, ignoreModules = options.ignoreModules, originalAst = {}, ast = {}, configAst = {}, generatedCode, declarations = [], hoistedVariables = {}, hoistedCallbackParameters = {}, defaultRange = defaultValues.defaultRange, defaultLOC = defaultValues.defaultLOC;
   // Creates and stores an AST representation of the code
   originalAst = createAst.call(amdclean);
   // Loops through the AST, finds all module ids, and stores them in the current instance storedModules property
@@ -1422,6 +1463,58 @@ clean = function clean() {
       });
     }
   });
+  // Adds a local module variable if a user wants local module information available to them
+  if (_.isObject(options.config) && !_.isEmpty(options.config)) {
+    configAst = function () {
+      var props = [];
+      _.each(options.config, function (val, key) {
+        var currentModuleConfig = options.config[key];
+        props.push({
+          'type': 'Property',
+          'key': {
+            'type': 'Literal',
+            'value': key
+          },
+          'value': {
+            'type': 'ObjectExpression',
+            'properties': [{
+                'type': 'Property',
+                'key': {
+                  'type': 'Literal',
+                  'value': 'config'
+                },
+                'value': {
+                  'type': 'FunctionExpression',
+                  'id': null,
+                  'params': [],
+                  'defaults': [],
+                  'body': {
+                    'type': 'BlockStatement',
+                    'body': [{
+                        'type': 'ReturnStatement',
+                        'argument': createAst.call(amdclean, 'var x =' + JSON.stringify(currentModuleConfig)).body[0].declarations[0].init
+                      }]
+                  }
+                },
+                'kind': 'init'
+              }]
+          }
+        });
+      });
+      return {
+        'type': 'VariableDeclarator',
+        'id': {
+          'type': 'Identifier',
+          'name': 'module'
+        },
+        'init': {
+          'type': 'ObjectExpression',
+          'properties': props
+        }
+      };
+    }();
+    declarations.push(configAst);
+  }
   // If there are declarations, the declarations are preprended to the beginning of the code block
   if (declarations.length) {
     ast.body.unshift({
@@ -1570,7 +1663,7 @@ clean = function clean() {
       // The object that is publicly accessible
       publicAPI = {
         // Current project version number
-        'VERSION': '2.2.8',
+        'VERSION': '2.3.0',
         'clean': function (options, overloadedOptions) {
           // Creates a new AMDclean instance
           var amdclean = new AMDclean(options, overloadedOptions), cleanedCode = amdclean.clean();

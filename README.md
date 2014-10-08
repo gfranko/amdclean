@@ -559,7 +559,10 @@ amdclean.clean({
     'start': ';(function() {\n',
     // This string is appended to the file
     'end': '\n}());'
-  }
+  },
+  // Configuration info for modules
+  // Note: Further info can be found here - http://requirejs.org/docs/api.html#config-moduleconfig
+  'config': {}
 })
 ```
 
@@ -722,6 +725,10 @@ __I am building a JavaScript library and want to create a conditional anonymous 
 __I don't like the way AMDclean normalizes the names of my modules with underscores.  Can I change this?__
 
 - You sure can.  You can either use the `prefixMode` and change it to camelCase, or you can override all of the logic with your own logic by using the `prefixTransform` option hook.
+
+__Require.js supports passing module information, to one or more modules, with the `config` option.  Does AMDclean support this?__
+
+- Yes!  Make sure to set the AMDclean `config` option with whatever module information you would like available to you in your modules.  Check the Require.js website for more details: http://requirejs.org/docs/api.html#config-moduleconfig
 
 
 __I can't seem to get AMDclean 2.0 to work.  What gives?__

@@ -11,7 +11,12 @@ define([
   defaultValues
 ) {
   return function convertToIIFEDeclaration(obj) {
-    var moduleName = obj.moduleName,
+    var amdclean = this,
+      options = amdclean.options,
+      moduleId = obj.moduleId,
+      moduleName = obj.moduleName,
+      hasModuleParam = obj.hasModuleParam,
+      hasExportsParam = obj.hasExportsParam,
       callbackFuncParams = obj.callbackFuncParams,
       isOptimized = obj.isOptimized,
       callback = obj.callbackFunc,
@@ -97,7 +102,41 @@ define([
         }
         return cbFunc;
       }()),
-      dependencyNames = obj.dependencyNames,
+      dependencyNames = (function() {
+        var depNames = obj.dependencyNames,
+          objExpression = {
+            'type': 'ObjectExpression',
+            'properties': [],
+            'range': range,
+            'loc': loc
+          },
+          configMemberExpression = {
+            'type': 'MemberExpression',
+            'computed': false,
+            'object': {
+              'type': 'Identifier',
+              'name': 'module'
+            },
+            'property': {
+              'type': 'Identifier',
+              'name': moduleId
+            }
+          },
+          moduleDepIndex;
+
+        if (options.config && options.config[moduleId]) {
+          if (hasExportsParam && hasModuleParam) {
+            return [objExpression, objExpression, configMemberExpression];
+          } else if (hasModuleParam) {
+            moduleDepIndex = _.findIndex(depNames, function(currentDep) {
+              return currentDep.name === '{}';
+            });
+            depNames[moduleDepIndex] = configMemberExpression;
+          }
+        }
+
+        return depNames;
+      }()),
       cb = (function() {
         if (callbackFunc.type === 'Literal' || (callbackFunc.type === 'Identifier' && callbackFunc.name === 'undefined') || isOptimized === true) {
           return callbackFunc;

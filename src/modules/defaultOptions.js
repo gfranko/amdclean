@@ -65,5 +65,8 @@ define({
     'end': '\n}());'
   },
   // Determines if certain aggressive file size optimization techniques will be used to transform the soure code
-  'aggressiveOptimizations': false
+  'aggressiveOptimizations': false,
+  // Configuration info for modules
+  // Note: Further info can be found here - http://requirejs.org/docs/api.html#config-moduleconfig
+  'config': {}
 });

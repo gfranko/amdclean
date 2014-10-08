@@ -148,6 +148,13 @@ define([
           'name': 'exports'
         }).length;
       }()),
+      hasModuleParam = (function() {
+        var cbParams = callbackFunc.params || [];
+
+        return _.where(cbParams, {
+          'name': 'module'
+        }).length;
+      }()),
       normalizeDependencyNames = {},
       dependencyNames = (function() {
         var deps = [],
@@ -386,9 +393,11 @@ define([
 
     if (isDefine) {
       return convertToIIFEDeclaration.call(amdclean, {
+        'moduleId': moduleId,
         'moduleName': moduleName,
         'dependencyNames': dependencyNames,
         'callbackFuncParams': callbackFuncParams,
+        'hasModuleParam': hasModuleParam,
         'hasExportsParam': hasExportsParam,
         'callbackFunc': callbackFunc,
         'isOptimized': isOptimized,

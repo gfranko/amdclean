@@ -28,6 +28,7 @@ define([
       ignoreModules = options.ignoreModules,
       originalAst = {},
       ast = {},
+      configAst = {},
       generatedCode,
       declarations = [],
       hoistedVariables = {},
@@ -257,6 +258,63 @@ define([
         });
       }
     });
+
+    // Adds a local module variable if a user wants local module information available to them
+    if (_.isObject(options.config) && !_.isEmpty(options.config)) {
+      configAst = (function() {
+        var props = [];
+
+        _.each(options.config, function(val, key) {
+          var currentModuleConfig = options.config[key];
+
+          props.push({
+            'type': 'Property',
+            'key': {
+              'type': 'Literal',
+              'value': key
+            },
+            'value': {
+              'type': 'ObjectExpression',
+              'properties': [{
+                'type': 'Property',
+                'key': {
+                  'type': 'Literal',
+                  'value': 'config'
+                },
+                'value': {
+                  'type': 'FunctionExpression',
+                  'id': null,
+                  'params': [],
+                  'defaults': [],
+                  'body': {
+                    'type': 'BlockStatement',
+                    'body': [{
+                      'type': 'ReturnStatement',
+                      'argument': createAst.call(amdclean, 'var x =' + JSON.stringify(currentModuleConfig)).body[0].declarations[0].init
+                    }]
+                  }
+                },
+                'kind': 'init'
+              }]
+            }
+          });
+        });
+
+        return {
+          'type': 'VariableDeclarator',
+          'id': {
+            'type': 'Identifier',
+            'name': 'module'
+          },
+          'init': {
+            'type': 'ObjectExpression',
+            'properties': props
+          }
+        };
+      }());
+
+      declarations.push(configAst);
+    }
 
     // If there are declarations, the declarations are preprended to the beginning of the code block
     if (declarations.length) {

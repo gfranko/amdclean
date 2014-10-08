@@ -1,6 +1,6 @@
 require('jasmine-only');
 describe('amdclean specs', function() {
-  var amdclean = require('../../build/amdclean'),
+  var amdclean = require('../../src/amdclean'),
     requirejs = require('requirejs'),
     _ = require('lodash'),
     fs = require('fs'),
@@ -752,13 +752,13 @@ describe('amdclean specs', function() {
 
       it('should correctly convert libraries that do define.amd checks in their AMD conditional', function() {
         var AMDcode = "  if (typeof define == 'function' && typeof define.amd == 'object' && define.amd) {" +
-            "root._ = _;" +
-            "define(function() {" +
-              "return _;" +
-            "});" +
+          "root._ = _;" +
+          "define(function() {" +
+          "return _;" +
+          "});" +
           "}",
-            cleanedCode = amdclean.clean(AMDcode, defaultOptions),
-            standardJavaScript = "if(true){root._=_;define(function(){return _;});}";
+          cleanedCode = amdclean.clean(AMDcode, defaultOptions),
+          standardJavaScript = "if(true){root._=_;define(function(){return _;});}";
 
         expect(cleanedCode).toBe(standardJavaScript);
       });
@@ -811,6 +811,65 @@ describe('amdclean specs', function() {
 
     });
 
+  });
+
+  describe('Require.js Compatibility', function() {
+    it('should support the Require.js config option with the simplified CJS format', function() {
+      var AMDcode = 'if (typeof define === "function" && define.amd) {' +
+        'define("moment", function (require, exports, module) {' +
+        'return moment;' +
+        '});' +
+        '}',
+        options = _.merge(_.cloneDeep(defaultOptions), {
+          'config': {
+            'moment': {
+              'noGlobal': true
+            }
+          }
+        }),
+        cleanedCode = amdclean.clean(AMDcode, options),
+        standardJavaScript = "var moment,module={'moment':{'config':function(){return{'noGlobal':true};}}};if(true){moment=function (require,exports,module){return moment;}({},{},module.moment);}";
+
+      expect(cleanedCode).toBe(standardJavaScript);
+    });
+
+    it('should support the Require.js config option when the special module ID, "module", is passed', function() {
+      var AMDcode = 'if (typeof define === "function" && define.amd) {' +
+        'define("moment", ["module"], function (module) {' +
+        'return moment;' +
+        '});' +
+        '}',
+        options = _.merge(_.cloneDeep(defaultOptions), {
+          'config': {
+            'moment': {
+              'noGlobal': true
+            }
+          }
+        }),
+        cleanedCode = amdclean.clean(AMDcode, options),
+        standardJavaScript = "var moment,module={'moment':{'config':function(){return{'noGlobal':true};}}};if(true){moment=function (module){return moment;}(module.moment);}";
+
+      expect(cleanedCode).toBe(standardJavaScript);
+    });
+
+    it('should support the Require.js config option when the special module ID, "module", is passed with more than one argument', function() {
+      var AMDcode = 'if (typeof define === "function" && define.amd) {' +
+        'define("moment", ["test", "module"], function (test, module) {' +
+        'return moment;' +
+        '});' +
+        '}',
+        options = _.merge(_.cloneDeep(defaultOptions), {
+          'config': {
+            'moment': {
+              'noGlobal': true
+            }
+          }
+        }),
+        cleanedCode = amdclean.clean(AMDcode, options),
+        standardJavaScript = "var moment,module={'moment':{'config':function(){return{'noGlobal':true};}}};if(true){moment=function (test,module){return moment;}(test,module.moment);}";
+
+      expect(cleanedCode).toBe(standardJavaScript);
+    });
   });
 
 });

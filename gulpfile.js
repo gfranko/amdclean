@@ -38,7 +38,11 @@ var gulp = require('gulp'),
   headerText = '/*! amdclean - v' + packageJson.version + ' - ' + currentDate +
   '\n* http://gregfranko.com/amdclean' +
   '\n* Copyright (c) ' + currentYear + ' Greg Franko */\n',
-  error = false;
+  error = false,
+  cachedBuiltLibText = fs.readFileSync('./src/amdclean.js', 'utf8');
+  revertFile = function() {
+    fs.writeFileSync('./src/amdclean.js', cachedBuiltLibText);
+  };
 
 gulp.task('build', function(cb) {
   requirejs.optimize({
@@ -69,12 +73,14 @@ gulp.task('build', function(cb) {
             });
           } catch (e) {
             error = true;
+            revertFile();
             return '' + e;
           }
         }()),
         fullCode = headerText + licenseText + cleanedCode;
 
       if (error) {
+        revertFile();
         console.log('Looks like there was an error building, stopping the build... ' + cleanedCode);
         return;
       }
@@ -85,6 +91,7 @@ gulp.task('build', function(cb) {
       cb();
     }
   }, function(err) {
+    revertFile();
     console.log('Looks like there was an error building, stopping the build... ');
     return cb(err); // return error
   });
