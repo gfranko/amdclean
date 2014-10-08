@@ -19,13 +19,15 @@ A build tool that converts AMD code to standard JavaScript.
 
 * [AMDclean](https://github.com/gfranko/amdclean) - A build tool that converts AMD code to standard JavaScript (this is not a typo)
 
-* [Backbone-Require-Boilerplate](https://github.com/BoilerplateMVC/Backbone-Require-Boilerplate) - A Rad Backbone.js and Require.js Boilerplate Project
+* [GifShot](http://yahoo.github.io/gifshot/) - JavaScript library that can create animated GIFs from media streams, videos, or images
 
 * [Ractive.js](http://www.ractivejs.org/) - Next-generation DOM manipulation
 
 * [Mod.js](http://madscript.com/modjs/) - JavaScript Workflow Tooling 
 
 * [Formatter.js](http://firstopinion.github.io/formatter.js/) - Format user input to match a specified pattern
+
+* [Backbone-Require-Boilerplate](https://github.com/BoilerplateMVC/Backbone-Require-Boilerplate) - A Rad Backbone.js and Require.js Boilerplate Project
 
 * [AddThis Smart Layers](https://www.addthis.com/get/smart-layers) - Third-party social widgets suite
 
