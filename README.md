@@ -31,6 +31,8 @@ A build tool that converts AMD code to standard JavaScript.
 
 * [AddThis Smart Layers](https://www.addthis.com/get/smart-layers) - Third-party social widgets suite
 
+* [Extended JavaScript Console](https://github.com/bignimbus/extended-javascript-console) - Better browser console methods
+
 
 ## Why
 
