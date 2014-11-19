@@ -23,7 +23,7 @@ define([
         throw new Error(errorMsgs.esprima);
       }
       var ast = esprima.parse(code, esprimaOptions);
-      if (options.sourceMap) sourceMapToAst(ast, options.sourceMap);
+      if (options.sourceMap) sourcemapToAst(ast, options.sourceMap);
       return ast;
     }
   };

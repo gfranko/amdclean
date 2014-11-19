@@ -966,7 +966,7 @@ createAst = function createAst(providedCode) {
     }
     var ast = esprima.parse(code, esprimaOptions);
     if (options.sourceMap)
-      sourceMapToAst(ast, options.sourceMap);
+      sourcemapToAst(ast, options.sourceMap);
     return ast;
   }
 };
