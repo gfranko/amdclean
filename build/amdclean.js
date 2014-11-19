@@ -1,4 +1,4 @@
-/*! amdclean - v2.3.0 - 2014-10-08
+/*! amdclean - v2.3.0 - 2014-11-19
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko */
 
@@ -28,7 +28,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ;(function() {
 // Third-party dependencies that are hoisted
-var esprima, estraverse, escodegen, _;
+var esprima, estraverse, escodegen, _, sourcemapToAst;
 // defaultOptions.js
 // =================
 // AMDclean default options
@@ -119,7 +119,8 @@ errorMsgs = {
   'lodash': 'Make sure you have included lodash (https://github.com/lodash/lodash).',
   'esprima': 'Make sure you have included esprima (https://github.com/ariya/esprima).',
   'estraverse': 'Make sure you have included estraverse (https://github.com/Constellation/estraverse).',
-  'escodegen': 'Make sure you have included escodegen (https://github.com/Constellation/escodegen).'
+  'escodegen': 'Make sure you have included escodegen (https://github.com/Constellation/escodegen).',
+  'sourcemapToAst': 'Make sure you have included sourcemapToAst (https://github.com/tarruda/sourcemap-to-ast).'
 };
 // defaultValues.js
 // ================
@@ -963,7 +964,10 @@ createAst = function createAst(providedCode) {
     if (!_.isPlainObject(esprima) || !_.isFunction(esprima.parse)) {
       throw new Error(errorMsgs.esprima);
     }
-    return esprima.parse(code, esprimaOptions);
+    var ast = esprima.parse(code, esprimaOptions);
+    if (options.sourceMap)
+      sourceMapToAst(ast, options.sourceMap);
+    return ast;
   }
 };
 // convertDefinesAndRequires.js
@@ -1553,13 +1557,15 @@ clean = function clean() {
         'esprima',
         'estraverse',
         'escodegen',
-        'underscore'
-      ], function (esprima, estraverse, escodegen, underscore) {
+        'underscore',
+        'sourcemap-to-ast'
+      ], function (esprima, estraverse, escodegen, underscore, sourcemapToAst) {
         return factory({
           'esprima': esprima,
           'estraverse': estraverse,
           'escodegen': escodegen,
-          'underscore': underscore
+          'underscore': underscore,
+          'sourcemapToAst': sourcemapToAst
         }, root);
       });
     } else if (typeof exports !== 'undefined') {
@@ -1570,6 +1576,17 @@ clean = function clean() {
     }
   }(this, function cleanamd(amdDependencies, context) {
     
+    // Third-Party Dependencies
+    // Note: These dependencies are hoisted to the top (as local variables) at build time (Look in the gulpfile.js file and the AMDclean wrap option for more details)
+    sourcemapToAst = function () {
+      if (cleanamd.amd && amdDependencies && amdDependencies.sourcemapToAst) {
+        return amdDependencies.sourcemapToAst;
+      } else if (cleanamd.commonjs) {
+        return require('sourcemap-to-ast');
+      } else if (context && context.sourcemapToAst) {
+        return context.sourcemapToAst;
+      }
+    }();
     // Third-Party Dependencies
     // Note: These dependencies are hoisted to the top (as local variables) at build time (Look in the gulpfile.js file and the AMDclean wrap option for more details)
     esprima = function () {
@@ -1618,6 +1635,8 @@ clean = function clean() {
           throw new Error(errorMsgs.escodegen);
         } else if (!_) {
           throw new Error(errorMsgs.lodash);
+        } else if (!sourcemapToAst) {
+          throw new Error(errorMsgs.sourcemapToAst);
         }
         var defaultOptions = _.cloneDeep(this.defaultOptions || {}), userOptions = options || overloadedOptions || {};
         if (!_.isPlainObject(options) && _.isString(options)) {

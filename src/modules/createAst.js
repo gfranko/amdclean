@@ -22,7 +22,9 @@ define([
       if (!_.isPlainObject(esprima) || !_.isFunction(esprima.parse)) {
         throw new Error(errorMsgs.esprima);
       }
-      return esprima.parse(code, esprimaOptions);
+      var ast = esprima.parse(code, esprimaOptions);
+      if (options.sourceMap) sourceMapToAst(ast, options.sourceMap);
+      return ast;
     }
   };
 });
