@@ -23,5 +23,7 @@ define({
 
   'estraverse': 'Make sure you have included estraverse (https://github.com/Constellation/estraverse).',
 
-  'escodegen': 'Make sure you have included escodegen (https://github.com/Constellation/escodegen).'
+  'escodegen': 'Make sure you have included escodegen (https://github.com/Constellation/escodegen).',
+
+  'sourcemapToAst': 'Make sure you have included sourcemapToAst (https://github.com/tarruda/sourcemap-to-ast).'
 });
