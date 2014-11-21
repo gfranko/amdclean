@@ -24,7 +24,8 @@
     "esprima": "1.x",
     "lodash": "2.x",
     "estraverse": "1.x",
-    "escodegen": "1.x"
+    "escodegen": "1.x",
+    "sourcemap-to-ast": "0.0.2"
   },
   "devDependencies": {
     "jasmine-node": "~1.14.3",

@@ -31,6 +31,8 @@ A build tool that converts AMD code to standard JavaScript.
 
 * [AddThis Smart Layers](https://www.addthis.com/get/smart-layers) - Third-party social widgets suite
 
+* [Extended JavaScript Console](https://github.com/bignimbus/extended-javascript-console) - Better browser console methods
+
 
 ## Why
 
@@ -494,6 +496,10 @@ The amdclean `clean()` method accepts a string or an object.  Below is an exampl
 amdclean.clean({
   // The source code you would like to be 'cleaned'
   'code': '',
+  // Provide a source map for the code you'd like to 'clean'
+  // Output will change from plain code to a hash: {code: ..., map: ...}
+  // Where code is 'cleaned' code and map is the new source map
+  'sourceMap': null,
   // Determines if certain aggressive file size optimization techniques
   // will be used to transform the soure code
   'aggressiveOptimizations': false,
