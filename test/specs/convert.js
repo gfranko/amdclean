@@ -249,6 +249,15 @@ describe('amdclean specs', function() {
         expect(cleanedCode).toBe(standardJavaScript);
       });
 
+      it('should not remove comments from the source code (special case)', function() {
+        var fs = require('fs'),
+          AMDcode = fs.readFileSync(__dirname + '/../comments.js').toString(),
+          cleanedCode = amdclean.clean(AMDcode, {wrap: false}),
+          standardJavaScript = fs.readFileSync(__dirname + '/../comments-output.js').toString();
+
+        expect(cleanedCode).toBe(standardJavaScript);
+      });
+
       it('should not automatically convert conditional AMD checks that are using the appropriate commentCleanName', function() {
         var AMDcode = "//amdclean\n if(typeof define === 'function') {}",
           cleanedCode = amdclean.clean(AMDcode, defaultOptions),
