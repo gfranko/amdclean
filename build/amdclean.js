@@ -1,4 +1,4 @@
-/*! amdclean - v2.3.0 - 2014-11-20
+/*! amdclean - v2.3.0 - 2014-11-21
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko */
 
@@ -36,6 +36,10 @@ var errorMsgs, defaultValues, utils, convertToIIFE, convertToIIFEDeclaration, no
 _defaultOptions_ = {
   // The source code you would like to be 'cleaned'
   'code': '',
+  // Provide a source map for the code you'd like to 'clean'
+  // Output will change from plain code to a hash: {code: ..., map: ...}
+  // Where code is 'cleaned' code and map is the new source map
+  'sourceMap': null,
   // The relative file path of the file to be cleaned.  Use this option if you are not using the code option.
   // Hint: Use the __dirname trick
   'filePath': '',
@@ -101,9 +105,6 @@ _defaultOptions_ = {
   // Note: Further info can be found here - http://requirejs.org/docs/api.html#config-moduleconfig
   'config': {}
 };
-// errorMsgs.js
-// ============
-// AMDclean error messages
 errorMsgs = {
   // The user has not supplied the cliean method with any code
   'emptyCode': 'There is no code to generate the AST with',
@@ -122,9 +123,6 @@ errorMsgs = {
   'escodegen': 'Make sure you have included escodegen (https://github.com/Constellation/escodegen).',
   'sourcemapToAst': 'Make sure you have included sourcemapToAst (https://github.com/tarruda/sourcemap-to-ast).'
 };
-// defaultValues.js
-// ================
-// Stores static default values
 defaultValues = {
   // dependencyBlacklist
   // -------------------
@@ -151,9 +149,6 @@ defaultValues = {
     0
   ]
 };
-// Utils.js
-// ========
-// Abstract Syntax Tree (AST) and other helper utility methods
 utils = function () {
   var Utils = {
     // isDefine
@@ -348,10 +343,6 @@ utils = function () {
   };
   return Utils;
 }();
-// convertToIIFE.js
-// ================
-// Returns an IIFE
-//  e.g. (function() { }())
 convertToIIFE = function convertToIIFE(obj) {
   var callbackFuncParams = obj.callbackFuncParams, callbackFunc = obj.callbackFunc, dependencyNames = obj.dependencyNames, node = obj.node, range = node.range || defaultValues.defaultRange, loc = node.loc || defaultValues.defaultLOC;
   return {
@@ -378,10 +369,6 @@ convertToIIFE = function convertToIIFE(obj) {
     'loc': loc
   };
 };
-// convertToIIFEDeclaration.js
-// ===========================
-// Returns a function expression that is executed immediately
-// e.g. var example = function(){}()
 convertToIIFEDeclaration = function convertToIIFEDeclaration(obj) {
   var amdclean = this, options = amdclean.options, moduleId = obj.moduleId, moduleName = obj.moduleName, hasModuleParam = obj.hasModuleParam, hasExportsParam = obj.hasExportsParam, callbackFuncParams = obj.callbackFuncParams, isOptimized = obj.isOptimized, callback = obj.callbackFunc, node = obj.node, name = callback.name, type = callback.type, range = node.range || defaultValues.defaultRange, loc = node.loc || defaultValues.defaultLOC, callbackFunc = function () {
       var cbFunc = obj.callbackFunc;
@@ -556,9 +543,6 @@ convertToIIFEDeclaration = function convertToIIFEDeclaration(obj) {
   });
   return updatedNode;
 };
-// normalizeModuleName.js
-// ======================
-// Returns a normalized module name (removes relative file path urls)
 normalizeModuleName = function normalizeModuleName(name, moduleId) {
   var amdclean = this, options = amdclean.options, prefixMode = options.prefixMode, prefixTransform = options.prefixTransform, dependencyBlacklist = defaultValues.dependencyBlacklist, prefixTransformValue, preNormalized, postNormalized;
   name = name || '';
@@ -590,10 +574,6 @@ normalizeModuleName = function normalizeModuleName(name, moduleId) {
   }
   return postNormalized;
 };
-// convertToFunctionExpression.js
-// ==============================
-// Returns either an IIFE or variable declaration.
-// Internally calls either convertToIIFE() or convertToIIFEDeclaration()
 convertToFunctionExpression = function convertToFunctionExpression(obj) {
   var amdclean = this, options = amdclean.options, ignoreModules = options.ignoreModules, node = obj.node, isDefine = obj.isDefine, isRequire = obj.isRequire, isOptimized = false, moduleName = obj.moduleName, moduleId = obj.moduleId, dependencies = obj.dependencies, depLength = dependencies.length, aggressiveOptimizations = options.aggressiveOptimizations, exportsExpressions = [], moduleExportsExpressions = [], defaultRange = defaultValues.defaultRange, defaultLOC = defaultValues.defaultLOC, range = obj.range || defaultRange, loc = obj.loc || defaultLOC, shouldOptimize = obj.shouldOptimize, dependencyBlacklist = defaultValues.dependencyBlacklist, hasNonMatchingParameter = false, callbackFunc = function () {
       var callbackFunc = obj.moduleReturnValue, body, returnStatements, firstReturnStatement, returnStatementArg;
@@ -886,10 +866,6 @@ convertToFunctionExpression = function convertToFunctionExpression(obj) {
     });
   }
 };
-// convertToObjectDeclaration.js
-// =============================
-// Returns an object variable declaration
-// e.g. var example = { exampleProp: true }
 convertToObjectDeclaration = function (obj, type) {
   var node = obj.node, defaultRange = defaultValues.defaultRange, defaultLOC = defaultValues.defaultLOC, range = node.range || defaultRange, loc = node.loc || defaultLOC, moduleName = obj.moduleName, moduleReturnValue = function () {
       var modReturnValue, callee, params, returnStatement, nestedReturnStatement, internalFunctionExpression;
@@ -953,9 +929,6 @@ convertToObjectDeclaration = function (obj, type) {
     };
   return updatedNode;
 };
-// createAst.js
-// ============
-// Returns an AST (Abstract Syntax Tree) that is generated by Esprima
 createAst = function createAst(providedCode) {
   var amdclean = this, options = amdclean.options, filePath = options.filePath, code = providedCode || options.code || (filePath ? utils.readFile(filePath) : ''), esprimaOptions = options.esprima, escodegenOptions = options.escodegen;
   if (!code) {
@@ -978,9 +951,6 @@ createAst = function createAst(providedCode) {
     return ast;
   }
 };
-// convertDefinesAndRequires.js
-// ============================
-//  Replaces define() and require() methods to standard JavaScript
 convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
   var amdclean = this, options = amdclean.options, moduleName, args, dependencies, moduleReturnValue, moduleId, params, isDefine = utils.isDefine(node), isRequire = utils.isRequire(node), startLineNumber, callbackFuncArg = false, type = '', shouldBeIgnored, moduleToBeIgnored, parentHasFunctionExpressionArgument, defaultRange = defaultValues.defaultRange, defaultLOC = defaultValues.defaultLOC, range = node.range || defaultRange, loc = node.loc || defaultLOC, dependencyBlacklist = defaultValues.dependencyBlacklist, shouldOptimize;
   startLineNumber = isDefine || isRequire ? node.expression.loc.start.line : node && node.loc && node.loc.start ? node.loc.start.line : null;
@@ -1185,9 +1155,6 @@ convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
     return node;
   }
 };
-// traverseAndUpdateAst.js
-// =======================
-// Uses Estraverse to traverse the AST and convert all define() and require() methods to standard JavaScript
 traverseAndUpdateAst = function traverseAndUpdateAst(obj) {
   var amdclean = this, options = amdclean.options, ast = obj.ast;
   if (!_.isPlainObject(obj)) {
@@ -1228,9 +1195,6 @@ traverseAndUpdateAst = function traverseAndUpdateAst(obj) {
   });
   return ast;
 };
-// getNormalizedModuleName.js
-// ==========================
-// Retrieves the module id if the current node is a define() method
 getNormalizedModuleName = function getNormalizedModuleName(node) {
   if (!utils.isDefine(node)) {
     return;
@@ -1238,9 +1202,6 @@ getNormalizedModuleName = function getNormalizedModuleName(node) {
   var amdclean = this, moduleId = node.expression['arguments'][0].value, moduleName = normalizeModuleName.call(amdclean, moduleId);
   return moduleName;
 };
-// findAndStoreAllModuleIds.js
-// ===========================
-// Uses Estraverse to traverse the AST so that all of the module ids can be found and stored in an object
 findAndStoreAllModuleIds = function findAndStoreAllModuleIds(ast) {
   var amdclean = this;
   if (!ast) {
@@ -1268,9 +1229,6 @@ findAndStoreAllModuleIds = function findAndStoreAllModuleIds(ast) {
     }
   });
 };
-// generateCode.js
-// ===============
-// Returns standard JavaScript generated by Escodegen
 generateCode = function generateCode(ast) {
   var amdclean = this, options = amdclean.options, escodegenOptions = options.escodegen || {};
   if (!_.isPlainObject(escodegen) || !_.isFunction(escodegen.generate)) {
@@ -1278,9 +1236,6 @@ generateCode = function generateCode(ast) {
   }
   return escodegen.generate(ast, escodegenOptions);
 };
-// clean.js
-// ========
-// Removes any AMD and/or CommonJS trace from the provided source code
 clean = function clean() {
   var amdclean = this, options = amdclean.options, ignoreModules = options.ignoreModules, originalAst = {}, ast = {}, configAst = {}, generatedCode, declarations = [], hoistedVariables = {}, hoistedCallbackParameters = {}, defaultRange = defaultValues.defaultRange, defaultLOC = defaultValues.defaultLOC;
   // Creates and stores an AST representation of the code
@@ -1542,11 +1497,6 @@ clean = function clean() {
   }
   return generatedCode;
 };
-// index.js
-// ========
-// Wraps AMDclean in the UMD pattern to support being loaded in multiple environments,
-// Sets all of the third-party dependencies
-// And exposes the public API
 (function (defaultOptions) {
   (function (root, factory, undefined) {
     

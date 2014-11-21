@@ -496,6 +496,10 @@ The amdclean `clean()` method accepts a string or an object.  Below is an exampl
 amdclean.clean({
   // The source code you would like to be 'cleaned'
   'code': '',
+  // Provide a source map for the code you'd like to 'clean'
+  // Output will change from plain code to a hash: {code: ..., map: ...}
+  // Where code is 'cleaned' code and map is the new source map
+  'sourceMap': null,
   // Determines if certain aggressive file size optimization techniques
   // will be used to transform the soure code
   'aggressiveOptimizations': false,

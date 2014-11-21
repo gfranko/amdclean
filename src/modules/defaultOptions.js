@@ -5,6 +5,10 @@
 define({
   // The source code you would like to be 'cleaned'
   'code': '',
+  // Provide a source map for the code you'd like to 'clean'
+  // Output will change from plain code to a hash: {code: ..., map: ...}
+  // Where code is 'cleaned' code and map is the new source map
+  'sourceMap': null,
   // The relative file path of the file to be cleaned.  Use this option if you are not using the code option.
   // Hint: Use the __dirname trick
   'filePath': '',
