@@ -33,18 +33,6 @@ define([
 
     postNormalized = prefixMode === 'camelCase' ? utils.convertToCamelCase(preNormalized) : preNormalized;
 
-    if (options.ignoreModules.indexOf(postNormalized) === -1 && amdclean.variablesStore[postNormalized]) {
-      amdclean.storedModules[postNormalized] = false;
-      postNormalized = (function findValidName(currentName) {
-        if (amdclean.variablesStore[currentName]) {
-          return findValidName('_' + currentName + '_');
-        } else {
-          return currentName;
-        }
-      }(postNormalized));
-      amdclean.storedModules[postNormalized] = true;
-    }
-
     if (_.isFunction(prefixTransform)) {
       prefixTransformValue = prefixTransform(postNormalized, name);
       if (_.isString(prefixTransformValue) && prefixTransformValue.length) {

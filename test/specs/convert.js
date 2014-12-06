@@ -369,7 +369,7 @@ describe('amdclean specs', function() {
         it('should not optimize basic define() methods that return a literal value and contain more than one code block', function() {
           var AMDcode = "define('example', [], function() { var example = true; return 'Convert AMD code to standard JavaScript';});",
             cleanedCode = amdclean.clean(AMDcode, defaultOptions),
-            standardJavaScript = "var _example_;_example_=function (){var example=true;return'Convert AMD code to standard JavaScript';}();";
+            standardJavaScript = "var example;example=function (){var example=true;return'Convert AMD code to standard JavaScript';}();";
 
           expect(cleanedCode).toBe(standardJavaScript);
         });
@@ -583,7 +583,7 @@ describe('amdclean specs', function() {
 
       it('should support the Require.js optimizer cjsTranslate option that converts CommonJS modules to AMD modules', function(done) {
         var cleanedCode,
-          standardJavaScript = "var commonjs3,commonjs1,__commonjs2__,_commonjs4_;commonjs3=function (exports){exports.exampleFunc=function(){var test=true;return test;};return exports;}({});__commonjs2__=function (exports){exports={'exampleBool':true,'exampleFunc':commonjs3.exampleFunc};return exports;}({});_commonjs4_=function (exports){exports.test='this is a test';return exports;}({});commonjs1=function (exports){var commonjs2=__commonjs2__;var _commonjs2_='blah';var commonjs4=_commonjs4_;commonjs2.exampleFunc();return exports;}({});";
+          standardJavaScript = "var commonjs3,commonjs2,commonjs4,commonjs1;commonjs3=function (exports){exports.exampleFunc=function(){var test=true;return test;};return exports;}({});commonjs2=function (exports){exports={'exampleBool':true,'exampleFunc':commonjs3.exampleFunc};return exports;}({});commonjs4=function (exports){exports.test='this is a test';return exports;}({});commonjs1=function (exports,__commonjs2__,_commonjs4_){var commonjs2=__commonjs2__;var _commonjs2_='blah';var commonjs4=_commonjs4_;commonjs2.exampleFunc();return exports;}({},commonjs2,commonjs4);";
 
         requirejs.optimize({
           'baseUrl': './test/',
@@ -785,7 +785,7 @@ describe('amdclean specs', function() {
           "}" +
           "}());",
           cleanedCode = amdclean.clean(AMDcode, defaultOptions);
-        standardJavaScript = "var _moment_;(function(window,factory){var moment;if(true){_moment_=function (require,exports,module){return moment;}({},{},{});}}());";
+        standardJavaScript = "(function(window,factory){var moment;if(true){moment=function (require,exports,module){return moment;}({},{},{});}}());";
 
         expect(cleanedCode).toBe(standardJavaScript);
       });

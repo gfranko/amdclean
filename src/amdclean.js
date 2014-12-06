@@ -1,4 +1,4 @@
-/*! amdclean - v2.3.0 - 2014-10-08
+/*! amdclean - v2.3.0 - 2014-12-06
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko */
 
@@ -32,8 +32,8 @@ var esprima, estraverse, escodegen, _;
 // defaultOptions.js
 // =================
 // AMDclean default options
-var errorMsgs, defaultValues, utils, convertToIIFE, convertToIIFEDeclaration, normalizeModuleName, convertToFunctionExpression, convertToObjectDeclaration, createAst, convertDefinesAndRequires, traverseAndUpdateAst, getNormalizedModuleName, findAndStoreAllModuleIds, generateCode, clean, _defaultOptions_;
-_defaultOptions_ = {
+var defaultOptions, errorMsgs, defaultValues, utils, convertToIIFE, convertToIIFEDeclaration, normalizeModuleName, convertToFunctionExpression, convertToObjectDeclaration, createAst, convertDefinesAndRequires, traverseAndUpdateAst, getNormalizedModuleName, findAndStoreAllModuleIds, generateCode, clean;
+defaultOptions = {
   // The source code you would like to be 'cleaned'
   'code': '',
   // The relative file path of the file to be cleaned.  Use this option if you are not using the code option.
@@ -570,17 +570,6 @@ normalizeModuleName = function normalizeModuleName(name, moduleId) {
   }
   preNormalized = utils.prefixReservedWords(name.replace(/\./g, '').replace(/[^A-Za-z0-9_$]/g, '_').replace(/^_+/, ''));
   postNormalized = prefixMode === 'camelCase' ? utils.convertToCamelCase(preNormalized) : preNormalized;
-  if (options.ignoreModules.indexOf(postNormalized) === -1 && amdclean.variablesStore[postNormalized]) {
-    amdclean.storedModules[postNormalized] = false;
-    postNormalized = function findValidName(currentName) {
-      if (amdclean.variablesStore[currentName]) {
-        return findValidName('_' + currentName + '_');
-      } else {
-        return currentName;
-      }
-    }(postNormalized);
-    amdclean.storedModules[postNormalized] = true;
-  }
   if (_.isFunction(prefixTransform)) {
     prefixTransformValue = prefixTransform(postNormalized, name);
     if (_.isString(prefixTransformValue) && prefixTransformValue.length) {
@@ -1250,9 +1239,6 @@ findAndStoreAllModuleIds = function findAndStoreAllModuleIds(ast) {
         node.expression = node.argument;
         delete node.argument;
       }
-      if (node.type === 'VariableDeclarator') {
-        amdclean.variablesStore[node.id.name] = true;
-      }
     }
   });
 };
@@ -1543,7 +1529,7 @@ clean = function clean() {
 // Wraps AMDclean in the UMD pattern to support being loaded in multiple environments,
 // Sets all of the third-party dependencies
 // And exposes the public API
-(function (defaultOptions) {
+(function () {
   (function (root, factory, undefined) {
     
     // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, and plain browser loading
@@ -1627,10 +1613,6 @@ clean = function clean() {
         // -------------
         // An object that will store all of the user module names
         this.storedModules = {};
-        // variablesStore
-        // --------------
-        // An object that will store all of the local variables that are declared
-        this.variablesStore = {};
         // originalAst
         // -----------
         // The original AST (Abstract Syntax Tree) before it is transformed
@@ -1684,5 +1666,5 @@ clean = function clean() {
     };
     return publicAPI;
   }));
-}(_defaultOptions_));
+}());
 }());

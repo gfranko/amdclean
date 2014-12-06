@@ -104,11 +104,6 @@ require([
         // An object that will store all of the user module names
         this.storedModules = {};
 
-        // variablesStore
-        // --------------
-        // An object that will store all of the local variables that are declared
-        this.variablesStore = {};
-
         // originalAst
         // -----------
         // The original AST (Abstract Syntax Tree) before it is transformed

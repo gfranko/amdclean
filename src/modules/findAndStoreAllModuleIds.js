@@ -35,10 +35,6 @@ define([
           node.expression = node.argument;
           delete node.argument;
         }
-
-        if (node.type === 'VariableDeclarator') {
-          amdclean.variablesStore[node.id.name] = true;
-        }
       }
     });
   };
