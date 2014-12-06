@@ -18,12 +18,13 @@ require([
     // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, and plain browser loading
     if (typeof define === 'function' && define.amd) {
       factory.amd = true;
-      define(['esprima', 'estraverse', 'escodegen', 'underscore'], function(esprima, estraverse, escodegen, underscore) {
+      define(['esprima', 'estraverse', 'escodegen', 'underscore', 'sourcemap-to-ast'], function(esprima, estraverse, escodegen, underscore, sourcemapToAst) {
         return factory({
           'esprima': esprima,
           'estraverse': estraverse,
           'escodegen': escodegen,
-          'underscore': underscore
+          'underscore': underscore,
+          'sourcemapToAst': sourcemapToAst
         }, root);
       });
     } else if (typeof exports !== 'undefined') {
@@ -34,6 +35,18 @@ require([
     }
   }(this, function cleanamd(amdDependencies, context) {
     'use strict';
+
+    // Third-Party Dependencies
+    // Note: These dependencies are hoisted to the top (as local variables) at build time (Look in the gulpfile.js file and the AMDclean wrap option for more details)
+    sourcemapToAst = (function() {
+      if (cleanamd.amd && amdDependencies && amdDependencies.sourcemapToAst) {
+        return amdDependencies.sourcemapToAst;
+      } else if (cleanamd.commonjs) {
+        return require('sourcemap-to-ast');
+      } else if (context && context.sourcemapToAst) {
+        return context.sourcemapToAst;
+      }
+    }());
 
     // Third-Party Dependencies
     // Note: These dependencies are hoisted to the top (as local variables) at build time (Look in the gulpfile.js file and the AMDclean wrap option for more details)
@@ -87,6 +100,8 @@ require([
           throw new Error(errorMsgs.escodegen);
         } else if (!_) {
           throw new Error(errorMsgs.lodash);
+        } else if (!sourcemapToAst) {
+          throw new Error(errorMsgs.sourcemapToAst);
         }
 
         var defaultOptions = _.cloneDeep(this.defaultOptions || {}),

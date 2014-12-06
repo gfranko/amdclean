@@ -62,12 +62,12 @@ gulp.task('build', function(cb) {
               'filePath': outputFile,
               'transformAMDChecks': false,
               'aggressiveOptimizations': true,
-              'ignoreModules': ['esprima', 'estraverse', 'escodegen', 'lodash', 'fs'],
+              'ignoreModules': ['esprima', 'estraverse', 'escodegen', 'lodash', 'fs', 'sourcemap_to_ast'], // wtf? parsed name here?
               'removeUseStricts': false,
               'wrap': {
                 // All of the third party dependencies are hoisted here
                 // It's a hack, but it's not too painful
-                'start': ';(function() {\n// Third-party dependencies that are hoisted\nvar esprima, estraverse, escodegen, _;\n'
+                'start': ';(function() {\n// Third-party dependencies that are hoisted\nvar esprima, estraverse, escodegen, _, sourcemapToAst;\n'
               },
               'createAnonymousAMDModule': true
             });
