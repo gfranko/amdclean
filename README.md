@@ -743,6 +743,27 @@ __I can't seem to get AMDclean 2.0 to work.  What gives?__
 
 - Please make sure you are using the `onModuleBundleComplete` Require.js hook and **NOT** the `onBuildWrite` Require.js hook.  The `onBuildWrite` hook has been deprecated for AMDclean versions `>= 2.0`.
 
+__I'd like to use source map support. What to do?__
+
+- You can use the following minimum viable configuration to add source map support:
+
+ ```javascript
+var amdclean = require('amdclean'),
+    cleaned = amdclean.clean({
+        'sourceMap: '{...}', // this is the source map that you already have for the code below
+        'code': 'define("randomExample", function() { console.log("I am a random example"); });',
+        'wrap': false, // do not use wrap together with escodegen.sourceMapWithCode since it breaks the logic
+        'esprima': {
+            'source': 'myfile.js' // name of your file to appear in sourcemap
+        },
+        'escodegen': {
+            'sourceMap': true,
+            'sourceMapWithCode': true
+        }
+    });
+```
+
+**Attention!** Result in variable `cleaned` is an object `{code: ..., map: ...}` where `code` is your cleaned code and `map` is a source map. Read [Escodegen Wiki](https://github.com/estools/escodegen/wiki/Source-Map-Usage) for more info.
 
 ## License
 
