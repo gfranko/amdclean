@@ -241,11 +241,22 @@ define([
     // -----------------------
     //  Returns a normalized dependency name that handles relative file paths
     'normalizeDependencyName': function(moduleId, dep) {
-      if (!moduleId || !dep || !Utils.isRelativeFilePath(dep)) {
+      if (!moduleId || !dep) {
         return dep;
       }
 
-      var normalizePath = function(path) {
+      var pluginName = (function(){
+          if (!dep || dep.indexOf("!") === -1) {
+            return "";
+          }
+
+          var split = dep.split("!");
+              dep = split[1];
+
+          return split[0] + "!";
+
+        }()),
+        normalizePath = function(path) {
           var segments = path.split('/'),
             normalizedSegments;
 
@@ -271,7 +282,11 @@ define([
           return segments.join('/');
         };
 
-      return normalizePath([baseName(moduleId), dep].join('/'));
+      if (!Utils.isRelativeFilePath(dep)) {
+        return pluginName + dep;
+      }
+
+      return pluginName + normalizePath([baseName(moduleId), dep].join('/'));
     }
   };
 
