@@ -112,14 +112,14 @@ define([
           },
           configMemberExpression = {
             'type': 'MemberExpression',
-            'computed': false,
+            'computed': true,
             'object': {
               'type': 'Identifier',
               'name': 'module'
             },
             'property': {
-              'type': 'Identifier',
-              'name': moduleId
+              'type': 'Literal',
+              'value': moduleId
             }
           },
           moduleDepIndex;

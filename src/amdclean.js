@@ -1,6 +1,6 @@
-/*! amdclean - v2.4.0 - 2014-12-06
+/*! amdclean - v2.4.0 - 2015-02-02
 * http://gregfranko.com/amdclean
-* Copyright (c) 2014 Greg Franko */
+* Copyright (c) 2015 Greg Franko */
 
 
 /*The MIT License (MIT)
@@ -453,14 +453,14 @@ convertToIIFEDeclaration = function convertToIIFEDeclaration(obj) {
           'loc': loc
         }, configMemberExpression = {
           'type': 'MemberExpression',
-          'computed': false,
+          'computed': true,
           'object': {
             'type': 'Identifier',
             'name': 'module'
           },
           'property': {
-            'type': 'Identifier',
-            'name': moduleId
+            'type': 'Literal',
+            'value': moduleId
           }
         }, moduleDepIndex;
       if (options.config && options.config[moduleId]) {
