@@ -173,7 +173,7 @@ define([
           'operator': '=',
           'left': {
             'type': 'Identifier',
-            'name': moduleName,
+            'name': options.IIFEVariableDeclaration ? options.IIFEVariableDeclaration(moduleName, moduleId) : moduleName,
             'range': range,
             'loc': loc
           },

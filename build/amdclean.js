@@ -1,6 +1,6 @@
-/*! amdclean - v2.4.0 - 2014-12-06
+/*! amdclean - v2.4.0 - 2015-03-09
 * http://gregfranko.com/amdclean
-* Copyright (c) 2014 Greg Franko */
+* Copyright (c) 2015 Greg Franko */
 
 
 /*The MIT License (MIT)
@@ -513,7 +513,7 @@ convertToIIFEDeclaration = function convertToIIFEDeclaration(obj) {
         'operator': '=',
         'left': {
           'type': 'Identifier',
-          'name': moduleName,
+          'name': options.IIFEVariableDeclaration ? options.IIFEVariableDeclaration(moduleName, moduleId) : moduleName,
           'range': range,
           'loc': loc
         },

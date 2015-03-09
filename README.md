@@ -570,7 +570,10 @@ amdclean.clean({
   },
   // Configuration info for modules
   // Note: Further info can be found here - http://requirejs.org/docs/api.html#config-moduleconfig
-  'config': {}
+  'config': {},
+  // A hook that allows you add your own custom module variable assignment expression, very handly if you need to 
+  // create your own modules global dictionary
+  'IIFEVariableDeclaration': function(moduleName, moduleId){return 'GlobalModules[\'' + moduleId + '\'] = ' + moduleName; }
 })
 ```
 
