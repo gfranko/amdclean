@@ -727,6 +727,21 @@ convertToFunctionExpression = function convertToFunctionExpression(obj) {
       return params;
     }(), callbackFuncParams = function () {
       var deps = [], currentName, cbParams = _.union(callbackFunc.params && callbackFunc.params.length ? callbackFunc.params : !shouldOptimize && dependencyNames && dependencyNames.length ? dependencyNames : [], matchingRequireExpressionParams), mappedParameter = {};
+      var callbackBody = callbackFunc.body ? amdclean.options.code.substring(callbackFunc.body.range[0], callbackFunc.body.range[1]) : '';
+      estraverse.traverse(ast, {
+        enter: function (node, parent) {
+          if (node.type == 'FunctionExpression' || node.type == 'FunctionDeclaration')
+            return estraverse.VisitorOption.Skip;
+        },
+        leave: function (node, parent) {
+          console.log('node.type', node.type);
+          if (node.type == 'VariableDeclarator')
+            console.log(node.id.name);
+        }
+      });
+      if (/[^\w0-9_]arguments[^\w0-9_]/.test(callbackBody)) {
+        cbParams = cbParams.concat(dependencyNames.slice(cbParams.length));
+      }
       _.each(cbParams, function (currentParam, iterator) {
         if (currentParam) {
           currentName = currentParam.name;

@@ -487,6 +487,30 @@ describe('amdclean specs', function() {
 
             expect(cleanedCode).toBe(standardJavaScript);
           });
+
+          it('should remove original function parameters if their arguments are not declared in the callback', function() {
+            var AMDcode = "define('A',['B','C','D'],function(B){return 1;});",
+              options = _.merge(_.cloneDeep(defaultOptions), {}),
+              cleanedCode = amdclean.clean(AMDcode, options),
+              standardJavaScript = "var A;A=function (B){return 1;}(B);";
+            expect(cleanedCode).toBe(standardJavaScript);
+          });
+
+          it('should not remove original function parameters if their arguments are not declared in the callback', function() {
+            var AMDcode = "define('A',['B','C','D'],function(B){return arguments[0];});",
+              options = _.merge(_.cloneDeep(defaultOptions), {}),
+              cleanedCode = amdclean.clean(AMDcode, options),
+              standardJavaScript = "var A;A=function (B,C,D){return arguments[0];}(B,C,D);";
+            expect(cleanedCode).toBe(standardJavaScript);
+          });
+
+          it('should remove original function parameters if "arguments" is used but only in an inner function', function() {
+            var AMDcode = "define('A',['B','C','D'],function(B){return function(){return arguments[0];}});",
+              options = _.merge(_.cloneDeep(defaultOptions), {}),
+              cleanedCode = amdclean.clean(AMDcode, options),
+              standardJavaScript = "var A;A=function (B){return function(){return arguments[0];};}(B);";
+            expect(cleanedCode).toBe(standardJavaScript);
+          });
         });
 
       });

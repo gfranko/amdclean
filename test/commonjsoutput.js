@@ -1,1 +1,24 @@
-var commonjs3,commonjs2,commonjs4,commonjs1;commonjs3=function (exports){exports.exampleFunc=function(){var test=true;return test;};return exports;}({});commonjs2=function (exports){exports={'exampleBool':true,'exampleFunc':commonjs3.exampleFunc};return exports;}({});commonjs4=function (exports){exports.test='this is a test';return exports;}({});commonjs1=function (exports,__commonjs2__,_commonjs4_){var commonjs2=__commonjs2__;var _commonjs2_='blah';var commonjs4=_commonjs4_;commonjs2.exampleFunc();return exports;}({},commonjs2,commonjs4);
+define('commonjs3',['require','exports','module'],function (require, exports, module) {exports.exampleFunc = function() {
+  var test = true;
+  return test;
+}
+});
+
+define('commonjs2',['require','exports','module','commonjs3'],function (require, exports, module) {module.exports = {
+	'exampleBool': true,
+	'exampleFunc': require('commonjs3').exampleFunc
+}
+});
+
+define('commonjs4',['require','exports','module'],function (require, exports, module) {exports.test = 'this is a test';
+});
+
+define('commonjs1',['require','exports','module','./commonjs2','./commonjs4'],function (require, exports, module) {var commonjs2 = require('./commonjs2');
+
+var _commonjs2_ = 'blah';
+
+var commonjs4 = require('./commonjs4');
+
+commonjs2.exampleFunc();
+});
+
