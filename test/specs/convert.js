@@ -432,6 +432,17 @@ describe('amdclean specs', function() {
           expect(cleanedCode).toBe(standardJavaScript);
         });
 
+        it('should correctly transform each module variable declaration name when using the IIFEVariableNameTransform option', function() {
+          var AMDcode = "define('A', ['B', 'C'], function(B, C){return 2; }); ",
+            options = _.merge(_.cloneDeep(defaultOptions), {
+              'IIFEVariableNameTransform': function(moduleName, moduleId) {
+                return "MyModules['" + moduleName +"']=" + moduleName;
+              }
+            }),
+            cleanedCode = amdclean.clean(AMDcode, options);
+          expect(cleanedCode.indexOf("MyModules['A']=A=function")!== -1).toBe(true);
+        });
+
         describe('aggressiveOptimizations option', function() {
           it('should correctly remove callback and IIFE parameters that directly match stored module names', function() {
             var AMDcode = "define('example1', function() {});define('example2', function() {});define('example', ['example1', 'example2'], function(example1, example2) {var test = true;});",

@@ -573,7 +573,7 @@ amdclean.clean({
   'config': {},
   // A hook that allows you add your own custom module variable assignment expression, very handly if you need to 
   // create your own modules global dictionary
-  'IIFEVariableDeclaration': function(moduleName, moduleId){return 'GlobalModules[\'' + moduleId + '\'] = ' + moduleName; }
+  'IIFEVariableNameTransform': function(moduleName, moduleId){return 'GlobalModules[\'' + moduleId + '\'] = ' + moduleName; }
 })
 ```
 
