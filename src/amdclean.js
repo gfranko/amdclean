@@ -1,6 +1,6 @@
-/*! amdclean - v2.4.0 - 2014-12-06
+/*! amdclean - v2.4.0 - 2015-03-09
 * http://gregfranko.com/amdclean
-* Copyright (c) 2014 Greg Franko */
+* Copyright (c) 2015 Greg Franko */
 
 
 /*The MIT License (MIT)
@@ -513,7 +513,7 @@ convertToIIFEDeclaration = function convertToIIFEDeclaration(obj) {
         'operator': '=',
         'left': {
           'type': 'Identifier',
-          'name': moduleName,
+          'name': options.IIFEVariableNameTransform ? options.IIFEVariableNameTransform(moduleName, moduleId) : moduleName,
           'range': range,
           'loc': loc
         },
@@ -727,6 +727,29 @@ convertToFunctionExpression = function convertToFunctionExpression(obj) {
       return params;
     }(), callbackFuncParams = function () {
       var deps = [], currentName, cbParams = _.union(callbackFunc.params && callbackFunc.params.length ? callbackFunc.params : !shouldOptimize && dependencyNames && dependencyNames.length ? dependencyNames : [], matchingRequireExpressionParams), mappedParameter = {};
+      if (callbackFunc.body) {
+        // For calculating cbParams we'll optimize by removing not referenced names in the callback parameters. 
+        // If the callback body contains a reference to 'arguments' then we cannot perform this optimization.
+        // but at the same time if only inner functions body contains arguments WE DO optimize.
+        // What we do is find inner function declarations and then remove their text from the callback body. Then we look for 'arguments' references
+        var innerFunctions = [], lookForArgumentsCode;
+        estraverse.traverse(callbackFunc.body, {
+          enter: function (node, parent) {
+            if (node.type == 'FunctionExpression' || node.type == 'FunctionDeclaration')
+              innerFunctions.push(node);
+          }
+        });
+        if (innerFunctions.length)
+          for (var i = callbackFunc.body.range[0]; i < callbackFunc.body.range[1]; i++)
+            _.each(innerFunctions, function (innerFunction) {
+              if (i < innerFunction.range[0] || i >= innerFunction.range[1])
+                lookForArgumentsCode += amdclean.options.code[i];
+            });
+        else
+          lookForArgumentsCode = amdclean.options.code.substring(callbackFunc.body.range[0], callbackFunc.body.range[1]);
+        if (/[^\w0-9_]arguments[^\w0-9_]/.test(lookForArgumentsCode))
+          cbParams = cbParams.concat(dependencyNames.slice(cbParams.length));
+      }
       _.each(cbParams, function (currentParam, iterator) {
         if (currentParam) {
           currentName = currentParam.name;
