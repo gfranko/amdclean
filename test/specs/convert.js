@@ -252,7 +252,7 @@ describe('amdclean specs', function() {
       it('should not remove comments from the source code (special case)', function() {
         var fs = require('fs'),
           AMDcode = fs.readFileSync(__dirname + '/../comments.js').toString(),
-          cleanedCode = amdclean.clean(AMDcode, {wrap: false}),
+          cleanedCode = amdclean.clean(AMDcode, {wrap: false, removeUseStricts: false}),
           standardJavaScript = fs.readFileSync(__dirname + '/../comments-output.js').toString();
 
         expect(cleanedCode).toBe(standardJavaScript);
@@ -352,9 +352,28 @@ describe('amdclean specs', function() {
           var AMDcode = "define('example', function () { 'use strict'; return function ( thing ) { return !isNaN( parseFloat( thing ) ) && isFinite( thing );};});",
             options = _.merge(_.cloneDeep(defaultOptions), {
               'removeUseStricts': false
-            });
-          cleanedCode = amdclean.clean(AMDcode, options),
-          standardJavaScript = "var example;example=function (){'use strict';return function(thing){return!isNaN(parseFloat(thing))&&isFinite(thing);};}();";
+            }),
+            cleanedCode = amdclean.clean(AMDcode, options),
+            standardJavaScript = "var example;example=function (){'use strict';return function(thing){return!isNaN(parseFloat(thing))&&isFinite(thing);};}();";
+
+          expect(cleanedCode).toBe(standardJavaScript);
+        });
+
+        it('should remove "use strict" statement when removeUseStricts option is set to true (which is default)', function() {
+          var AMDcode = "define('example', function () { 'use strict'; function example() {};example.prototype.test = 1;return example;});",
+            cleanedCode = amdclean.clean(AMDcode, defaultOptions),
+            standardJavaScript = "var example;example=function (){function example(){}example.prototype.test=1;return example;}();";
+
+          expect(cleanedCode).toBe(standardJavaScript);
+        });
+
+        it('should keep "use strict" statement when removeUseStricts option is set to false', function() {
+          var AMDcode = "define('example', function () { 'use strict'; function example() {};example.prototype.test = 1;return example;});",
+            options = _.merge(_.cloneDeep(defaultOptions), {
+              'removeUseStricts': false
+            }),
+            cleanedCode = amdclean.clean(AMDcode, options),
+            standardJavaScript = "var example;example=function (){'use strict';function example(){}example.prototype.test=1;return example;}();";
 
           expect(cleanedCode).toBe(standardJavaScript);
         });

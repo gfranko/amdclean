@@ -1,6 +1,6 @@
-/*! amdclean - v2.4.0 - 2014-12-06
+/*! amdclean - v2.4.0 - 2015-03-23
 * http://gregfranko.com/amdclean
-* Copyright (c) 2014 Greg Franko */
+* Copyright (c) 2015 Greg Franko */
 
 
 /*The MIT License (MIT)
@@ -576,6 +576,7 @@ convertToFunctionExpression = function convertToFunctionExpression(obj) {
             return node;
           }
         });
+        callbackFunc.body.body = body;
         // Returns an array of all return statements
         returnStatements = _.where(body, { 'type': 'ReturnStatement' });
         exportsExpressions = _.where(body, {

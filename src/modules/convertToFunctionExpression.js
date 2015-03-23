@@ -58,6 +58,7 @@ define([
               return node;
             }
           });
+          callbackFunc.body.body = body;
 
           // Returns an array of all return statements
           returnStatements = _.where(body, {
