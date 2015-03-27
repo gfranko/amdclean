@@ -1,4 +1,4 @@
-/*! amdclean - v2.4.0 - 2014-12-06
+/*! amdclean - v2.4.0 - 2014-12-23
 * http://gregfranko.com/amdclean
 * Copyright (c) 2014 Greg Franko */
 
@@ -312,10 +312,17 @@ utils = function () {
     // -----------------------
     //  Returns a normalized dependency name that handles relative file paths
     'normalizeDependencyName': function (moduleId, dep) {
-      if (!moduleId || !dep || !Utils.isRelativeFilePath(dep)) {
+      if (!moduleId || !dep) {
         return dep;
       }
-      var normalizePath = function (path) {
+      var pluginName = function () {
+          if (!dep || dep.indexOf('!') === -1) {
+            return '';
+          }
+          var split = dep.split('!');
+          dep = split[1];
+          return split[0] + '!';
+        }(), normalizePath = function (path) {
           var segments = path.split('/'), normalizedSegments;
           normalizedSegments = _.reduce(segments, function (memo, segment) {
             switch (segment) {
@@ -335,7 +342,10 @@ utils = function () {
           segments.pop();
           return segments.join('/');
         };
-      return normalizePath([
+      if (!Utils.isRelativeFilePath(dep)) {
+        return pluginName + dep;
+      }
+      return pluginName + normalizePath([
         baseName(moduleId),
         dep
       ].join('/'));

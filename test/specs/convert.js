@@ -253,7 +253,7 @@ describe('amdclean specs', function() {
         var fs = require('fs'),
           AMDcode = fs.readFileSync(__dirname + '/../comments.js').toString(),
           cleanedCode = amdclean.clean(AMDcode, {wrap: false}),
-          standardJavaScript = fs.readFileSync(__dirname + '/../comments-output.js').toString();
+          standardJavaScript = fs.readFileSync(__dirname + '/../comments-output.js').toString().replace(/\r\n/g, "\n");
 
         expect(cleanedCode).toBe(standardJavaScript);
       });
@@ -296,6 +296,15 @@ describe('amdclean specs', function() {
           }),
           cleanedCode = amdclean.clean(AMDcode, options),
           standardJavaScript = "if(typeof define==='function'){define([],function(){});}";
+
+        expect(cleanedCode).toBe(standardJavaScript);
+      });
+
+      it('should handle loader plugins', function(){
+        var fs = require('fs'),
+          AMDcode = fs.readFileSync(__dirname + '/../loaderPlugin.js').toString(),
+          cleanedCode = amdclean.clean(AMDcode, {wrap: false}),
+          standardJavaScript = fs.readFileSync(__dirname + '/../loaderPlugin-output.js').toString().replace(/\r\n/g, "\n");
 
         expect(cleanedCode).toBe(standardJavaScript);
       });
