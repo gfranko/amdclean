@@ -100,7 +100,8 @@ gulp.task('build', function(cb) {
 gulp.task('lint', ['build'], function() {
   gulp.src('src/amdclean.js')
     .pipe(jshint({
-      'evil': true
+      'evil': true,
+      'loopfunc': true
     }))
     .pipe(jshint.reporter('default'));
 });

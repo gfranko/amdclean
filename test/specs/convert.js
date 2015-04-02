@@ -441,6 +441,41 @@ describe('amdclean specs', function() {
           expect(cleanedCode).toBe(standardJavaScript);
         });
 
+        it('should correctly transform each module variable declaration name when using the IIFEVariableNameTransform option', function() {
+          var AMDcode = "define('A', ['B', 'C'], function(B, C){return 2; }); ",
+            options = _.merge(_.cloneDeep(defaultOptions), {
+              'IIFEVariableNameTransform': function(moduleName, moduleId) {
+                return "MyModules['" + moduleName +"']=" + moduleName;
+              }
+            }),
+            cleanedCode = amdclean.clean(AMDcode, options);
+          expect(cleanedCode.indexOf("MyModules['A']=A=function")!== -1).toBe(true);
+        });
+        
+        it('should remove original function parameters if their arguments are not declared in the callback', function() {
+          var AMDcode = "define('A',['B','C','D'],function(B){return 1;});",
+            options = _.merge(_.cloneDeep(defaultOptions), {}),
+            cleanedCode = amdclean.clean(AMDcode, options),
+            standardJavaScript = "var A;A=function (B){return 1;}(B);";
+          expect(cleanedCode).toBe(standardJavaScript);
+        });
+
+        it('should not remove original function parameters if their arguments are not declared in the callback', function() {
+          var AMDcode = "define('A',['B','C','D'],function(B){return arguments[0];});",
+            options = _.merge(_.cloneDeep(defaultOptions), {}),
+            cleanedCode = amdclean.clean(AMDcode, options),
+            standardJavaScript = "var A;A=function (B,C,D){return arguments[0];}(B,C,D);";
+          expect(cleanedCode).toBe(standardJavaScript);
+        });
+
+        it('should remove original function parameters if "arguments" is used but only in an inner function', function() {
+          var AMDcode = "define('A',['B','C','D'],function(B){return function(){return arguments[0];}});",
+            options = _.merge(_.cloneDeep(defaultOptions), {}),
+            cleanedCode = amdclean.clean(AMDcode, options),
+            standardJavaScript = "var A;A=function (B){return function(){return arguments[0];};}(B);";
+          expect(cleanedCode).toBe(standardJavaScript);
+        });
+
         describe('aggressiveOptimizations option', function() {
           it('should correctly remove callback and IIFE parameters that directly match stored module names', function() {
             var AMDcode = "define('example1', function() {});define('example2', function() {});define('example', ['example1', 'example2'], function(example1, example2) {var test = true;});",
@@ -485,6 +520,7 @@ describe('amdclean specs', function() {
 
             expect(cleanedCode).toBe(standardJavaScript);
           });
+
         });
 
       });

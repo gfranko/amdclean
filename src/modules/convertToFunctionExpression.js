@@ -251,7 +251,37 @@ define([
         var deps = [],
           currentName,
           cbParams = _.union((callbackFunc.params && callbackFunc.params.length ? callbackFunc.params : !shouldOptimize && dependencyNames && dependencyNames.length ? dependencyNames : []), matchingRequireExpressionParams),
-          mappedParameter = {};
+          mappedParameter = {},
+          // For calculating cbParams we'll optimize by removing not referenced names in the callback parameters. 
+          // If the callback body contains a reference to 'arguments' then we cannot perform this optimization.
+          // but at the same time if only inner functions body contains arguments WE DO optimize.
+          // What we do is find inner function declarations and then remove their text from the callback body. Then we look for 'arguments' references
+          innerFunctions = [],
+          lookForArgumentsCode; 
+
+        if (callbackFunc.body) {
+          estraverse.traverse(callbackFunc.body, {
+            enter: function (node, parent) {
+              if (node.type == 'FunctionExpression' || node.type == 'FunctionDeclaration')
+                innerFunctions.push(node);
+            }
+          });
+          if (innerFunctions.length) {
+            for (var i = callbackFunc.body.range[0]; i < callbackFunc.body.range[1]; i++) {
+              _.each(innerFunctions, function (innerFunction) {
+                if (i<innerFunction.range[0] || i>=innerFunction.range[1]) {
+                  lookForArgumentsCode += amdclean.options.code[i];
+                }
+              });
+            }
+          } else {
+            lookForArgumentsCode = amdclean.options.code.substring(callbackFunc.body.range[0], callbackFunc.body.range[1]);
+          }
+
+          if (/[^\w0-9_]arguments[^\w0-9_]/.test(lookForArgumentsCode)) {
+            cbParams = cbParams.concat(dependencyNames.slice(cbParams.length));
+          }
+        }
 
         _.each(cbParams, function(currentParam, iterator) {
           if (currentParam) {
