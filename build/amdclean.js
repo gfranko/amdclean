@@ -1607,7 +1607,7 @@ clean = function clean() {
           throw new Error(errorMsgs.escodegen);
         } else if (!_) {
           throw new Error(errorMsgs.lodash);
-        } else if (!sourcemapToAst) {
+        } else if (!sourcemapToAst && typeof window === 'undefined') {
           throw new Error(errorMsgs.sourcemapToAst);
         }
         var defaultOptions = _.cloneDeep(this.defaultOptions || {}), userOptions = options || overloadedOptions || {};

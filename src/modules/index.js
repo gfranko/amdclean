@@ -100,7 +100,7 @@ require([
           throw new Error(errorMsgs.escodegen);
         } else if (!_) {
           throw new Error(errorMsgs.lodash);
-        } else if (!sourcemapToAst) {
+        } else if (!sourcemapToAst && typeof window === 'undefined') {
           throw new Error(errorMsgs.sourcemapToAst);
         }
 
