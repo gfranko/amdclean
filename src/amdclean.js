@@ -586,6 +586,7 @@ convertToFunctionExpression = function convertToFunctionExpression(obj) {
             return node;
           }
         });
+        callbackFunc.body.body = body;
         // Returns an array of all return statements
         returnStatements = _.where(body, { 'type': 'ReturnStatement' });
         exportsExpressions = _.where(body, {
