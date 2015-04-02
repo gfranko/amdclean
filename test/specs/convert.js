@@ -846,7 +846,7 @@ describe('amdclean specs', function() {
           }
         }),
         cleanedCode = amdclean.clean(AMDcode, options),
-        standardJavaScript = "var moment,module={'moment':{'config':function(){return{'noGlobal':true};}}};if(true){moment=function (require,exports,module){return moment;}({},{},module.moment);}";
+        standardJavaScript = "var moment,module={'moment':{'config':function(){return{'noGlobal':true};}}};if(true){moment=function (require,exports,module){return moment;}({},{},module['moment']);}";
 
       expect(cleanedCode).toBe(standardJavaScript);
     });
@@ -865,7 +865,7 @@ describe('amdclean specs', function() {
           }
         }),
         cleanedCode = amdclean.clean(AMDcode, options),
-        standardJavaScript = "var moment,module={'moment':{'config':function(){return{'noGlobal':true};}}};if(true){moment=function (module){return moment;}(module.moment);}";
+        standardJavaScript = "var moment,module={'moment':{'config':function(){return{'noGlobal':true};}}};if(true){moment=function (module){return moment;}(module['moment']);}";
 
       expect(cleanedCode).toBe(standardJavaScript);
     });
@@ -884,7 +884,7 @@ describe('amdclean specs', function() {
           }
         }),
         cleanedCode = amdclean.clean(AMDcode, options),
-        standardJavaScript = "var moment,module={'moment':{'config':function(){return{'noGlobal':true};}}};if(true){moment=function (test,module){return moment;}(test,module.moment);}";
+        standardJavaScript = "var moment,module={'moment':{'config':function(){return{'noGlobal':true};}}};if(true){moment=function (test,module){return moment;}(test,module['moment']);}";
 
       expect(cleanedCode).toBe(standardJavaScript);
     });
