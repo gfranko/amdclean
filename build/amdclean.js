@@ -1,4 +1,4 @@
-/*! amdclean - v2.4.0 - 2015-04-01
+/*! amdclean - v2.6.0 - 2015-04-02
 * http://gregfranko.com/amdclean
 * Copyright (c) 2015 Greg Franko */
 
@@ -1650,7 +1650,7 @@ clean = function clean() {
       // The object that is publicly accessible
       publicAPI = {
         // Current project version number
-        'VERSION': '2.5.0',
+        'VERSION': '2.6.0',
         'clean': function (options, overloadedOptions) {
           // Creates a new AMDclean instance
           var amdclean = new AMDclean(options, overloadedOptions), cleanedCode = amdclean.clean();
