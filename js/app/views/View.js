@@ -32,7 +32,7 @@ define(['jquery',
         this.standardTextarea.val(amdclean.clean({
           'code': this.amdTextarea.val(),
           'aggressiveOptimizations': this.aggressiveOptimizations.is(':checked') ? true : false
-        }));
+        }).trim());
 
         this.amdEditor = CodeMirror.fromTextArea(document.getElementById('amd-textarea'), {
           mode: 'javascript',
@@ -85,7 +85,7 @@ define(['jquery',
           var cleanedCode = amdclean.clean({
             'code': $.trim(this.amdEditor.getValue()),
             'aggressiveOptimizations': this.aggressiveOptimizations.is(':checked') ? true : false
-          });
+          }).trim();
           this.standardEditor.setValue(cleanedCode);
           this.codeError.empty().hide();
           this.linkToShare.val(this.buildURL());

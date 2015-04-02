@@ -42,7 +42,9 @@ require.config({
 
     'escodegen': '../libs/plugins/escodegen',
 
-    'amdclean': '../libs/plugins/amdclean'
+    'amdclean': '../libs/plugins/amdclean',
+
+    'sourcemap-to-ast': '../libs/plugins/sourcemap-to-ast'
 
   },
 
