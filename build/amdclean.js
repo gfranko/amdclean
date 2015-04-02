@@ -26,9 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
 
-;(function() {
-// Third-party dependencies that are hoisted
-var esprima, estraverse, escodegen, _, sourcemapToAst;
+;(function(esprima, estraverse, escodegen, _) {
 // defaultOptions.js
 // =================
 // AMDclean default options
@@ -1673,5 +1671,4 @@ clean = function clean() {
     };
     return publicAPI;
   }));
-}());
-}());
+}());}(typeof esprima !== "undefined" ? esprima: null, typeof estraverse !== "undefined" ? estraverse: null, typeof escodegen !== "undefined" ? escodegen: null, typeof _ !== "undefined" ? _ : null));

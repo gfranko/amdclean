@@ -67,7 +67,8 @@ gulp.task('build', function(cb) {
               'wrap': {
                 // All of the third party dependencies are hoisted here
                 // It's a hack, but it's not too painful
-                'start': ';(function() {\n// Third-party dependencies that are hoisted\nvar esprima, estraverse, escodegen, _, sourcemapToAst;\n'
+                'start': ';(function(esprima, estraverse, escodegen, _) {\n',
+                'end': '}(typeof esprima !== "undefined" ? esprima: null, typeof estraverse !== "undefined" ? estraverse: null, typeof escodegen !== "undefined" ? escodegen: null, typeof _ !== "undefined" ? _ : null));'
               },
               'createAnonymousAMDModule': true
             });
