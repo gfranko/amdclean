@@ -181,7 +181,7 @@ describe('amdclean specs', function() {
             'globalModules': ['foo']
           }),
           cleanedCode = amdclean.clean(AMDcode, options),
-          standardJavaScript = "var foo;foo=function (exports){exports.bar=bar;return exports;}({});window.foo=foo;";
+          standardJavaScript = "var foo={};foo=function (exports){exports.bar=bar;return exports;}(foo);window.foo=foo;";
 
         expect(cleanedCode).toBe(standardJavaScript);
       });
@@ -236,7 +236,7 @@ describe('amdclean specs', function() {
       it('should support converting define() methods with identifiers', function() {
         var AMDcode = "define('esprima', ['exports'], factory);",
           cleanedCode = amdclean.clean(AMDcode, defaultOptions),
-          standardJavaScript = "var esprima;esprima=function (){return typeof factory==='function'?factory():factory;}();";
+          standardJavaScript = "var esprima={};esprima=function (){return typeof factory==='function'?factory():factory;}();";
 
         expect(cleanedCode).toBe(standardJavaScript);
       });
@@ -603,7 +603,7 @@ describe('amdclean specs', function() {
       it('should support the simplified CJS wrapper', function() {
         var AMDcode = "define('foo', ['require', 'exports', './bar'], function(require, exports, bar){exports.bar = require('./bar');});",
           cleanedCode = amdclean.clean(AMDcode, defaultOptions),
-          standardJavaScript = "var foo;foo=function (exports,bar){exports.bar=bar;return exports;}({},bar);";
+          standardJavaScript = "var foo={};foo=function (exports,bar){exports.bar=bar;return exports;}(foo,bar);";
 
         expect(cleanedCode).toBe(standardJavaScript);
       });
@@ -611,7 +611,7 @@ describe('amdclean specs', function() {
       it('should support the plain simplified CJS wrapper', function() {
         var AMDcode = "define('foo',['require','exports','module','bar'],function(require, exports){exports.bar = require('bar');});",
           cleanedCode = amdclean.clean(AMDcode, defaultOptions),
-          standardJavaScript = "var foo;foo=function (exports){exports.bar=bar;return exports;}({});";
+          standardJavaScript = "var foo={};foo=function (exports){exports.bar=bar;return exports;}(foo);";
 
         expect(cleanedCode).toBe(standardJavaScript);
       });
@@ -619,7 +619,7 @@ describe('amdclean specs', function() {
       it('should support the plain simplified CJS wrapper and not bomb when a variable is not initialized', function() {
         var AMDcode = "define('has',['require','exports','module'],function( require, exports, module ){exports.all = function( subject, properties ){if(subject === undefined || typeof subject != 'object'){return false;}var i = 0,len = properties.length,prop; //<--- error thrown because this isn't initialized\nfor(; i < len; i++){prop = properties[i];if(!(prop in subject)){return false;}}return true;};});",
           cleanedCode = amdclean.clean(AMDcode, defaultOptions),
-          standardJavaScript = "var has;has=function (exports){exports.all=function(subject,properties){if(subject===undefined||typeof subject!='object'){return false;}var i=0,len=properties.length,prop;//<--- error thrown because this isn't initialized\nfor(;i<len;i++){prop=properties[i];if(!(prop in subject)){return false;}}return true;};return exports;}({});";
+          standardJavaScript = "var has={};has=function (exports){exports.all=function(subject,properties){if(subject===undefined||typeof subject!='object'){return false;}var i=0,len=properties.length,prop;//<--- error thrown because this isn't initialized\nfor(;i<len;i++){prop=properties[i];if(!(prop in subject)){return false;}}return true;};return exports;}(has);";
 
         expect(cleanedCode).toBe(standardJavaScript);
       });
@@ -656,7 +656,7 @@ describe('amdclean specs', function() {
 
       it('should support the Require.js optimizer cjsTranslate option that converts CommonJS modules to AMD modules', function(done) {
         var cleanedCode,
-          standardJavaScript = "var commonjs3,commonjs2,commonjs4,commonjs1;commonjs3=function (exports){exports.exampleFunc=function(){var test=true;return test;};return exports;}({});commonjs2=function (exports){exports={'exampleBool':true,'exampleFunc':commonjs3.exampleFunc};return exports;}({});commonjs4=function (exports){exports.test='this is a test';return exports;}({});commonjs1=function (exports,__commonjs2__,_commonjs4_){var commonjs2=__commonjs2__;var _commonjs2_='blah';var commonjs4=_commonjs4_;commonjs2.exampleFunc();return exports;}({},commonjs2,commonjs4);";
+          standardJavaScript = "var commonjs3={},commonjs2={},commonjs4={},commonjs1={};commonjs3=function (exports){exports.exampleFunc=function(){var test=true;return test;};return exports;}(commonjs3);commonjs2=function (exports){exports={'exampleBool':true,'exampleFunc':commonjs3.exampleFunc};return exports;}(commonjs2);commonjs4=function (exports){exports.test='this is a test';return exports;}(commonjs4);commonjs1=function (exports,__commonjs2__,_commonjs4_){var commonjs2=__commonjs2__;var _commonjs2_='blah';var commonjs4=_commonjs4_;commonjs2.exampleFunc();return exports;}(commonjs1,commonjs2,commonjs4);";
 
         requirejs.optimize({
           'baseUrl': './test/',
