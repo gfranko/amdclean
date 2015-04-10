@@ -41,6 +41,7 @@ define([
       dependencyBlacklist = defaultValues.dependencyBlacklist,
       shouldOptimize;
 
+
     startLineNumber = isDefine || isRequire ? node.expression.loc.start.line : node && node.loc && node.loc.start ? node.loc.start.line : null;
     shouldBeIgnored = (amdclean.matchingCommentLineNumbers[startLineNumber] || amdclean.matchingCommentLineNumbers[startLineNumber - 1]);
 
@@ -120,7 +121,10 @@ define([
             if (dependencyBlacklist[currentDependency.value] && !shouldOptimize) {
               depNames.push(currentDependency.value);
             } else if (dependencyBlacklist[currentDependency.value] !== 'remove') {
-              if (dependencyBlacklist[currentDependency.value]) {
+	      if (currentDependency.value === "exports") {
+                  depNames.push(moduleName);
+		  amdclean.exportsModules[moduleName] = true;
+              } else if (dependencyBlacklist[currentDependency.value]) {
                 depNames.push('{}');
               } else {
                 depNames.push(currentDependency.value);

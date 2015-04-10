@@ -149,6 +149,11 @@ require([
         // All of the stored program comments
         this.comments = [];
 
+        // exportsModules
+        // --------
+        // An object that stores a map of all modules that makes use of the exports parameter in define. Useful when declaring variables and making sure circular dependencies work correctly.
+        this.exportsModules = {};
+
         // options
         // -------
         // Merged user options and default options
