@@ -52,7 +52,7 @@ fit for JavaScript library/web app authors who want a tiny download in one file 
 It is best used for libraries or apps that use AMD or CommonJS (using the [cjsTranslate](https://github.com/jrburke/r.js/blob/master/build/example.build.js#L574) Require.js optimizer option) and optimize all modules into one file or multiple bundles.  If you do not include Require.js or a similar loader, you cannot dynamically load code.
 
 
-##What is Supported
+## What is Supported
 
 * Can be used for both full-fledged web apps and/or individual JavaScript libraries.
 
@@ -94,7 +94,7 @@ There are a few different ways that AMDclean can be used including:
 **Note:** AMDclean does not have any module ordering logic, so if you do not use the RequireJS optimizer then you need to find another solution for resolving module dependencies before your files can be "cleaned".
 
 
-###AMDclean with the RequireJS Optimizer
+### AMDclean with the RequireJS Optimizer
 
 * [Download the RequireJS optimizer](http://requirejs.org/docs/download.html#rjs).
 
@@ -176,7 +176,7 @@ gulp.task('build', function() {
 });
 ```
 
-###AMDclean as a Node Module
+### AMDclean as a Node Module
 
 * `npm install amdclean --save-dev`
 
@@ -194,7 +194,7 @@ var cleanedCode = amdclean.clean(code);
 ```
 
 
-###AMDclean as a Client-side Library
+### AMDclean as a Client-side Library
 
 * Include all dependencies
 
@@ -236,7 +236,7 @@ AMDclean uses Esprima to generate an AST (Abstract Syntax Tree) from the provide
 Here are a few different techniques that AMDclean uses to convert AMD to standard JavaScript code:
 
 
-###Define Calls
+### Define Calls
 
 _AMD_
 
@@ -372,7 +372,7 @@ third = {
 
 ---
 
-###Require Calls
+### Require Calls
 
 **Note:** `require(['someModule'])` calls, with no callback function, are removed from the built source code
 
@@ -411,7 +411,7 @@ _Standard_
 ```
 
 
-##Optimization Algorithms
+## Optimization Algorithms
 
 AMDclean uses a few different strategies to decrease file size:
 
@@ -488,7 +488,7 @@ anotherExample = function() {
 ```
 
 
-##Options
+## Options
 
 The amdclean `clean()` method accepts a string or an object.  Below is an example object with all of the available configuration options:
 
