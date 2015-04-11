@@ -244,6 +244,8 @@ define([
     // Creates variable declarations for each AMD module/callback parameter that needs to be hoisted
     _.each(hoistedVariables, function(moduleValue, moduleName) {
       if (!_.contains(options.ignoreModules, moduleName)) {
+	  var _initValue = amdclean.exportsModules[moduleName] !== true ? null : { type: 'ObjectExpression', properties: [] };
+
         declarations.push({
           'type': 'VariableDeclarator',
           'id': {
@@ -252,7 +254,7 @@ define([
             'range': defaultRange,
             'loc': defaultLOC
           },
-          'init': null,
+          'init': _initValue,
           'range': defaultRange,
           'loc': defaultLOC
         });
