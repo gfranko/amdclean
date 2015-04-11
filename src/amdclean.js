@@ -1,4 +1,4 @@
-/*! amdclean - v2.6.1 - 2015-04-10
+/*! amdclean - v2.7.0 - 2015-04-10
 * http://gregfranko.com/amdclean
 * Copyright (c) 2015 Greg Franko */
 
@@ -26,7 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
 
-;var sourcemapToAst;(function(esprima, estraverse, escodegen, _) {
+;(function(esprima, estraverse, escodegen, _, sourcemapToAst) {
 // defaultOptions.js
 // =================
 // AMDclean default options
@@ -1528,7 +1528,7 @@ clean = function clean() {
 };
 (function () {
   (function (root, factory, undefined) {
-    'use strict';
+    
     // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, and plain browser loading
     if (typeof define === 'function' && define.amd) {
       factory.amd = true;
@@ -1554,7 +1554,7 @@ clean = function clean() {
       root.amdclean = factory(null, root);
     }
   }(this, function cleanamd(amdDependencies, context) {
-    'use strict';
+    
     // Third-Party Dependencies
     // Note: These dependencies are hoisted to the top (as local variables) at build time (Look in the gulpfile.js file and the AMDclean wrap option for more details)
     sourcemapToAst = function () {
@@ -1661,7 +1661,7 @@ clean = function clean() {
       // The object that is publicly accessible
       publicAPI = {
         // Current project version number
-        'VERSION': '2.6.0',
+        'VERSION': '2.7.0',
         'clean': function (options, overloadedOptions) {
           // Creates a new AMDclean instance
           var amdclean = new AMDclean(options, overloadedOptions), cleanedCode = amdclean.clean();
@@ -1682,4 +1682,4 @@ clean = function clean() {
     };
     return publicAPI;
   }));
-}());}(typeof esprima !== "undefined" ? esprima: null, typeof estraverse !== "undefined" ? estraverse: null, typeof escodegen !== "undefined" ? escodegen: null, typeof _ !== "undefined" ? _ : null));
+}());}(typeof esprima !== "undefined" ? esprima: null, typeof estraverse !== "undefined" ? estraverse: null, typeof escodegen !== "undefined" ? escodegen: null, typeof _ !== "undefined" ? _ : null, typeof sourcemapToAst !== "undefined" ? sourcemapToAst : null));
