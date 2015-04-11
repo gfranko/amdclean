@@ -1,4 +1,4 @@
-/*! amdclean - v2.6.0 - 2015-04-02
+/*! amdclean - v2.7.0 - 2015-04-10
 * http://gregfranko.com/amdclean
 * Copyright (c) 2015 Greg Franko */
 
@@ -26,7 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
 
-;(function(esprima, estraverse, escodegen, _) {
+;(function(esprima, estraverse, escodegen, _, sourcemapToAst) {
 // defaultOptions.js
 // =================
 // AMDclean default options
@@ -1038,7 +1038,10 @@ convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
           if (dependencyBlacklist[currentDependency.value] && !shouldOptimize) {
             depNames.push(currentDependency.value);
           } else if (dependencyBlacklist[currentDependency.value] !== 'remove') {
-            if (dependencyBlacklist[currentDependency.value]) {
+            if (currentDependency.value === 'exports') {
+              depNames.push(moduleName);
+              amdclean.exportsModules[moduleName] = true;
+            } else if (dependencyBlacklist[currentDependency.value]) {
               depNames.push('{}');
             } else {
               depNames.push(currentDependency.value);
@@ -1430,6 +1433,10 @@ clean = function clean() {
   // Creates variable declarations for each AMD module/callback parameter that needs to be hoisted
   _.each(hoistedVariables, function (moduleValue, moduleName) {
     if (!_.contains(options.ignoreModules, moduleName)) {
+      var _initValue = amdclean.exportsModules[moduleName] !== true ? null : {
+        type: 'ObjectExpression',
+        properties: []
+      };
       declarations.push({
         'type': 'VariableDeclarator',
         'id': {
@@ -1438,7 +1445,7 @@ clean = function clean() {
           'range': defaultRange,
           'loc': defaultLOC
         },
-        'init': null,
+        'init': _initValue,
         'range': defaultRange,
         'loc': defaultLOC
       });
@@ -1642,6 +1649,10 @@ clean = function clean() {
         // --------
         // All of the stored program comments
         this.comments = [];
+        // exportsModules
+        // --------
+        // An object that stores a map of all modules that makes use of the exports parameter in define. Useful when declaring variables and making sure circular dependencies work correctly.
+        this.exportsModules = {};
         // options
         // -------
         // Merged user options and default options
@@ -1650,7 +1661,7 @@ clean = function clean() {
       // The object that is publicly accessible
       publicAPI = {
         // Current project version number
-        'VERSION': '2.6.0',
+        'VERSION': '2.7.0',
         'clean': function (options, overloadedOptions) {
           // Creates a new AMDclean instance
           var amdclean = new AMDclean(options, overloadedOptions), cleanedCode = amdclean.clean();
@@ -1671,4 +1682,4 @@ clean = function clean() {
     };
     return publicAPI;
   }));
-}());}(typeof esprima !== "undefined" ? esprima: null, typeof estraverse !== "undefined" ? estraverse: null, typeof escodegen !== "undefined" ? escodegen: null, typeof _ !== "undefined" ? _ : null));
+}());}(typeof esprima !== "undefined" ? esprima: null, typeof estraverse !== "undefined" ? estraverse: null, typeof escodegen !== "undefined" ? escodegen: null, typeof _ !== "undefined" ? _ : null, typeof sourcemapToAst !== "undefined" ? sourcemapToAst : null));
