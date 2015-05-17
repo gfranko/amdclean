@@ -33,7 +33,7 @@ A build tool that converts AMD code to standard JavaScript.
 
 * [Extended JavaScript Console](https://github.com/bignimbus/extended-javascript-console) - Better browser console methods
 
-* [Cash.js](https://github.com/bignimbus/extended-javascript-console) - Modules for processing, parsing, and computing money strings
+* [Cash.js](https://github.com/bignimbus/cash.js) - Modules for processing, parsing, and computing money strings
 
 ## Why
 
