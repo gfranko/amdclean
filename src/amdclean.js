@@ -1,4 +1,4 @@
-/*! amdclean - v2.7.0 - 2015-04-10
+/*! amdclean - v2.7.0 - 2015-09-25
 * http://gregfranko.com/amdclean
 * Copyright (c) 2015 Greg Franko */
 
@@ -1263,6 +1263,12 @@ generateCode = function generateCode(ast) {
 };
 clean = function clean() {
   var amdclean = this, options = amdclean.options, ignoreModules = options.ignoreModules, originalAst = {}, ast = {}, configAst = {}, generatedCode, declarations = [], hoistedVariables = {}, hoistedCallbackParameters = {}, defaultRange = defaultValues.defaultRange, defaultLOC = defaultValues.defaultLOC;
+  // Permit ignoreModules to contain module ids (using '/' rather than '_')
+  if (options.ignoreModules !== undefined) {
+    options.ignoreModules = options.ignoreModules.map(function (name) {
+      return normalizeModuleName.call(amdclean, name);
+    });
+  }
   // Creates and stores an AST representation of the code
   originalAst = createAst.call(amdclean);
   // Loops through the AST, finds all module ids, and stores them in the current instance storedModules property
@@ -1528,7 +1534,7 @@ clean = function clean() {
 };
 (function () {
   (function (root, factory, undefined) {
-    
+    'use strict';
     // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, and plain browser loading
     if (typeof define === 'function' && define.amd) {
       factory.amd = true;
@@ -1554,7 +1560,7 @@ clean = function clean() {
       root.amdclean = factory(null, root);
     }
   }(this, function cleanamd(amdDependencies, context) {
-    
+    'use strict';
     // Third-Party Dependencies
     // Note: These dependencies are hoisted to the top (as local variables) at build time (Look in the gulpfile.js file and the AMDclean wrap option for more details)
     sourcemapToAst = function () {
