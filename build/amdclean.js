@@ -1,4 +1,4 @@
-/*! amdclean - v2.7.0 - 2015-04-10
+/*! amdclean - v2.7.0 - 2015-12-05
 * http://gregfranko.com/amdclean
 * Copyright (c) 2015 Greg Franko */
 
@@ -464,7 +464,7 @@ convertToIIFEDeclaration = function convertToIIFEDeclaration(obj) {
           'computed': true,
           'object': {
             'type': 'Identifier',
-            'name': 'module'
+            'name': 'modules'
           },
           'property': {
             'type': 'Literal',
@@ -1451,7 +1451,7 @@ clean = function clean() {
       });
     }
   });
-  // Adds a local module variable if a user wants local module information available to them
+  // Adds a local modules variable if a user wants local module information available to them
   if (_.isObject(options.config) && !_.isEmpty(options.config)) {
     configAst = function () {
       var props = [];
@@ -1493,7 +1493,7 @@ clean = function clean() {
         'type': 'VariableDeclarator',
         'id': {
           'type': 'Identifier',
-          'name': 'module'
+          'name': 'modules'
         },
         'init': {
           'type': 'ObjectExpression',
@@ -1528,7 +1528,7 @@ clean = function clean() {
 };
 (function () {
   (function (root, factory, undefined) {
-    
+    'use strict';
     // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, and plain browser loading
     if (typeof define === 'function' && define.amd) {
       factory.amd = true;
@@ -1554,7 +1554,7 @@ clean = function clean() {
       root.amdclean = factory(null, root);
     }
   }(this, function cleanamd(amdDependencies, context) {
-    
+    'use strict';
     // Third-Party Dependencies
     // Note: These dependencies are hoisted to the top (as local variables) at build time (Look in the gulpfile.js file and the AMDclean wrap option for more details)
     sourcemapToAst = function () {

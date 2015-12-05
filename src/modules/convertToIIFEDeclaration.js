@@ -115,7 +115,7 @@ define([
             'computed': true,
             'object': {
               'type': 'Identifier',
-              'name': 'module'
+              'name': 'modules'
             },
             'property': {
               'type': 'Literal',
