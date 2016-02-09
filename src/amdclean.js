@@ -469,7 +469,7 @@ convertToIIFEDeclaration = function convertToIIFEDeclaration(obj) {
           'computed': true,
           'object': {
             'type': 'Identifier',
-            'name': 'module'
+            'name': 'modules'
           },
           'property': {
             'type': 'Literal',
@@ -1462,7 +1462,7 @@ clean = function clean() {
       });
     }
   });
-  // Adds a local module variable if a user wants local module information available to them
+  // Adds a local modules variable if a user wants local module information available to them
   if (_.isObject(options.config) && !_.isEmpty(options.config)) {
     configAst = function () {
       var props = [];
@@ -1504,7 +1504,7 @@ clean = function clean() {
         'type': 'VariableDeclarator',
         'id': {
           'type': 'Identifier',
-          'name': 'module'
+          'name': 'modules'
         },
         'init': {
           'type': 'ObjectExpression',
