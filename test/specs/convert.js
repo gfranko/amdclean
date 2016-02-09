@@ -164,6 +164,17 @@ describe('amdclean specs', function() {
         expect(cleanedCode).toBe(standardJavaScript);
       });
 
+      it('should permit module ids in the ignoreModules options array', function() {
+        var AMDcode = "define('exampleModule/subModule', ['example1', 'example2'], function(one, two) {});",
+          options = _.merge(_.cloneDeep(defaultOptions), {
+            'ignoreModules': ['exampleModule/subModule']
+          }),
+          cleanedCode = amdclean.clean(AMDcode, options),
+          standardJavaScript = "define('exampleModule/subModule',['example1','example2'],function(one,two){});";
+
+        expect(cleanedCode).toBe(standardJavaScript);
+      });
+
       it('should remove defines that are added to the removeModules options array', function() {
         var AMDcode = "define('exampleModule', ['example1', 'example2'], function(one, two) {});define('exampleModule2', function() {})",
           options = _.merge(_.cloneDeep(defaultOptions), {

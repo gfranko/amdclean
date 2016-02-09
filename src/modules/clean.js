@@ -23,6 +23,7 @@ define([
   // -----
   //  Creates an AST using Esprima, traverse and updates the AST using Estraverse, and generates standard JavaScript using Escodegen.
   return function clean() {
+
     var amdclean = this,
       options = amdclean.options,
       ignoreModules = options.ignoreModules,
@@ -36,6 +37,14 @@ define([
       defaultRange = defaultValues.defaultRange,
       defaultLOC = defaultValues.defaultLOC;
 
+    // Permit ignoreModules to contain module ids (using '/' rather than '_')
+    if(options.ignoreModules !== undefined){
+      options.ignoreModules = options.ignoreModules.map(
+        function(name){
+          return normalizeModuleName.call(amdclean, name);
+        });
+    }
+    
     // Creates and stores an AST representation of the code
     originalAst = createAst.call(amdclean);
 
