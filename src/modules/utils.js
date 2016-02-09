@@ -286,7 +286,13 @@ define([
         return pluginName + dep;
       }
 
-      return pluginName + normalizePath([baseName(moduleId), dep].join('/'));
+      var moduleBaseName = baseName(moduleId);
+      var pathToNormalize = dep;
+      if (moduleBaseName) {
+        pathToNormalize = [baseName(moduleId), dep].join('/');
+      }
+
+      return pluginName + normalizePath(pathToNormalize);
     }
   };
 

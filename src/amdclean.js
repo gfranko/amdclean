@@ -1,6 +1,6 @@
-/*! amdclean - v2.7.0 - 2015-09-25
+/*! amdclean - v2.7.0 - 2016-02-08
 * http://gregfranko.com/amdclean
-* Copyright (c) 2015 Greg Franko */
+* Copyright (c) 2016 Greg Franko */
 
 
 /*The MIT License (MIT)
@@ -343,10 +343,15 @@ utils = function () {
       if (!Utils.isRelativeFilePath(dep)) {
         return pluginName + dep;
       }
-      return pluginName + normalizePath([
-        baseName(moduleId),
-        dep
-      ].join('/'));
+      var moduleBaseName = baseName(moduleId);
+      var pathToNormalize = dep;
+      if (moduleBaseName) {
+        pathToNormalize = [
+          baseName(moduleId),
+          dep
+        ].join('/');
+      }
+      return pluginName + normalizePath(pathToNormalize);
     }
   };
   return Utils;
@@ -1534,7 +1539,7 @@ clean = function clean() {
 };
 (function () {
   (function (root, factory, undefined) {
-    'use strict';
+    
     // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, and plain browser loading
     if (typeof define === 'function' && define.amd) {
       factory.amd = true;
@@ -1560,7 +1565,7 @@ clean = function clean() {
       root.amdclean = factory(null, root);
     }
   }(this, function cleanamd(amdDependencies, context) {
-    'use strict';
+    
     // Third-Party Dependencies
     // Note: These dependencies are hoisted to the top (as local variables) at build time (Look in the gulpfile.js file and the AMDclean wrap option for more details)
     sourcemapToAst = function () {
