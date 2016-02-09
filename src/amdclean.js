@@ -1,4 +1,4 @@
-/*! amdclean - v2.7.0 - 2015-04-10
+/*! amdclean - v2.7.0 - 2015-06-23
 * http://gregfranko.com/amdclean
 * Copyright (c) 2015 Greg Franko */
 
@@ -343,10 +343,15 @@ utils = function () {
       if (!Utils.isRelativeFilePath(dep)) {
         return pluginName + dep;
       }
-      return pluginName + normalizePath([
-        baseName(moduleId),
-        dep
-      ].join('/'));
+      var moduleBaseName = baseName(moduleId);
+      var pathToNormalize = dep;
+      if (moduleBaseName) {
+        pathToNormalize = [
+          baseName(moduleId),
+          dep
+        ].join('/');
+      }
+      return pluginName + normalizePath(pathToNormalize);
     }
   };
   return Utils;
