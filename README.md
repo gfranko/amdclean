@@ -754,7 +754,7 @@ __I'd like to use source map support. What to do?__
  ```javascript
 var amdclean = require('amdclean'),
     cleaned = amdclean.clean({
-        'sourceMap: '{...}', // this is the source map that you already have for the code below
+        'sourceMap': '{...}', // this is the source map that you already have for the code below
         'code': 'define("randomExample", function() { console.log("I am a random example"); });',
         'wrap': false, // do not use wrap together with escodegen.sourceMapWithCode since it breaks the logic
         'esprima': {
