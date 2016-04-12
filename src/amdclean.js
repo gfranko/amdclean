@@ -978,7 +978,19 @@ createAst = function createAst(providedCode) {
 };
 convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
   var amdclean = this, options = amdclean.options, moduleName, args, dependencies, moduleReturnValue, moduleId, params, isDefine = utils.isDefine(node), isRequire = utils.isRequire(node), startLineNumber, callbackFuncArg = false, type = '', shouldBeIgnored, moduleToBeIgnored, parentHasFunctionExpressionArgument, defaultRange = defaultValues.defaultRange, defaultLOC = defaultValues.defaultLOC, range = node.range || defaultRange, loc = node.loc || defaultLOC, dependencyBlacklist = defaultValues.dependencyBlacklist, shouldOptimize;
-  startLineNumber = isDefine || isRequire ? node.expression.loc.start.line : node && node.loc && node.loc.start ? node.loc.start.line : null;
+  startLineNumber = isDefine || isRequire ? (
+    node && node.expression && node.expression.loc && node.expression.loc.start && node.expression.loc.start.line ? (
+      node.expression.loc.start.line
+    ) : (
+      null
+    )
+  ) : (
+    node && node.loc && node.loc.start ? (
+      node.loc.start.line
+    ) : (
+      null
+    )
+  );
   shouldBeIgnored = amdclean.matchingCommentLineNumbers[startLineNumber] || amdclean.matchingCommentLineNumbers[startLineNumber - 1];
   // If it is an AMD conditional statement
   // e.g. if(typeof define === 'function') {}
