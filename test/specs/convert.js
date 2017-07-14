@@ -956,4 +956,47 @@ describe('amdclean specs', function() {
     });
   });
 
+  describe('Unicode characher compatibility.',  function() {
+    it('should support valid JavaScript names with non-latin characters as module name', function() {
+      var AMDcode = "define('Тест', [], function() {});";
+      var cleanedCode = amdclean.clean(AMDcode, {
+        'escodegen': {
+          'format': {
+            'compact': true
+          }
+        }
+      }).replace(/\n/g, '');
+      var standardJavaScript = ";(function() {var Тест;Тест=undefined;}());";
+
+      expect(cleanedCode).toBe(standardJavaScript);
+    });
+
+    it('should support valid JavaScript names with non-latin characters as module dependencies', function() {
+      var AMDcode = "define('Тест', ['зависимость1'], function(зав) {зав.dummy()});";
+      var cleanedCode = amdclean.clean(AMDcode, {
+        'escodegen': {
+          'format': {
+            'compact': true
+          }
+        }
+      }).replace(/\n/g, '');
+      var standardJavaScript = ";(function() {var Тест;Тест=function (зав){зав.dummy();}(зависимость1);}());";
+
+      expect(cleanedCode).toBe(standardJavaScript);
+    });
+
+    it('should support valid JavaScript names with escape characters', function() {
+      var AMDcode = "define('Тест', ['\u041B\u043E\u043B2'], function(зав) {зав.dummy()});";
+      var cleanedCode = amdclean.clean(AMDcode, {
+        'escodegen': {
+          'format': {
+            'compact': true
+          }
+        }
+      }).replace(/\n/g, '');
+      var standardJavaScript = ";(function() {var Тест;Тест=function (зав){зав.dummy();}(\u041B\u043E\u043B2);}());";
+
+      expect(cleanedCode).toBe(standardJavaScript);
+    });
+  });
 });
