@@ -29,7 +29,12 @@ define([
       }
     }
 
-    preNormalized = utils.prefixReservedWords(name.replace(/\./g, '').replace(/[^A-Za-z0-9_$]/g, '_').replace(/^_+/, ''));
+    preNormalized = utils.prefixReservedWords(
+      name.replace(/\./g, '')
+        .replace(utils.invalidIdentifierStartSymbol, '')
+        .replace(utils.invalidIdentifierTrailingSymbol, '_')
+        .replace(/^_+/, '')
+    );
 
     postNormalized = prefixMode === 'camelCase' ? utils.convertToCamelCase(preNormalized) : preNormalized;
 
