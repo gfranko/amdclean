@@ -792,6 +792,21 @@ describe('amdclean specs', function() {
         expect(cleanedCode).toBe(standardJavaScript);
       });
 
+      it('should correctly convert libraries with simple conditional AMD checks (ternary operator case)', function(){
+        var AMDcode = "(function (root, factory) {"+
+            "'use strict';"+
+            "typeof define === 'function' ?"+
+              "define('esprima', ['exports'], factory):"+
+              "factory(exports);"+
+          "}(this, function (exports) {"+
+            "var test = true;"+
+          "}));",
+          cleanedCode = amdclean.clean(AMDcode, defaultOptions),
+          standardJavaScript = "var esprima;(function(root,factory){'use strict';true?esprima=function (exports){return typeof factory==='function'?factory(exports):factory;}({}):factory(exports);}(this,function(exports){exports=exports||{};var test=true;return exports;}));";
+
+        expect(cleanedCode).toBe(standardJavaScript);
+      });
+
       it('should correctly convert libraries that use factory function parameters', function() {
         var AMDcode = "(function (factory) {" +
           "if (typeof exports === 'object') {" +
