@@ -820,6 +820,15 @@ describe('amdclean specs', function() {
 
         expect(cleanedCode).toBe(standardJavaScript);
       });
+      
+      it('should correctly translate comma-separated define-calls', function(){
+        var AMDcode = "define('foo', [], function () { return 123; }),"+
+          "define('bar', [], function () { return 456; });",
+          cleanedCode = amdclean.clean(AMDcode, defaultOptions),
+          standardJavaScript = "var foo,bar;foo=123,bar=456;";
+
+        expect(cleanedCode).toBe(standardJavaScript);
+      });
 
       it('should correctly convert libraries that use factory function parameters', function() {
         var AMDcode = "(function (factory) {" +
