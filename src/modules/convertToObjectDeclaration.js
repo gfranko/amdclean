@@ -10,6 +10,7 @@ define([
 ) {
   return function(obj, type) {
     var node = obj.node,
+      isStatement = obj.isDefine.isStatement,
       defaultRange = defaultValues.defaultRange,
       defaultLOC = defaultValues.defaultLOC,
       range = (node.range || defaultRange),
@@ -76,24 +77,25 @@ define([
         modReturnValue = modReturnValue || obj.moduleReturnValue;
         return modReturnValue;
       }()),
-      updatedNode = {
-        'type': 'ExpressionStatement',
-        'expression': {
-          'type': 'AssignmentExpression',
-          'operator': '=',
-          'left': {
-            'type': 'Identifier',
-            'name': moduleName,
-            'range': range,
-            'loc': loc
-          },
-          'right': moduleReturnValue,
+      expression = {
+        'type': 'AssignmentExpression',
+        'operator': '=',
+        'left': {
+          'type': 'Identifier',
+          'name': moduleName,
           'range': range,
           'loc': loc
         },
+        'right': moduleReturnValue,
         'range': range,
         'loc': loc
-      };
+      },
+      updatedNode =  isStatement ? {
+        'type': 'ExpressionStatement',
+        'expression': expression,
+        'range': range,
+        'loc': loc
+      } : expression;
     return updatedNode;
   };
 });

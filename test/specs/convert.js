@@ -792,6 +792,44 @@ describe('amdclean specs', function() {
         expect(cleanedCode).toBe(standardJavaScript);
       });
 
+      it('should correctly convert libraries with simple conditional AMD checks (ternary operator case)', function(){
+        var AMDcode = "(function (root, factory) {"+
+            "'use strict';"+
+            "typeof define === 'function' ?"+
+              "define('esprima', ['exports'], factory):"+
+              "factory(exports);"+
+          "}(this, function (exports) {"+
+            "var test = true;"+
+          "}));",
+          cleanedCode = amdclean.clean(AMDcode, defaultOptions),
+          standardJavaScript = "var esprima;(function(root,factory){'use strict';true?esprima=function (exports){return typeof factory==='function'?factory(exports):factory;}({}):factory(exports);}(this,function(exports){exports=exports||{};var test=true;return exports;}));";
+
+        expect(cleanedCode).toBe(standardJavaScript);
+      });
+
+      it('should correctly convert libraries with simple conditional AMD checks (ternary operator case 2)', function(){
+        var AMDcode = "(function(global, factory) {"+
+            "typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :"+
+            "typeof define === 'function' && define.amd ? define(factory) :"+
+            "(global.Vue = factory());"+
+          "})(this, (function() {"+
+            "return true;"+
+          "}))",
+          cleanedCode = amdclean.clean(AMDcode, defaultOptions),
+          standardJavaScript = "(function(global,factory){typeof exports==='object'&&typeof module!=='undefined'?module.exports=factory():true?define(factory):global.Vue=factory();}(this,function(){return true;}));";
+
+        expect(cleanedCode).toBe(standardJavaScript);
+      });
+      
+      it('should correctly translate comma-separated define-calls', function(){
+        var AMDcode = "define('foo', [], function () { return 123; }),"+
+          "define('bar', [], function () { return 456; });",
+          cleanedCode = amdclean.clean(AMDcode, defaultOptions),
+          standardJavaScript = "var foo,bar;foo=123,bar=456;";
+
+        expect(cleanedCode).toBe(standardJavaScript);
+      });
+
       it('should correctly convert libraries that use factory function parameters', function() {
         var AMDcode = "(function (factory) {" +
           "if (typeof exports === 'object') {" +

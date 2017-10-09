@@ -14,31 +14,56 @@ define([
     // isDefine
     // --------
     // Returns if the current AST node is a define() method call
-    'isDefine': function(node) {
-      var expression = node.expression || {},
-        callee = expression.callee;
-
-      return (_.isObject(node) &&
-        node.type === 'ExpressionStatement' &&
-        expression &&
-        expression.type === 'CallExpression' &&
-        callee.type === 'Identifier' &&
-        callee.name === 'define');
+    'isDefine': function(node, parent) {
+      return Utils.isDefineAsExpressionStatement(node) || Utils.isDefineAsExpression(node, parent);
     },
 
     // isRequire
     // ---------
     // Returns if the current AST node is a require() method call
     'isRequire': function(node) {
+     var expression = node.expression || {},
+       callee = expression.callee;
+
+     return (node &&
+       node.type === 'ExpressionStatement' &&
+       expression &&
+       expression.type === 'CallExpression' &&
+       callee.type === 'Identifier' &&
+       callee.name === 'require');
+    },
+
+    'isDefineAsExpressionStatement':function(node){
       var expression = node.expression || {},
         callee = expression.callee;
 
-      return (node &&
+      var isDefine = (_.isObject(node) &&
         node.type === 'ExpressionStatement' &&
         expression &&
         expression.type === 'CallExpression' &&
         callee.type === 'Identifier' &&
-        callee.name === 'require');
+        callee.name === 'define');
+      if(isDefine){
+        return {
+          expression:node.expression,
+          isStatement: true
+        };
+      }
+    },
+
+    'isDefineAsExpression':function(node, parent){
+      if(parent && Utils.isDefineAsExpressionStatement(parent)){
+        return false;
+      }
+      var isDefine = (node &&
+        node.type === 'CallExpression' &&
+        node.callee.type === 'Identifier' &&
+        node.callee.name === 'define');
+      if(isDefine){
+        return {
+          expression:node
+        };
+      }
     },
 
     // isModuleExports
@@ -117,7 +142,7 @@ define([
     // e.g. if(true) {}
     'isIfStatement': function(node) {
       return (node &&
-        node.type === 'IfStatement' &&
+        (node.type === 'IfStatement' || node.type == 'ConditionalExpression') &&
         node.test);
     },
 

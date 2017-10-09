@@ -432,7 +432,8 @@ define([
         'hasExportsParam': hasExportsParam,
         'callbackFunc': callbackFunc,
         'isOptimized': isOptimized,
-        'node': node
+        'node': node,
+        'isStatement':isDefine.isStatement
       });
     } else if (isRequire) {
       return convertToIIFE.call(amdclean, {

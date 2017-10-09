@@ -1,6 +1,6 @@
-/*! amdclean - v2.7.0 - 2015-12-05
+/*! amdclean - v2.7.0 - 2017-10-09
 * http://gregfranko.com/amdclean
-* Copyright (c) 2015 Greg Franko */
+* Copyright (c) 2017 Greg Franko */
 
 
 /*The MIT License (MIT)
@@ -152,9 +152,8 @@ utils = function () {
     // isDefine
     // --------
     // Returns if the current AST node is a define() method call
-    'isDefine': function (node) {
-      var expression = node.expression || {}, callee = expression.callee;
-      return _.isObject(node) && node.type === 'ExpressionStatement' && expression && expression.type === 'CallExpression' && callee.type === 'Identifier' && callee.name === 'define';
+    'isDefine': function (node, parent) {
+      return Utils.isDefineAsExpressionStatement(node) || Utils.isDefineAsExpression(node, parent);
     },
     // isRequire
     // ---------
@@ -162,6 +161,25 @@ utils = function () {
     'isRequire': function (node) {
       var expression = node.expression || {}, callee = expression.callee;
       return node && node.type === 'ExpressionStatement' && expression && expression.type === 'CallExpression' && callee.type === 'Identifier' && callee.name === 'require';
+    },
+    'isDefineAsExpressionStatement': function (node) {
+      var expression = node.expression || {}, callee = expression.callee;
+      var isDefine = _.isObject(node) && node.type === 'ExpressionStatement' && expression && expression.type === 'CallExpression' && callee.type === 'Identifier' && callee.name === 'define';
+      if (isDefine) {
+        return {
+          expression: node.expression,
+          isStatement: true
+        };
+      }
+    },
+    'isDefineAsExpression': function (node, parent) {
+      if (parent && Utils.isDefineAsExpressionStatement(parent)) {
+        return false;
+      }
+      var isDefine = node && node.type === 'CallExpression' && node.callee.type === 'Identifier' && node.callee.name === 'define';
+      if (isDefine) {
+        return { expression: node };
+      }
     },
     // isModuleExports
     // ---------------
@@ -209,7 +227,7 @@ utils = function () {
     // Returns if the current AST node is an if statement
     // e.g. if(true) {}
     'isIfStatement': function (node) {
-      return node && node.type === 'IfStatement' && node.test;
+      return node && (node.type === 'IfStatement' || node.type == 'ConditionalExpression') && node.test;
     },
     // isAMDConditional
     // ----------------
@@ -378,7 +396,7 @@ convertToIIFE = function convertToIIFE(obj) {
   };
 };
 convertToIIFEDeclaration = function convertToIIFEDeclaration(obj) {
-  var amdclean = this, options = amdclean.options, moduleId = obj.moduleId, moduleName = obj.moduleName, hasModuleParam = obj.hasModuleParam, hasExportsParam = obj.hasExportsParam, callbackFuncParams = obj.callbackFuncParams, isOptimized = obj.isOptimized, callback = obj.callbackFunc, node = obj.node, name = callback.name, type = callback.type, range = node.range || defaultValues.defaultRange, loc = node.loc || defaultValues.defaultLOC, callbackFunc = function () {
+  var amdclean = this, options = amdclean.options, moduleId = obj.moduleId, isStatement = obj.isStatement, moduleName = obj.moduleName, hasModuleParam = obj.hasModuleParam, hasExportsParam = obj.hasExportsParam, callbackFuncParams = obj.callbackFuncParams, isOptimized = obj.isOptimized, callback = obj.callbackFunc, node = obj.node, name = callback.name, type = callback.type, range = node.range || defaultValues.defaultRange, loc = node.loc || defaultValues.defaultLOC, callbackFunc = function () {
       var cbFunc = obj.callbackFunc;
       if (type === 'Identifier' && name !== 'undefined') {
         cbFunc = {
@@ -514,24 +532,24 @@ convertToIIFEDeclaration = function convertToIIFEDeclaration(obj) {
           'loc': loc
         };
       }
-    }(), updatedNode = {
-      'type': 'ExpressionStatement',
-      'expression': {
-        'type': 'AssignmentExpression',
-        'operator': '=',
-        'left': {
-          'type': 'Identifier',
-          'name': options.IIFEVariableNameTransform ? options.IIFEVariableNameTransform(moduleName, moduleId) : moduleName,
-          'range': range,
-          'loc': loc
-        },
-        'right': cb,
+    }(), expression = {
+      'type': 'AssignmentExpression',
+      'operator': '=',
+      'left': {
+        'type': 'Identifier',
+        'name': options.IIFEVariableNameTransform ? options.IIFEVariableNameTransform(moduleName, moduleId) : moduleName,
         'range': range,
         'loc': loc
       },
+      'right': cb,
       'range': range,
       'loc': loc
-    };
+    }, updatedNode = isStatement ? {
+      'type': 'ExpressionStatement',
+      'expression': expression,
+      'range': range,
+      'loc': loc
+    } : expression;
   estraverse.replace(callbackFunc, {
     'enter': function (node) {
       if (utils.isModuleExports(node)) {
@@ -880,7 +898,8 @@ convertToFunctionExpression = function convertToFunctionExpression(obj) {
       'hasExportsParam': hasExportsParam,
       'callbackFunc': callbackFunc,
       'isOptimized': isOptimized,
-      'node': node
+      'node': node,
+      'isStatement': isDefine.isStatement
     });
   } else if (isRequire) {
     return convertToIIFE.call(amdclean, {
@@ -892,7 +911,7 @@ convertToFunctionExpression = function convertToFunctionExpression(obj) {
   }
 };
 convertToObjectDeclaration = function (obj, type) {
-  var node = obj.node, defaultRange = defaultValues.defaultRange, defaultLOC = defaultValues.defaultLOC, range = node.range || defaultRange, loc = node.loc || defaultLOC, moduleName = obj.moduleName, moduleReturnValue = function () {
+  var node = obj.node, isStatement = obj.isDefine.isStatement, defaultRange = defaultValues.defaultRange, defaultLOC = defaultValues.defaultLOC, range = node.range || defaultRange, loc = node.loc || defaultLOC, moduleName = obj.moduleName, moduleReturnValue = function () {
       var modReturnValue, callee, params, returnStatement, nestedReturnStatement, internalFunctionExpression;
       if (type === 'functionCallExpression') {
         modReturnValue = obj.moduleReturnValue;
@@ -934,24 +953,24 @@ convertToObjectDeclaration = function (obj, type) {
       }
       modReturnValue = modReturnValue || obj.moduleReturnValue;
       return modReturnValue;
-    }(), updatedNode = {
-      'type': 'ExpressionStatement',
-      'expression': {
-        'type': 'AssignmentExpression',
-        'operator': '=',
-        'left': {
-          'type': 'Identifier',
-          'name': moduleName,
-          'range': range,
-          'loc': loc
-        },
-        'right': moduleReturnValue,
+    }(), expression = {
+      'type': 'AssignmentExpression',
+      'operator': '=',
+      'left': {
+        'type': 'Identifier',
+        'name': moduleName,
         'range': range,
         'loc': loc
       },
+      'right': moduleReturnValue,
       'range': range,
       'loc': loc
-    };
+    }, updatedNode = isStatement ? {
+      'type': 'ExpressionStatement',
+      'expression': expression,
+      'range': range,
+      'loc': loc
+    } : expression;
   return updatedNode;
 };
 createAst = function createAst(providedCode) {
@@ -977,20 +996,22 @@ createAst = function createAst(providedCode) {
   }
 };
 convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
-  var amdclean = this, options = amdclean.options, moduleName, args, dependencies, moduleReturnValue, moduleId, params, isDefine = utils.isDefine(node), isRequire = utils.isRequire(node), startLineNumber, callbackFuncArg = false, type = '', shouldBeIgnored, moduleToBeIgnored, parentHasFunctionExpressionArgument, defaultRange = defaultValues.defaultRange, defaultLOC = defaultValues.defaultLOC, range = node.range || defaultRange, loc = node.loc || defaultLOC, dependencyBlacklist = defaultValues.dependencyBlacklist, shouldOptimize;
-  startLineNumber = isDefine || isRequire ? node.expression.loc.start.line : node && node.loc && node.loc.start ? node.loc.start.line : null;
+  var amdclean = this, options = amdclean.options, moduleName, args, dependencies, moduleReturnValue, moduleId, params, isDefine = utils.isDefine(node, parent), isRequire = utils.isRequire(node), expressionFromDefineOrRequire = isDefine ? isDefine.expression : isRequire ? node.expression : null, startLineNumber, callbackFuncArg = false, type = '', shouldBeIgnored, moduleToBeIgnored, parentHasFunctionExpressionArgument, defaultRange = defaultValues.defaultRange, defaultLOC = defaultValues.defaultLOC, range = node.range || defaultRange, loc = node.loc || defaultLOC, dependencyBlacklist = defaultValues.dependencyBlacklist, shouldOptimize;
+  startLineNumber = isDefine || isRequire ? expressionFromDefineOrRequire.loc.start.line : node && node.loc && node.loc.start ? node.loc.start.line : null;
   shouldBeIgnored = amdclean.matchingCommentLineNumbers[startLineNumber] || amdclean.matchingCommentLineNumbers[startLineNumber - 1];
   // If it is an AMD conditional statement
   // e.g. if(typeof define === 'function') {}
   if (utils.isAMDConditional(node)) {
     estraverse.traverse(node, {
-      'enter': function (node) {
+      'enter': function (node, parent) {
         var normalizedModuleName;
-        if (utils.isDefine(node)) {
-          if (node.expression && node.expression.arguments && node.expression.arguments.length) {
+        var isDefine = utils.isDefine(node, parent);
+        if (isDefine) {
+          var expressionFromDefineOrRequire = isDefine.expression;
+          if (expressionFromDefineOrRequire && expressionFromDefineOrRequire.arguments && expressionFromDefineOrRequire.arguments.length) {
             // Add the module name to the ignore list
-            if (node.expression.arguments[0].type === 'Literal' && node.expression.arguments[0].value) {
-              normalizedModuleName = normalizeModuleName.call(amdclean, node.expression.arguments[0].value);
+            if (expressionFromDefineOrRequire.arguments[0].type === 'Literal' && expressionFromDefineOrRequire.arguments[0].value) {
+              normalizedModuleName = normalizeModuleName.call(amdclean, expressionFromDefineOrRequire.arguments[0].value);
               if (options.transformAMDChecks !== true) {
                 amdclean.conditionalModulesToIgnore[normalizedModuleName] = true;
               } else {
@@ -998,7 +1019,7 @@ convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
               }
               if (options.createAnonymousAMDModule === true) {
                 amdclean.storedModules[normalizedModuleName] = false;
-                node.expression.arguments.shift();
+                expressionFromDefineOrRequire.arguments.shift();
               }
             }
           }
@@ -1020,9 +1041,9 @@ convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
     }
   }
   if (isDefine || isRequire) {
-    args = Array.prototype.slice.call(node.expression['arguments'], 0);
+    args = Array.prototype.slice.call(expressionFromDefineOrRequire['arguments'], 0);
     moduleReturnValue = isRequire ? args[1] : args[args.length - 1];
-    moduleId = node.expression['arguments'][0].value;
+    moduleId = expressionFromDefineOrRequire['arguments'][0].value;
     moduleName = normalizeModuleName.call(amdclean, moduleId);
     shouldOptimize = !amdclean.conditionalModulesToNotOptimize[moduleName];
     dependencies = function () {
@@ -1102,7 +1123,7 @@ convertDefinesAndRequires = function convertDefinesAndRequires(node, parent) {
       if (shouldBeIgnored) {
         return node;
       }
-      callbackFuncArg = _.isArray(node.expression['arguments']) && node.expression['arguments'].length ? node.expression['arguments'][1] && node.expression['arguments'][1].body && node.expression['arguments'][1].body.body && node.expression['arguments'][1].body.body.length : false;
+      callbackFuncArg = _.isArray(expressionFromDefineOrRequire['arguments']) && expressionFromDefineOrRequire['arguments'].length ? expressionFromDefineOrRequire['arguments'][1] && expressionFromDefineOrRequire['arguments'][1].body && expressionFromDefineOrRequire['arguments'][1].body.body && expressionFromDefineOrRequire['arguments'][1].body.body.length : false;
       if (options.removeAllRequires !== true && callbackFuncArg) {
         return convertToFunctionExpression.call(amdclean, params);
       } else {
@@ -1223,11 +1244,12 @@ traverseAndUpdateAst = function traverseAndUpdateAst(obj) {
   });
   return ast;
 };
-getNormalizedModuleName = function getNormalizedModuleName(node) {
-  if (!utils.isDefine(node)) {
+getNormalizedModuleName = function getNormalizedModuleName(node, parent) {
+  var isDefine = utils.isDefine(node, parent);
+  if (!isDefine) {
     return;
   }
-  var amdclean = this, moduleId = node.expression['arguments'][0].value, moduleName = normalizeModuleName.call(amdclean, moduleId);
+  var amdclean = this, expression = isDefine.expression, moduleId = expression['arguments'][0].value, moduleName = normalizeModuleName.call(amdclean, moduleId);
   return moduleName;
 };
 findAndStoreAllModuleIds = function findAndStoreAllModuleIds(ast) {

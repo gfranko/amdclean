@@ -26,8 +26,9 @@ define([
       moduleReturnValue,
       moduleId,
       params,
-      isDefine = utils.isDefine(node),
+      isDefine = utils.isDefine(node, parent),
       isRequire = utils.isRequire(node),
+      expressionFromDefineOrRequire = isDefine ? isDefine.expression : (isRequire ? node.expression : null),
       startLineNumber,
       callbackFuncArg = false,
       type = '',
@@ -42,20 +43,22 @@ define([
       shouldOptimize;
 
 
-    startLineNumber = isDefine || isRequire ? node.expression.loc.start.line : node && node.loc && node.loc.start ? node.loc.start.line : null;
+    startLineNumber = isDefine || isRequire ? expressionFromDefineOrRequire.loc.start.line : node && node.loc && node.loc.start ? node.loc.start.line : null;
     shouldBeIgnored = (amdclean.matchingCommentLineNumbers[startLineNumber] || amdclean.matchingCommentLineNumbers[startLineNumber - 1]);
 
     // If it is an AMD conditional statement
     // e.g. if(typeof define === 'function') {}
     if (utils.isAMDConditional(node)) {
       estraverse.traverse(node, {
-        'enter': function(node) {
+        'enter': function(node, parent) {
           var normalizedModuleName;
-          if (utils.isDefine(node)) {
-            if (node.expression && node.expression.arguments && node.expression.arguments.length) {
+          var isDefine = utils.isDefine(node, parent);
+          if (isDefine) {
+            var expressionFromDefineOrRequire = isDefine.expression;
+            if (expressionFromDefineOrRequire && expressionFromDefineOrRequire.arguments && expressionFromDefineOrRequire.arguments.length) {
               // Add the module name to the ignore list
-              if (node.expression.arguments[0].type === 'Literal' && node.expression.arguments[0].value) {
-                normalizedModuleName = normalizeModuleName.call(amdclean, node.expression.arguments[0].value);
+              if (expressionFromDefineOrRequire.arguments[0].type === 'Literal' && expressionFromDefineOrRequire.arguments[0].value) {
+                normalizedModuleName = normalizeModuleName.call(amdclean, expressionFromDefineOrRequire.arguments[0].value);
                 if (options.transformAMDChecks !== true) {
                   amdclean.conditionalModulesToIgnore[normalizedModuleName] = true;
                 } else {
@@ -63,7 +66,7 @@ define([
                 }
                 if (options.createAnonymousAMDModule === true) {
                   amdclean.storedModules[normalizedModuleName] = false;
-                  node.expression.arguments.shift();
+                  expressionFromDefineOrRequire.arguments.shift();
                 }
               }
             }
@@ -90,11 +93,11 @@ define([
     }
 
     if (isDefine || isRequire) {
-      args = Array.prototype.slice.call(node.expression['arguments'], 0);
+      args = Array.prototype.slice.call(expressionFromDefineOrRequire['arguments'], 0);
 
       moduleReturnValue = isRequire ? args[1] : args[args.length - 1];
 
-      moduleId = node.expression['arguments'][0].value;
+      moduleId = expressionFromDefineOrRequire['arguments'][0].value;
 
       moduleName = normalizeModuleName.call(amdclean, moduleId);
 
@@ -199,7 +202,7 @@ define([
           return node;
         }
 
-        callbackFuncArg = _.isArray(node.expression['arguments']) && node.expression['arguments'].length ? node.expression['arguments'][1] && node.expression['arguments'][1].body && node.expression['arguments'][1].body.body && node.expression['arguments'][1].body.body.length : false;
+        callbackFuncArg = _.isArray(expressionFromDefineOrRequire['arguments']) && expressionFromDefineOrRequire['arguments'].length ? expressionFromDefineOrRequire['arguments'][1] && expressionFromDefineOrRequire['arguments'][1].body && expressionFromDefineOrRequire['arguments'][1].body.body && expressionFromDefineOrRequire['arguments'][1].body.body.length : false;
 
         if (options.removeAllRequires !== true && callbackFuncArg) {
           return convertToFunctionExpression.call(amdclean, params);

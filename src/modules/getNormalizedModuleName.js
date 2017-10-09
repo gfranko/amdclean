@@ -9,13 +9,15 @@ define([
   utils,
   normalizeModuleName
 ) {
-  return function getNormalizedModuleName(node) {
-    if (!utils.isDefine(node)) {
+  return function getNormalizedModuleName(node, parent) {
+    var isDefine = utils.isDefine(node, parent);
+    if (!isDefine) {
       return;
     }
 
     var amdclean = this,
-      moduleId = node.expression['arguments'][0].value,
+      expression = isDefine.expression,
+      moduleId = expression['arguments'][0].value,
       moduleName = normalizeModuleName.call(amdclean, moduleId);
 
     return moduleName;

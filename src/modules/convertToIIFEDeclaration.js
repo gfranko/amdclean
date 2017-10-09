@@ -14,6 +14,7 @@ define([
     var amdclean = this,
       options = amdclean.options,
       moduleId = obj.moduleId,
+      isStatement = obj.isStatement,
       moduleName = obj.moduleName,
       hasModuleParam = obj.hasModuleParam,
       hasExportsParam = obj.hasExportsParam,
@@ -166,24 +167,25 @@ define([
           };
         }
       }()),
-      updatedNode = {
-        'type': 'ExpressionStatement',
-        'expression': {
-          'type': 'AssignmentExpression',
-          'operator': '=',
-          'left': {
-            'type': 'Identifier',
-            'name': options.IIFEVariableNameTransform ? options.IIFEVariableNameTransform(moduleName, moduleId) : moduleName,
-            'range': range,
-            'loc': loc
-          },
-          'right': cb,
+      expression = {
+        'type': 'AssignmentExpression',
+        'operator': '=',
+        'left': {
+          'type': 'Identifier',
+          'name': options.IIFEVariableNameTransform ? options.IIFEVariableNameTransform(moduleName, moduleId) : moduleName,
           'range': range,
           'loc': loc
         },
+        'right': cb,
         'range': range,
         'loc': loc
-      };
+      },
+      updatedNode = isStatement ? {
+        'type': 'ExpressionStatement',
+        'expression': expression,
+        'range': range,
+        'loc': loc
+      } : expression;
 
     estraverse.replace(callbackFunc, {
       'enter': function(node) {
