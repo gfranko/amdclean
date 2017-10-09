@@ -816,7 +816,7 @@ describe('amdclean specs', function() {
             "return true;"+
           "}))",
           cleanedCode = amdclean.clean(AMDcode, defaultOptions),
-          standardJavaScript = "var esprima;(function(root,factory){'use strict';true?esprima=function (exports){return typeof factory==='function'?factory(exports):factory;}({}):factory(exports);}(this,function(exports){exports=exports||{};var test=true;return exports;}));";
+          standardJavaScript = "(function(global,factory){typeof exports==='object'&&typeof module!=='undefined'?module.exports=factory():true?define(factory):global.Vue=factory();}(this,function(){return true;}));";
 
         expect(cleanedCode).toBe(standardJavaScript);
       });
