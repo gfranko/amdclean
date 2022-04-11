@@ -61,18 +61,18 @@ define([
           callbackFunc.body.body = body;
 
           // Returns an array of all return statements
-          returnStatements = _.where(body, {
+          returnStatements = _.filter(body, {
             'type': 'ReturnStatement'
           });
 
-          exportsExpressions = _.where(body, {
+          exportsExpressions = _.filter(body, {
             'left': {
               'type': 'Identifier',
               'name': 'exports'
             }
           });
 
-          moduleExportsExpressions = _.where(body, {
+          moduleExportsExpressions = _.filter(body, {
             'left': {
               'type': 'MemberExpression',
               'object': {
@@ -132,7 +132,7 @@ define([
         var returns = [];
 
         if (callbackFunc && callbackFunc.body && _.isArray(callbackFunc.body.body)) {
-          returns = _.where(callbackFunc.body.body, {
+          returns = _.filter(callbackFunc.body.body, {
             'type': 'ReturnStatement'
           });
           if (returns.length) {
@@ -145,14 +145,14 @@ define([
       hasExportsParam = (function() {
         var cbParams = callbackFunc.params || [];
 
-        return _.where(cbParams, {
+        return _.filter(cbParams, {
           'name': 'exports'
         }).length;
       }()),
       hasModuleParam = (function() {
         var cbParams = callbackFunc.params || [];
 
-        return _.where(cbParams, {
+        return _.filter(cbParams, {
           'name': 'module'
         }).length;
       }()),
@@ -219,7 +219,7 @@ define([
                   variableName = node.id.name;
                   expressionName = normalizeModuleName.call(amdclean, utils.normalizeDependencyName(moduleId, node.init['arguments'][0].value, moduleId));
 
-                  if (!_.contains(ignoreModules, expressionName) && (variableName === expressionName)) {
+                  if (!_.includes(ignoreModules, expressionName) && (variableName === expressionName)) {
                     matchingNames.push({
                       'originalName': expressionName,
                       'newName': findNewParamName(expressionName),
@@ -316,7 +316,7 @@ define([
                   'count': 1
                 }];
               } else {
-                mappedParameter = _.where(amdclean.callbackParameterMap[dependencyNames[iterator].name], {
+                mappedParameter = _.filter(amdclean.callbackParameterMap[dependencyNames[iterator].name], {
                   'name': currentName
                 });
 
@@ -398,14 +398,14 @@ define([
 
             normalizedModuleName = normalizeModuleName.call(amdclean, utils.normalizeDependencyName(moduleId, node['arguments'][0].value, moduleId));
 
-            if (_.contains(ignoreModules, normalizedModuleName)) {
+            if (_.includes(ignoreModules, normalizedModuleName)) {
               return node;
             }
 
-            if (_.where(matchingRequireExpressionNames, {
+            if (_.filter(matchingRequireExpressionNames, {
               'originalName': normalizedModuleName
             }).length) {
-              newName = _.where(matchingRequireExpressionNames, {
+              newName = _.filter(matchingRequireExpressionNames, {
                 'originalName': normalizedModuleName
               })[0].newName;
             }

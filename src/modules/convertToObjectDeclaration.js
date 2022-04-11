@@ -28,12 +28,12 @@ define([
           callee = modReturnValue.callee;
           params = callee.params;
 
-          if (params && params.length && _.isArray(params) && _.where(params, {
+          if (params && params.length && _.isArray(params) && _.filter(params, {
             'name': 'global'
           })) {
 
             if (_.isObject(callee.body) && _.isArray(callee.body.body)) {
-              returnStatement = _.where(callee.body.body, {
+              returnStatement = _.filter(callee.body.body, {
                 'type': 'ReturnStatement'
               })[0];
 
@@ -41,7 +41,7 @@ define([
                 internalFunctionExpression = returnStatement.argument;
 
                 if (_.isObject(internalFunctionExpression.body) && _.isArray(internalFunctionExpression.body.body)) {
-                  nestedReturnStatement = _.where(internalFunctionExpression.body.body, {
+                  nestedReturnStatement = _.filter(internalFunctionExpression.body.body, {
                     'type': 'ReturnStatement'
                   })[0];
 
