@@ -1,4 +1,3 @@
-require('jasmine-only');
 describe('amdclean specs', function() {
   var amdclean = require('../../src/amdclean'),
     requirejs = require('requirejs'),
@@ -26,7 +25,6 @@ describe('amdclean specs', function() {
         var AMDcode = "define('example', [], function() {});",
           cleanedCode = amdclean.clean(AMDcode, defaultOptions);
         standardJavaScript = "var example;example=undefined;";
-
         expect(cleanedCode).toBe(standardJavaScript);
       });
 

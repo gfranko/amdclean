@@ -243,7 +243,7 @@ define([
 
     // Creates variable declarations for each AMD module/callback parameter that needs to be hoisted
     _.each(hoistedVariables, function(moduleValue, moduleName) {
-      if (!_.contains(options.ignoreModules, moduleName)) {
+      if (!_.includes(options.ignoreModules, moduleName)) {
 	  var _initValue = amdclean.exportsModules[moduleName] !== true ? null : { type: 'ObjectExpression', properties: [] };
 
         declarations.push({
